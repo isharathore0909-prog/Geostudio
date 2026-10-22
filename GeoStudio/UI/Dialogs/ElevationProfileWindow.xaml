@@ -2,37 +2,41 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Elevation Profile &amp; Terrain Cross-Section Transect"
-        Height="560" Width="960" MinHeight="450" MinWidth="750"
+        Height="580" Width="980" MinHeight="460" MinWidth="750"
         WindowStartupLocation="CenterOwner"
-        Background="#0F172A" Foreground="#F8FAFC"
+        Background="#F8FAFC" Foreground="#0F172A"
         FontFamily="Segoe UI">
     <Window.Resources>
         <Style x:Key="StatCard" TargetType="Border">
-            <Setter Property="Background" Value="#1E293B"/>
-            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12,8"/>
             <Setter Property="Margin" Value="4,0"/>
         </Style>
         <Style x:Key="ToolbarBtn" TargetType="Button">
-            <Setter Property="Background" Value="#1E293B"/>
-            <Setter Property="Foreground" Value="#F8FAFC"/>
-            <Setter Property="BorderBrush" Value="#475569"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Padding" Value="12,6"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#334155"/>
+                                <Setter TargetName="border" Property="Background" Value="#F1F5F9"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#94A3B8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#E2E8F0"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -41,7 +45,7 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="16">
+    <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -50,29 +54,31 @@
         </Grid.RowDefinitions>
 
         <!-- Top Header & Controls -->
-        <Grid Grid.Row="0" Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+        <Border Grid.Row="0" Margin="0,0,0,14" Padding="0,0,0,12" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="📈" FontSize="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                <StackPanel>
-                    <TextBlock x:Name="TxtTitle" Text="Elevation Profile Transect" FontSize="16" FontWeight="Bold" Foreground="#38BDF8"/>
-                    <TextBlock x:Name="TxtSubtitle" Text="Sampling terrain elevations..." FontSize="12" Foreground="#94A3B8"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="📈" FontSize="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <StackPanel>
+                        <TextBlock x:Name="TxtTitle" Text="Elevation Profile Transect" FontSize="16" FontWeight="Bold" Foreground="#0F172A"/>
+                        <TextBlock x:Name="TxtSubtitle" Text="Sampling terrain elevations..." FontSize="12" Foreground="#64748B"/>
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="⇄ Invert Transect" Style="{StaticResource ToolbarBtn}" Margin="0,0,8,0" Click="BtnInvert_Click"/>
-                <Button Content="📊 Export CSV" Style="{StaticResource ToolbarBtn}" Margin="0,0,8,0" Click="BtnExportCsv_Click"/>
-                <Button Content="Close" Style="{StaticResource ToolbarBtn}" Background="#334155" Click="BtnClose_Click"/>
-            </StackPanel>
-        </Grid>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="⇄ Invert Transect" Style="{StaticResource ToolbarBtn}" Margin="0,0,8,0" Click="BtnInvert_Click"/>
+                    <Button Content="📊 Export CSV" Style="{StaticResource ToolbarBtn}" Margin="0,0,8,0" Click="BtnExportCsv_Click"/>
+                    <Button Content="Close" Style="{StaticResource ToolbarBtn}" Click="BtnClose_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
 
         <!-- Metric Stat Cards -->
-        <Grid Grid.Row="1" Margin="0,0,0,12">
+        <Grid Grid.Row="1" Margin="0,0,0,14">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
@@ -84,59 +90,59 @@
 
             <Border Grid.Column="0" Style="{StaticResource StatCard}">
                 <StackPanel>
-                    <TextBlock Text="TRANSECT LENGTH" FontSize="9" FontWeight="Bold" Foreground="#64748B"/>
-                    <TextBlock x:Name="TxtLength" Text="0.0 m" FontSize="14" FontWeight="Bold" Foreground="#38BDF8"/>
+                    <TextBlock Text="TRANSECT LENGTH" FontSize="9.5" FontWeight="Bold" Foreground="#64748B"/>
+                    <TextBlock x:Name="TxtLength" Text="0.0 m" FontSize="15" FontWeight="Bold" Foreground="#0284C7" Margin="0,3,0,0"/>
                 </StackPanel>
             </Border>
 
             <Border Grid.Column="1" Style="{StaticResource StatCard}">
                 <StackPanel>
-                    <TextBlock Text="MIN ELEVATION" FontSize="9" FontWeight="Bold" Foreground="#64748B"/>
-                    <TextBlock x:Name="TxtMinElev" Text="0.0 m" FontSize="14" FontWeight="Bold" Foreground="#10B981"/>
+                    <TextBlock Text="MIN ELEVATION" FontSize="9.5" FontWeight="Bold" Foreground="#64748B"/>
+                    <TextBlock x:Name="TxtMinElev" Text="0.0 m" FontSize="15" FontWeight="Bold" Foreground="#10B981" Margin="0,3,0,0"/>
                 </StackPanel>
             </Border>
 
             <Border Grid.Column="2" Style="{StaticResource StatCard}">
                 <StackPanel>
-                    <TextBlock Text="MAX ELEVATION" FontSize="9" FontWeight="Bold" Foreground="#64748B"/>
-                    <TextBlock x:Name="TxtMaxElev" Text="0.0 m" FontSize="14" FontWeight="Bold" Foreground="#F59E0B"/>
+                    <TextBlock Text="MAX ELEVATION" FontSize="9.5" FontWeight="Bold" Foreground="#64748B"/>
+                    <TextBlock x:Name="TxtMaxElev" Text="0.0 m" FontSize="15" FontWeight="Bold" Foreground="#D97706" Margin="0,3,0,0"/>
                 </StackPanel>
             </Border>
 
             <Border Grid.Column="3" Style="{StaticResource StatCard}">
                 <StackPanel>
-                    <TextBlock Text="RELIEF (ΔZ)" FontSize="9" FontWeight="Bold" Foreground="#64748B"/>
-                    <TextBlock x:Name="TxtRelief" Text="0.0 m" FontSize="14" FontWeight="Bold" Foreground="#A855F7"/>
+                    <TextBlock Text="RELIEF (ΔZ)" FontSize="9.5" FontWeight="Bold" Foreground="#64748B"/>
+                    <TextBlock x:Name="TxtRelief" Text="0.0 m" FontSize="15" FontWeight="Bold" Foreground="#8B5CF6" Margin="0,3,0,0"/>
                 </StackPanel>
             </Border>
 
             <Border Grid.Column="4" Style="{StaticResource StatCard}">
                 <StackPanel>
-                    <TextBlock Text="ELEV GAIN / LOSS" FontSize="9" FontWeight="Bold" Foreground="#64748B"/>
-                    <TextBlock x:Name="TxtGainLoss" Text="+0.0m / -0.0m" FontSize="14" FontWeight="Bold" Foreground="#EC4899"/>
+                    <TextBlock Text="ELEV GAIN / LOSS" FontSize="9.5" FontWeight="Bold" Foreground="#64748B"/>
+                    <TextBlock x:Name="TxtGainLoss" Text="+0.0m / -0.0m" FontSize="15" FontWeight="Bold" Foreground="#EC4899" Margin="0,3,0,0"/>
                 </StackPanel>
             </Border>
 
             <Border Grid.Column="5" Style="{StaticResource StatCard}">
                 <StackPanel>
-                    <TextBlock Text="AVG / MAX SLOPE" FontSize="9" FontWeight="Bold" Foreground="#64748B"/>
-                    <TextBlock x:Name="TxtSlope" Text="0.0° / 0.0°" FontSize="14" FontWeight="Bold" Foreground="#E2E8F0"/>
+                    <TextBlock Text="AVG / MAX SLOPE" FontSize="9.5" FontWeight="Bold" Foreground="#64748B"/>
+                    <TextBlock x:Name="TxtSlope" Text="0.0° / 0.0°" FontSize="15" FontWeight="Bold" Foreground="#0F172A" Margin="0,3,0,0"/>
                 </StackPanel>
             </Border>
         </Grid>
 
         <!-- Profile Plot Canvas Border -->
-        <Border Grid.Row="2" Background="#020617" BorderBrush="#334155" BorderThickness="1" CornerRadius="6" ClipToBounds="True">
+        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
             <Grid x:Name="PlotContainer" SizeChanged="PlotContainer_SizeChanged" MouseMove="PlotContainer_MouseMove" MouseLeave="PlotContainer_MouseLeave">
                 <Canvas x:Name="PlotCanvas"/>
                 <!-- Hover Info Tooltip Popup -->
-                <Border x:Name="HoverCard" Background="#1E293B" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="4" Padding="8,4" HorizontalAlignment="Left" VerticalAlignment="Top" Visibility="Collapsed" IsHitTestVisible="False">
+                <Border x:Name="HoverCard" Background="#0F172A" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="10,6" HorizontalAlignment="Left" VerticalAlignment="Top" Visibility="Collapsed" IsHitTestVisible="False">
                     <TextBlock x:Name="TxtHover" Text="" FontSize="11" Foreground="#F8FAFC" FontFamily="Consolas"/>
                 </Border>
             </Grid>
         </Border>
 
         <!-- Footer Coordinates / Info -->
-        <TextBlock Grid.Row="3" Margin="0,8,0,0" Text="Hover over the profile transect curve to inspect point-by-point station distance, elevation, and terrain gradient." FontSize="11" Foreground="#64748B" HorizontalAlignment="Center"/>
+        <TextBlock Grid.Row="3" Margin="0,10,0,0" Text="Hover over the profile transect curve to inspect point-by-point station distance, elevation, and terrain gradient." FontSize="11.5" Foreground="#64748B" HorizontalAlignment="Center"/>
     </Grid>
 </Window>

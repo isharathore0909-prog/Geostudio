@@ -1,0 +1,116 @@
+<UserControl x:Class="GeoStudio.UI.Views.Ribbon.HomeRibbonView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <!-- 1. HOME TAB (CORE MAP NAVIGATION, SELECTION & INSPECTION) -->
+        <StackPanel x:Name="PanelRibbonHome" Orientation="Horizontal" Visibility="Visible">
+            <!-- GROUP: NAVIGATE -->
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtnActive}" Content="Pan" Tag="/Resources/Icons/pan.png" ToolTip="Pan Tool (P)" Click="BtnPan_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Bookmarks ▾" Tag="/Resources/Icons/map_layout.png" ToolTip="Bookmarks / Spatial Views" Click="BtnZoomFull_Click"/>
+
+                    <!-- Column 1: Full Extent, Zoom In, Zoom Out -->
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Full Extent" Tag="/Resources/Icons/zoom_full.png" ToolTip="Zoom to Full Extent (Ctrl+Shift+F)" Click="BtnZoomFull_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom In" Tag="/Resources/Icons/zoom_in.png" ToolTip="Zoom In (+)" Click="BtnZoomIn_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom Out" Tag="/Resources/Icons/zoom_out.png" ToolTip="Zoom Out (-)" Click="BtnZoomOut_Click"/>
+                    </StackPanel>
+
+                    <!-- Column 2: Previous, Next, Go To XY -->
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="2,0,1,0">
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Previous" Tag="/Resources/Icons/undo.png" ToolTip="Previous Extent" Click="BtnUndo_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Next" Tag="/Resources/Icons/redo.png" ToolTip="Next Extent" Click="BtnRedo_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Go To XY" Tag="/Resources/Icons/coord_capture.png" ToolTip="Coordinate Capture / Go to XY" Click="BtnIdentify_Click"/>
+                    </StackPanel>
+
+                    <!-- Column 3: Identify, Find Place -->
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="2,0,1,0">
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Identify ▾" Tag="/Resources/Icons/identify.png" ToolTip="Identify Features (I / F6)" Click="BtnIdentify_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Find Place" Tag="/Resources/Icons/zoom.png" ToolTip="Find / Search Location" Click="BtnZoomFull_Click"/>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Text="Navigate" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+
+            <!-- DIVIDER -->
+            <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+            <!-- GROUP: SELECTION -->
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Select" Tag="/Resources/Icons/select.png" ToolTip="Select Feature" Click="BtnSelectPointer_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Select By&#x0a;Attributes" Tag="/Resources/Icons/identify.png" ToolTip="Select by Attributes" Click="BtnIdentify_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Select By&#x0a;Location" Tag="/Resources/Icons/select_poly.png" ToolTip="Select by Polygon / Location" Click="BtnSelectPolygon_Click"/>
+
+                    <!-- Stacked Column: Clear, Zoom To, Attributes -->
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Clear" Tag="/Resources/Icons/clear_selection.png" ToolTip="Clear Selection" Click="BtnClearSelection_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom To" Tag="/Resources/Icons/zoom.png" ToolTip="Zoom to Selected" Click="BtnZoomFull_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Attributes" Tag="/Resources/Icons/identify.png" ToolTip="Attribute Table (F6)" Click="BtnIdentify_Click"/>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Text="Selection" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+
+            <!-- DIVIDER -->
+            <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+            <!-- GROUP: INSPECT -->
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Measure ▾" Tag="/Resources/Icons/measure.png" ToolTip="Measure Distance &amp; Area" Click="BtnMeasureDistance_Click"/>
+
+                    <!-- Stacked Column: Locate, Zoom Box -->
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Locate" Tag="/Resources/Icons/coord_capture.png" ToolTip="Capture Coordinates" Click="BtnIdentify_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom Box" Tag="/Resources/Icons/zoom_in.png" ToolTip="Select Box Zoom" Click="BtnSelectBox_Click"/>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Text="Inspect" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+
+            <!-- DIVIDER -->
+            <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+            <!-- GROUP: PANELS -->
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Browser" Tag="/Resources/Icons/browser_panel.png" ToolTip="Open File Browser Panel" Click="BtnFileBrowser_Click"/>
+                </StackPanel>
+                <TextBlock Text="Panels" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- 2. PROJECT TAB PANEL (PROJECT & EXPORT MANAGEMENT) -->
+        <StackPanel x:Name="PanelRibbonFile" Orientation="Horizontal" Visibility="Collapsed">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="New" Tag="/Resources/Icons/new_project.png" ToolTip="New Project (Ctrl+N)" Click="MenuNewProject_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Open" Tag="/Resources/Icons/open_project.png" ToolTip="Open Project (Ctrl+O)" Click="MenuOpenProject_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Save" Tag="/Resources/Icons/save_project.png" ToolTip="Save Project (Ctrl+S)" Click="MenuSaveProject_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Save As" Tag="/Resources/Icons/save_project_as.png" ToolTip="Save Project As (Ctrl+Shift+S)" Click="MenuSaveProject_Click"/>
+                </StackPanel>
+                <TextBlock Text="Project" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+
+            <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Print Layout" Tag="/Resources/Icons/print_map.png" ToolTip="Print / Export Map Layout (Ctrl+P)" Click="BtnPrint_Click"/>
+                </StackPanel>
+                <TextBlock Text="Print &amp; Export" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+
+            <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Exit" Tag="/Resources/Icons/delete.png" ToolTip="Exit GeoStudio (Ctrl+Q)" Click="MenuExit_Click"/>
+                </StackPanel>
+                <TextBlock Text="System" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

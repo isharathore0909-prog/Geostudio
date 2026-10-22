@@ -87,7 +87,7 @@ namespace GeoStudio
             }
         }
 
-        private void ComboShader_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        internal void ComboShader_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isInitialized || TxtStatus == null || ComboShader.SelectedItem == null) return;
             string text = (ComboShader.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
@@ -107,7 +107,7 @@ namespace GeoStudio
             ApplyActiveShader(mode);
         }
 
-        private void ComboAtlas_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        internal void ComboAtlas_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isInitialized || TxtStatus == null || ComboAtlas.SelectedItem == null) return;
             string text = (ComboAtlas.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
@@ -121,31 +121,31 @@ namespace GeoStudio
             ApplyActiveShader("atlas", palette);
         }
 
-        private void MenuElevation_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuElevation_Click(object sender, RoutedEventArgs e) =>
             ApplyActiveShader("atlas", "GLOBAL_MAPPER_ATLAS");
 
-        private void MenuHillshade_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuHillshade_Click(object sender, RoutedEventArgs e) =>
             ApplyActiveShader("hillshade");
 
-        private void MenuSlope_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuSlope_Click(object sender, RoutedEventArgs e) =>
             ApplyActiveShader("slope");
 
-        private void MenuAspect_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuAspect_Click(object sender, RoutedEventArgs e) =>
             ApplyActiveShader("aspect");
 
-        private void MenuTri_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuTri_Click(object sender, RoutedEventArgs e) =>
             ApplyActiveShader("tri");
 
-        private void MenuTpi_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuTpi_Click(object sender, RoutedEventArgs e) =>
             ApplyActiveShader("tpi");
 
-        private void MenuTwi_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuTwi_Click(object sender, RoutedEventArgs e) =>
             ApplyActiveShader("twi");
 
-        private void MenuCurvature_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuCurvature_Click(object sender, RoutedEventArgs e) =>
             ApplyActiveShader("curvature");
 
-        private void MenuProfile_Click(object sender, RoutedEventArgs e)
+        internal void MenuProfile_Click(object sender, RoutedEventArgs e)
         {
             var activeRaster = Layers.LastOrDefault(l => l.Type == LayerType.Raster);
             if (activeRaster == null || string.IsNullOrEmpty(activeRaster.FilePath) || !File.Exists(activeRaster.FilePath))
@@ -159,7 +159,7 @@ namespace GeoStudio
             TxtStatus.Text = $"Elevation Profile tool active: Click two points across {activeRaster.Name} on map canvas to extract cross-section transect.";
         }
 
-        private void MenuContour_Click(object sender, RoutedEventArgs e)
+        internal void MenuContour_Click(object sender, RoutedEventArgs e)
         {
             var rasterLayers = Layers.Where(l => l.Type == LayerType.Raster && !string.IsNullOrEmpty(l.FilePath) && File.Exists(l.FilePath)).ToList();
             if (rasterLayers.Count == 0)
@@ -180,7 +180,7 @@ namespace GeoStudio
             win.ShowDialog();
         }
 
-        private void MenuCutFill_Click(object sender, RoutedEventArgs e)
+        internal void MenuCutFill_Click(object sender, RoutedEventArgs e)
         {
             var rasterLayers = Layers.Where(l => l.Type == LayerType.Raster).ToList();
             if (rasterLayers.Count == 0)
@@ -194,10 +194,10 @@ namespace GeoStudio
             win.ShowDialog();
         }
 
-        private void MenuWatershed_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuWatershed_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Watershed Drainage Basin Analysis: Computes flow direction, flow accumulation, and hydrologic pour points.", "Watershed Analysis", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void Btn3dMesh_Click(object sender, RoutedEventArgs e)
+        internal void Btn3dMesh_Click(object sender, RoutedEventArgs e)
         {
             TxtStatus.Text = "Launching interactive 3D Point Cloud / Terrain Workstation...";
             string? targetFile = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud)?.FilePath ?? _activeRasterFilePath;

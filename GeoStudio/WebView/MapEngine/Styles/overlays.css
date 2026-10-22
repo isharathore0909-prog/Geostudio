@@ -1,0 +1,66 @@
+/* Tooltip, Graticule & Control Overlays */
+.ol-tooltip {
+  position: relative;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 4px;
+  color: white;
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.ol-tooltip-static {
+  background-color: #2563eb;
+  color: white;
+  border: 1px solid #1d4ed8;
+  font-weight: bold;
+}
+
+.ol-control button {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  font-weight: bold;
+}
+
+.ol-control button:hover {
+  background-color: #e2e8f0 !important;
+}
+
+.ol-scale-line {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 4px !important;
+  color: #0f172a !important;
+  font-weight: bold;
+  bottom: 12px;
+  left: 12px;
+}
+
+.ol-scale-line-inner {
+  border-color: #0f172a !important;
+  color: #0f172a !important;
+}
+
+/* Offline Cartographic Graticule Background */
+#offlineBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-color: #ffffff;
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(to right, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+}

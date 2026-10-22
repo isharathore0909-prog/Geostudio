@@ -80,7 +80,7 @@ namespace GeoStudio
             catch { }
         }
 
-        private void BtnToggleTelemetry_Click(object sender, RoutedEventArgs e)
+        internal void BtnToggleTelemetry_Click(object sender, RoutedEventArgs e)
         {
             _isTelemetryExpanded = !_isTelemetryExpanded;
             if (TelemetryContentPanel != null)

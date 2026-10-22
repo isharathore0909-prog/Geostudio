@@ -8,6 +8,9 @@ Communicates progress and JSON results back to .NET host.
 import os
 import sys
 import json
+import time
+import shutil
+import subprocess
 import argparse
 import tempfile
 import traceback
@@ -140,11 +143,19 @@ def run_pdal_smrf_classification(in_file: str, out_file: str):
     })
 
     stages.append({
+        "type": "filters.covariancefeatures",
+        "knn": 16,
+        "threads": 8,
+        "feature_set": ["Planarity", "Scattering"]
+    })
+
+    stages.append({
         "type": "filters.assign",
         "value": [
-            "Classification = 3 WHERE HeightAboveGround >= 0.35 && HeightAboveGround < 1.8 && Classification != 2",
-            "Classification = 4 WHERE HeightAboveGround >= 1.8 && HeightAboveGround < 4.5 && Classification != 2",
-            "Classification = 5 WHERE HeightAboveGround >= 4.5 && Classification != 2"
+            "Classification = 3 WHERE HeightAboveGround >= 0.3 && HeightAboveGround < 1.5 && Classification != 2",
+            "Classification = 4 WHERE HeightAboveGround >= 1.5 && HeightAboveGround < 3.5 && Planarity < 0.65 && Classification != 2",
+            "Classification = 5 WHERE HeightAboveGround >= 3.5 && Planarity < 0.65 && Classification != 2",
+            "Classification = 6 WHERE HeightAboveGround >= 1.8 && Planarity >= 0.65 && Classification != 2"
         ]
     })
 
@@ -155,18 +166,20 @@ def run_pdal_smrf_classification(in_file: str, out_file: str):
         })
 
     is_out_copc = out_file.lower().endswith(".copc.laz") or out_file.lower().endswith(".laz")
-    stages.append({
+    w_stage = {
         "type": "writers.copc" if is_out_copc else "writers.las",
         "filename": out_file,
-        "forward": "all",
-        "threads": 8
-    })
+        "forward": "all"
+    }
+    if is_out_copc:
+        w_stage["threads"] = 8
+    stages.append(w_stage)
 
     pipe_path = os.path.join(tempfile.gettempdir(), f"pdal_classify_{int(time.time())}.json")
     with open(pipe_path, "w", encoding="utf-8") as f:
         json.dump(stages, f, indent=2)
 
-    proc = subprocess.Popen([pdal_exe, 'pipeline', pipe_path], env=env, startupinfo=startupinfo, creationflags=cflags)
+    proc = subprocess.Popen([pdal_exe, 'pipeline', pipe_path], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo, creationflags=cflags)
     start_t = time.time()
     while proc.poll() is None:
         time.sleep(0.4)
@@ -181,10 +194,12 @@ def run_pdal_smrf_classification(in_file: str, out_file: str):
             msg = f"Writing classified point cloud ({dyn_pct}%)..."
         report_progress(dyn_pct, msg)
 
-    rc = proc.poll()
+    stdout_b, stderr_b = proc.communicate()
+    rc = proc.returncode
     if rc == 0 and os.path.exists(out_file) and os.path.getsize(out_file) > 1024:
         return out_file
-    raise RuntimeError(f"PDAL pipeline exited with code {rc}")
+    err_str = (stderr_b or b"").decode("utf-8", errors="ignore").strip()
+    raise RuntimeError(f"PDAL pipeline failed (code {rc}): {err_str[:250]}")
 
 
 def task_classify_ground(args):

@@ -26,7 +26,7 @@ namespace GeoStudio
             return null;
         }
 
-        private void LayerCheckBox_Checked(object sender, RoutedEventArgs e)
+        internal void LayerCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             if (sender is CheckBox cb && cb.Tag is string layerId)
             {
@@ -35,7 +35,7 @@ namespace GeoStudio
             }
         }
 
-        private void LayerCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        internal void LayerCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
             if (sender is CheckBox cb && cb.Tag is string layerId)
             {
@@ -44,7 +44,7 @@ namespace GeoStudio
             }
         }
 
-        private void LayerOpacity_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        internal void LayerOpacity_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (sender is Slider slider && slider.Tag is string layerId)
             {
@@ -53,7 +53,7 @@ namespace GeoStudio
             }
         }
 
-        private void BtnRemoveLayer_Click(object sender, RoutedEventArgs e)
+        internal void BtnRemoveLayer_Click(object sender, RoutedEventArgs e)
         {
             string? layerId = (sender as FrameworkElement)?.Tag as string;
             if (string.IsNullOrEmpty(layerId)) return;
@@ -89,7 +89,7 @@ namespace GeoStudio
             }
         }
 
-        private void TxtSearchLayers_TextChanged(object sender, TextChangedEventArgs e)
+        internal void TxtSearchLayers_TextChanged(object sender, TextChangedEventArgs e)
         {
             string query = TxtSearchLayers.Text.Trim().ToLowerInvariant();
             if (string.IsNullOrEmpty(query))
@@ -109,7 +109,7 @@ namespace GeoStudio
             LayersListControl.ItemsSource = filtered;
         }
 
-        private void BtnZoomToLayer_Click(object sender, RoutedEventArgs e)
+        internal void BtnZoomToLayer_Click(object sender, RoutedEventArgs e)
         {
             string? layerId = (sender as FrameworkElement)?.Tag as string;
             if (!string.IsNullOrEmpty(layerId))

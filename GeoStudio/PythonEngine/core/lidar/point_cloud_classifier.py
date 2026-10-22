@@ -184,12 +184,14 @@ def classify_point_cloud(input_path: str, output_path: Optional[str] = None, pro
         })
 
     is_out_copc = output_path.lower().endswith(".copc.laz") or output_path.lower().endswith(".laz")
-    stages.append({
+    w_stage = {
         "type": "writers.copc" if is_out_copc else "writers.las",
         "filename": output_path,
-        "forward": "all",
-        "threads": 8
-    })
+        "forward": "all"
+    }
+    if is_out_copc:
+        w_stage["threads"] = 8
+    stages.append(w_stage)
 
     pipe_path = os.path.join(tempfile.gettempdir(), f"pdal_classify_{int(time.time())}.json")
     with open(pipe_path, "w", encoding="utf-8") as f:

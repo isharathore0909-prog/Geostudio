@@ -84,13 +84,14 @@ function initTelemetryHandlers() {
       rasterDebounceTimer = setTimeout(requestHighResRasterWindow, 60);
     }
 
-    if (isPointCloudVisible && ((pointCloudBatch && pointCloudBatch.count > 0) || (pointCloudData && pointCloudData.length > 0))) {
+    const requiresExtAttrs = (lidarColorMode === 'scan_angle' || lidarColorMode === 'return_num' || lidarColorMode === 'return_delta' || lidarColorMode === 'point_source_id' || lidarColorMode === 'withheld' || lidarColorMode === 'keypoint' || lidarColorMode === 'overlap');
+    if (isPointCloudVisible && !requiresExtAttrs && (mapView.getZoom() >= 16.5) && ((pointCloudBatch && pointCloudBatch.count > 0) || (pointCloudData && pointCloudData.length > 0))) {
       clearTimeout(pointCloudDebounceTimer);
       pointCloudDebounceTimer = setTimeout(() => {
         const mapSize = map.getSize() || [window.innerWidth, window.innerHeight];
         const extent3857 = mapView.calculateExtent(mapSize);
         postToHost({ action: 'queryPointCloudViewport', bounds: extent3857 });
-      }, 80);
+      }, 120);
     }
   });
 

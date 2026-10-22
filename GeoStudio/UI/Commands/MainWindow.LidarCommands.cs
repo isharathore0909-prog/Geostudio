@@ -11,7 +11,7 @@ namespace GeoStudio
     public partial class MainWindow
     {
         #region LiDAR Point Cloud Controls & Classifiers
-        private void ComboLidarColorBy_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        internal void ComboLidarColorBy_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isInitialized || TxtStatus == null || ComboLidarColorBy == null) return;
             if (ComboLidarColorBy.SelectedItem is ComboBoxItem item)
@@ -60,7 +60,7 @@ namespace GeoStudio
             }
         }
 
-        private void BtnLidarClassifyGround_Click(object sender, RoutedEventArgs e)
+        internal void BtnLidarClassifyGround_Click(object sender, RoutedEventArgs e)
         {
             string? lasFile = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud)?.FilePath;
             if (string.IsNullOrEmpty(lasFile) || !File.Exists(lasFile))
@@ -77,7 +77,7 @@ namespace GeoStudio
                 var newCls = PointCloudClassifier.ClassifySMRF(_activePointCloudBatch.x, _activePointCloudBatch.y, _activePointCloudBatch.z, _activePointCloudBatch.c);
                 _activePointCloudBatch.c = newCls;
                 PostMessageToMap(new { action = "updateClassification", classes = newCls, colorBy = "classification" });
-                TxtStatus.Text = "Ground & canopy auto-classified to ASPRS Standards (Class 2 Ground, Class 3/4/5 Veg)";
+                TxtStatus.Text = "Ground & canopy auto-classified to ASPRS Standards (Class 2 Ground, Class 3/4/5 Veg, Class 6 Buildings)";
                 if (ComboLidarColorBy != null)
                 {
                     for (int i = 0; i < ComboLidarColorBy.Items.Count; i++)
@@ -91,21 +91,55 @@ namespace GeoStudio
                 }
             }
 
-            // 2. Background task to generate persistent classified file on disk
+            // 2. Background task to generate persistent classified file on disk & reload
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await PythonPipelineService.ExecuteTaskAsync("classify_ground", lasFile, onProgress: (pct, msg) =>
+                    var res = await PythonPipelineService.ExecuteTaskAsync("classify_ground", lasFile, onProgress: (pct, msg) =>
                     {
                         Dispatcher.Invoke(() => TxtStatus.Text = $"Classifying Ground: {pct}% {msg}");
                     });
+                    if (res.Success && !string.IsNullOrEmpty(res.OutputFilePath) && File.Exists(res.OutputFilePath))
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            TxtStatus.Text = "Ground & canopy classified to ASPRS Standards (PDAL pipeline complete)";
+                            var ptLayer = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud);
+                            if (ptLayer != null)
+                            {
+                                ptLayer.FilePath = res.OutputFilePath;
+                                ptLayer.Name = Path.GetFileName(res.OutputFilePath);
+                            }
+                        });
+
+                        var header = LasPointCloudService.InspectLasHeader(res.OutputFilePath);
+                        var crs = new LasCrsInfo(header.CrsWkt, header.EpsgCode, header.IsProjected);
+                        var sampleResult = LasSampleReader.Read(res.OutputFilePath, crs, targetPoints: 800_000);
+                        if (sampleResult.Batch?.c != null)
+                        {
+                            _activePointCloudBatch = sampleResult.Batch;
+                            Dispatcher.Invoke(() =>
+                            {
+                                PostMessageToMap(new { action = "updateClassification", classes = sampleResult.Batch.c, colorBy = "classification" });
+                            });
+                        }
+
+                        _ = Task.Run(() =>
+                        {
+                            try { DuckDbPointCloudService.IngestLasFile(res.OutputFilePath, null, maxPointsToIngest: 1_000_000); } catch { }
+                        });
+                    }
+                    else if (!string.IsNullOrEmpty(res.ErrorMessage))
+                    {
+                        Dispatcher.Invoke(() => TxtStatus.Text = $"LiDAR Classifier: In-memory complete ({res.ErrorMessage})");
+                    }
                 }
                 catch { }
             });
         }
 
-        private void BtnLidarClassifyBuildings_Click(object sender, RoutedEventArgs e)
+        internal void BtnLidarClassifyBuildings_Click(object sender, RoutedEventArgs e)
         {
             string? lasFile = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud)?.FilePath;
             if (string.IsNullOrEmpty(lasFile) || !File.Exists(lasFile))
@@ -149,7 +183,7 @@ namespace GeoStudio
             });
         }
 
-        private void BtnLidarClassifyVeg_Click(object sender, RoutedEventArgs e)
+        internal void BtnLidarClassifyVeg_Click(object sender, RoutedEventArgs e)
         {
             string? lasFile = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud)?.FilePath;
             if (string.IsNullOrEmpty(lasFile) || !File.Exists(lasFile))
@@ -193,7 +227,7 @@ namespace GeoStudio
             });
         }
 
-        private async void BtnLidarThin_Click(object sender, RoutedEventArgs e)
+        internal async void BtnLidarThin_Click(object sender, RoutedEventArgs e)
         {
             string? lasFile = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud)?.FilePath;
             if (string.IsNullOrEmpty(lasFile) || !File.Exists(lasFile))
@@ -214,37 +248,37 @@ namespace GeoStudio
             }
         }
 
-        private void MenuLidarDtm_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuLidarDtm_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Bare-Earth DTM: Interpolates ground-classified points into a high-resolution Digital Terrain Model.", "Bare-Earth DTM", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void MenuLidarChm_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuLidarChm_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Canopy Height Model: Computes DSM minus DTM normalized tree canopy heights.", "Canopy Height Model", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void MenuLidarElevation_Click(object sender, RoutedEventArgs e)
+        internal void MenuLidarElevation_Click(object sender, RoutedEventArgs e)
         {
             PostMessageToMap(new { action = "setLidarColorBy", colorBy = "elevation" });
             TxtStatus.Text = "LiDAR Color Ramp: Elevation (Z)";
         }
 
-        private void MenuLidarIntensity_Click(object sender, RoutedEventArgs e)
+        internal void MenuLidarIntensity_Click(object sender, RoutedEventArgs e)
         {
             PostMessageToMap(new { action = "setLidarColorBy", colorBy = "intensity" });
             TxtStatus.Text = "LiDAR Color Ramp: Intensity";
         }
 
-        private void MenuLidarClassification_Click(object sender, RoutedEventArgs e)
+        internal void MenuLidarClassification_Click(object sender, RoutedEventArgs e)
         {
             PostMessageToMap(new { action = "setLidarColorBy", colorBy = "classification" });
             TxtStatus.Text = "LiDAR Color Ramp: ASPRS Classification (Ground, Veg, Buildings)";
         }
 
-        private void BtnLidarFilter_Click(object sender, RoutedEventArgs e) =>
+        internal void BtnLidarFilter_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Point Cloud Classification Filter: Display Ground (Class 2), High Vegetation (Class 5), Buildings (Class 6).", "LiDAR Classification", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void BtnLidarReturns_Click(object sender, RoutedEventArgs e) => TxtStatus.Text = "Displaying First & Last LiDAR Return pulses";
-        private void BtnLidarHeight_Click(object sender, RoutedEventArgs e) => TxtStatus.Text = "Normalized Height Above Ground (HAG) computed";
+        internal void BtnLidarReturns_Click(object sender, RoutedEventArgs e) => TxtStatus.Text = "Displaying First & Last LiDAR Return pulses";
+        internal void BtnLidarHeight_Click(object sender, RoutedEventArgs e) => TxtStatus.Text = "Normalized Height Above Ground (HAG) computed";
         
-        private void BtnLidarRgb_Click(object sender, RoutedEventArgs e)
+        internal void BtnLidarRgb_Click(object sender, RoutedEventArgs e)
         {
             PostMessageToMap(new { action = "setLidarColorBy", colorBy = "rgb" });
             TxtStatus.Text = "LiDAR True Color RGB Photogrammetry mode";

@@ -1,0 +1,56 @@
+<UserControl x:Class="GeoStudio.UI.Views.Ribbon.AnalysisRibbonView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <!-- 6. ANALYZE TAB PANEL (TERRAIN & HYDROLOGY) -->
+        <StackPanel x:Name="PanelRibbonAnalyze" Orientation="Horizontal" Visibility="Collapsed">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Elevation" Tag="/Resources/Icons/elevation.png" ToolTip="Digital Elevation Model" Click="MenuElevation_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Hillshade" Tag="/Resources/Icons/hillshade.png" ToolTip="Multi-directional Hillshade" Click="MenuHillshade_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Slope" Tag="/Resources/Icons/slope.png" ToolTip="Slope Analysis (Degrees)" Click="MenuSlope_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Aspect" Tag="/Resources/Icons/aspect.png" ToolTip="Aspect Analysis (Compass Heading)" Click="MenuAspect_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Profile" Tag="/Resources/Icons/profile.png" ToolTip="Interactive Elevation Profile Transect" Click="MenuProfile_Click"/>
+                </StackPanel>
+                <TextBlock Text="Surface Analysis" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+
+            <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Contours" Tag="/Resources/Icons/elevation.png" ToolTip="Generate Vector Contours" Click="MenuContour_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Cut / Fill" Tag="/Resources/Icons/cut_fill.png" ToolTip="Cut &amp; Fill Volumetrics" Click="MenuCutFill_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Watershed" Tag="/Resources/Icons/watershed.png" ToolTip="Hydrological Watershed Delineation" Click="MenuWatershed_Click"/>
+                </StackPanel>
+                <TextBlock Text="Terrain Operations" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Alias for PanelRibbonTerrain to maintain compatibility -->
+        <StackPanel x:Name="PanelRibbonTerrain" Orientation="Horizontal" Visibility="Collapsed"/>
+
+        <!-- 7. VIEW TAB PANEL -->
+        <StackPanel x:Name="PanelRibbonView" Orientation="Horizontal" Visibility="Collapsed">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Full&#x0a;Extent" Tag="/Resources/Icons/zoom_full.png" ToolTip="Zoom to Full Extent" Click="BtnZoomFull_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Refresh" Tag="/Resources/Icons/refresh.png" ToolTip="Refresh Canvas Display" Click="BtnRefresh_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Swipe&#x0a;Compare" Tag="/Resources/Icons/swipe.png" ToolTip="Interactive Swipe &amp; Compare Surfaces" Click="BtnSplit_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Overview&#x0a;Inset" Tag="/Resources/Icons/map_layout.png" ToolTip="Toggle Overview Inset Map" Click="BtnOverview_Click"/>
+                </StackPanel>
+                <TextBlock Text="Map Views" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- 13. 3D TAB PANEL -->
+        <StackPanel x:Name="PanelRibbon3D" Orientation="Horizontal" Visibility="Collapsed">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="3D View" Tag="/Resources/Icons/view_3d.png" ToolTip="Launch 3D Workstation" Click="Btn3dMesh_Click"/>
+                </StackPanel>
+                <TextBlock Text="3D Display" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

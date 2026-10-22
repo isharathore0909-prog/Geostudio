@@ -13,7 +13,7 @@ namespace GeoStudio
     public partial class MainWindow
     {
         #region Project File Operations
-        private void MenuNewProject_Click(object sender, RoutedEventArgs e)
+        internal void MenuNewProject_Click(object sender, RoutedEventArgs e)
         {
             Layers.Clear();
             _activeRasterLayerId = null;
@@ -28,7 +28,7 @@ namespace GeoStudio
             TxtStatus.Text = "New GeoStudio Project Created";
         }
 
-        private void MenuOpenProject_Click(object sender, RoutedEventArgs e)
+        internal void MenuOpenProject_Click(object sender, RoutedEventArgs e)
         {
             var dlg = new OpenFileDialog
             {
@@ -41,7 +41,7 @@ namespace GeoStudio
             }
         }
 
-        private void MenuSaveProject_Click(object sender, RoutedEventArgs e)
+        internal void MenuSaveProject_Click(object sender, RoutedEventArgs e)
         {
             var dlg = new SaveFileDialog
             {
@@ -55,7 +55,7 @@ namespace GeoStudio
             }
         }
 
-        private void MenuClearCache_Click(object sender, RoutedEventArgs e)
+        internal void MenuClearCache_Click(object sender, RoutedEventArgs e)
         {
             GdalRasterService.ClearCache();
             DuckDbPointCloudService.Clear();
@@ -64,16 +64,16 @@ namespace GeoStudio
             MessageBox.Show("All disk tile caches and in-memory spatial databases have been purged. The next file load will measure raw cold-start disk time.", "Cache Purged", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void BtnPrint_Click(object sender, RoutedEventArgs e) =>
+        internal void BtnPrint_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Export Map Layout: Generating high-resolution 300 DPI print layout (PDF / PNG)...", "Print Layout", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void BtnUndo_Click(object sender, RoutedEventArgs e) => TxtStatus.Text = "Undo last action";
-        private void BtnRedo_Click(object sender, RoutedEventArgs e) => TxtStatus.Text = "Redo action";
-        private void MenuExit_Click(object sender, RoutedEventArgs e) => Close();
+        internal void BtnUndo_Click(object sender, RoutedEventArgs e) => TxtStatus.Text = "Undo last action";
+        internal void BtnRedo_Click(object sender, RoutedEventArgs e) => TxtStatus.Text = "Redo action";
+        internal void MenuExit_Click(object sender, RoutedEventArgs e) => Close();
         #endregion
 
         #region Satellite & Remote Sensing
-        private async void MenuNdvi_Click(object sender, RoutedEventArgs e)
+        internal async void MenuNdvi_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_activeRasterFilePath) || !File.Exists(_activeRasterFilePath))
             {
@@ -94,7 +94,7 @@ namespace GeoStudio
             }
         }
 
-        private async void MenuNdwi_Click(object sender, RoutedEventArgs e)
+        internal async void MenuNdwi_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_activeRasterFilePath) || !File.Exists(_activeRasterFilePath))
             {
@@ -114,27 +114,27 @@ namespace GeoStudio
             }
         }
 
-        private void MenuEvi_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuEvi_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Enhanced Vegetation Index (EVI): Computes atmospheric-corrected canopy greenness.", "EVI Index", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void MenuNdbi_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuNdbi_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Normalized Difference Built-up Index (NDBI): Highlights urban structures.", "NDBI Index", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void MenuNbr_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuNbr_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Normalized Burn Ratio (NBR): Identifies burned areas and wildfire severity.", "NBR Index", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void MenuFalseColor_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuFalseColor_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("False Color Composite: Composites NIR (Band 8/5), Red (Band 4), and Green (Band 3) for vegetation reflectance visualization.", "False Color Composite", MessageBoxButton.OK, MessageBoxImage.Information);
         #endregion
 
         #region Raster Operations & Diagnostics
-        private void MenuClipRaster_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuClipRaster_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Crop / Clip Raster by Mask: Subsets raster dataset using vector boundary polygon.", "Clip Raster", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void MenuRasterStats_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuRasterStats_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Raster Statistics: Min, Max, Mean, Standard Deviation, and 256-bin histogram.", "Raster Statistics", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void MenuRemoveLayer_Click(object sender, RoutedEventArgs e)
+        internal void MenuRemoveLayer_Click(object sender, RoutedEventArgs e)
         {
             if (Layers.Count > 0)
             {
@@ -146,7 +146,7 @@ namespace GeoStudio
             }
         }
 
-        private void MenuGpuStatus_Click(object sender, RoutedEventArgs e)
+        internal void MenuGpuStatus_Click(object sender, RoutedEventArgs e)
         {
             var p = Process.GetCurrentProcess();
             long memMb = p.WorkingSet64 / (1024 * 1024);
@@ -162,13 +162,13 @@ namespace GeoStudio
                 MessageBoxImage.Information);
         }
 
-        private void MenuPythonConsole_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuPythonConsole_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Python Pipeline Console: Standalone execution pipeline active with 102+ geospatial algorithms.", "Python Console", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void MenuProcessingToolbox_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuProcessingToolbox_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Processing Toolbox: 102 available algorithms (Terrain, LiDAR, Remote Sensing, Vector, Hydrology).", "Processing Toolbox", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void MenuPythonStatus_Click(object sender, RoutedEventArgs e)
+        internal void MenuPythonStatus_Click(object sender, RoutedEventArgs e)
         {
             string py = PythonPipelineService.ResolvePythonExecutable();
             string br = PythonPipelineService.ResolveBridgeScriptPath();
@@ -183,7 +183,7 @@ namespace GeoStudio
                 MessageBoxImage.Information);
         }
 
-        private void MenuDocs_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuDocs_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show(
                 "GeoStudio Standalone GIS Documentation:\n\n" +
                 "• 100GB+ BigTIFF Streaming: Drag & drop or use File > Load BigTIFF\n" +
@@ -195,7 +195,7 @@ namespace GeoStudio
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 
-        private void MenuAbout_Click(object sender, RoutedEventArgs e) =>
+        internal void MenuAbout_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show(
                 "GeoStudio v1.0.0 — Standalone GIS\n\n" +
                 "Engineered for high-throughput spatial analysis, 100GB+ BigTIFF raster streaming, ASPRS LiDAR point cloud visualization, and professional cartographic editing.\n\n" +

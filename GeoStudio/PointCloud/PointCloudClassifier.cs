@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace GeoStudio.PointCloud
 {
     /// <summary>
-    /// Ultra-fast native LiDAR point cloud classifier (ASPRS standards).
+    /// Professional LiDAR point cloud classifier conforming to ASPRS standards.
     /// Implements Progressive SMRF ground filtering, HAG segmentation, and building detection.
     /// Handles both metric-projected and geographic (WGS84 degrees) point clouds correctly.
     /// </summary>
@@ -73,17 +73,20 @@ namespace GeoStudio.PointCloud
             float[] groundGrid = new float[gw * gh];
             Array.Copy(minGrid, groundGrid, minGrid.Length);
 
+            int gridW = gw;
+            int gridH = gh;
+
             // Iterative dilation fill for empty grid cells (up to 4 passes for flight gaps)
             for (int iter = 0; iter < 4; iter++)
             {
                 bool anyEmpty = false;
                 float[] temp = (float[])groundGrid.Clone();
 
-                Parallel.For(0, gh, gy =>
+                Parallel.For(0, gridH, gy =>
                 {
-                    for (int gx = 0; gx < gw; gx++)
+                    for (int gx = 0; gx < gridW; gx++)
                     {
-                        int idx = gy * gw + gx;
+                        int idx = gy * gridW + gx;
                         if (temp[idx] != float.MaxValue) continue;
 
                         float sum = 0f;
@@ -91,12 +94,12 @@ namespace GeoStudio.PointCloud
                         for (int dy = -1; dy <= 1; dy++)
                         {
                             int ny = gy + dy;
-                            if (ny < 0 || ny >= gh) continue;
+                            if (ny < 0 || ny >= gridH) continue;
                             for (int dx = -1; dx <= 1; dx++)
                             {
                                 int nx = gx + dx;
-                                if (nx < 0 || nx >= gw) continue;
-                                float val = temp[ny * gw + nx];
+                                if (nx < 0 || nx >= gridW) continue;
+                                float val = temp[ny * gridW + nx];
                                 if (val != float.MaxValue)
                                 {
                                     sum += val;
@@ -128,48 +131,54 @@ namespace GeoStudio.PointCloud
             }
 
             // Pass 3: Morphological opening (SMRF) to eliminate roofs/canopy tops from the ground surface
-            float[] smoothedGround = new float[gw * gh];
-            Parallel.For(0, gh, gy =>
+            float[] smoothedGround = new float[gridW * gridH];
+            Parallel.For(0, gridH, gy =>
             {
-                for (int gx = 0; gx < gw; gx++)
+                for (int gx = 0; gx < gridW; gx++)
                 {
-                    float localMin = groundGrid[gy * gw + gx];
+                    float localMin = groundGrid[gy * gridW + gx];
                     for (int dy = -1; dy <= 1; dy++)
                     {
                         int ny = gy + dy;
-                        if (ny < 0 || ny >= gh) continue;
+                        if (ny < 0 || ny >= gridH) continue;
                         for (int dx = -1; dx <= 1; dx++)
                         {
                             int nx = gx + dx;
-                            if (nx < 0 || nx >= gw) continue;
-                            float val = groundGrid[ny * gw + nx];
+                            if (nx < 0 || nx >= gridW) continue;
+                            float val = groundGrid[ny * gridW + nx];
                             if (val < localMin) localMin = val;
                         }
                     }
-                    smoothedGround[gy * gw + gx] = localMin;
+                    smoothedGround[gy * gridW + gx] = localMin;
                 }
             });
 
             // Pass 4: Classify points by Height Above Ground (HAG) into ASPRS Standards
             Parallel.For(0, count, i =>
             {
+                if (existingCls != null && existingCls[i] == 2)
+                {
+                    cls[i] = 2; // Preserve verified ground points
+                    return;
+                }
+
                 double mx = (x[i] - minX) * toMeterX;
                 double my = (y[i] - minY) * toMeterY;
-                int gx = Math.Clamp((int)(mx / cellSize), 0, gw - 1);
-                int gy = Math.Clamp((int)(my / cellSize), 0, gh - 1);
-                float gElev = smoothedGround[gy * gw + gx];
+                int gx = Math.Clamp((int)(mx / cellSize), 0, gridW - 1);
+                int gy = Math.Clamp((int)(my / cellSize), 0, gridH - 1);
+                float gElev = smoothedGround[gy * gridW + gx];
                 float hag = z[i] - gElev;
 
-                // ASPRS Standard Classification
-                if (hag <= 0.35f)
+                // ASPRS Standard Classification matching PDAL SMRF & DUPLICACY
+                if (hag <= 0.75f)
                 {
                     cls[i] = 2; // ASPRS Class 2: Ground (Tan/Brown)
                 }
-                else if (hag <= 1.8f)
+                else if (hag < 1.8f)
                 {
                     cls[i] = 3; // ASPRS Class 3: Low Vegetation (Mint)
                 }
-                else if (hag <= 4.5f)
+                else if (hag < 3.5f)
                 {
                     cls[i] = 4; // ASPRS Class 4: Medium Vegetation (Green)
                 }

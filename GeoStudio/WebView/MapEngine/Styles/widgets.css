@@ -1,0 +1,221 @@
+/* Shader Scale & LiDAR Legend Widgets */
+.shader-scale-widget {
+  position: absolute;
+  bottom: 24px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 10px 14px;
+  min-width: 210px;
+  max-width: 250px;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.shader-scale-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.shader-scale-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.shader-scale-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.shader-scale-toggle {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  border-radius: 3px;
+  transition: transform 0.2s ease, background 0.15s ease;
+}
+
+.shader-scale-toggle:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.shader-scale-widget.collapsed .shader-scale-body {
+  display: none;
+}
+
+.shader-scale-widget.collapsed .shader-scale-toggle {
+  transform: rotate(-90deg);
+}
+
+.shader-scale-bar-container {
+  border-radius: 4px;
+  padding: 2px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 4px;
+}
+
+.shader-scale-bar {
+  height: 14px;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.shader-scale-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.shader-scale-subtext {
+  font-size: 9px;
+  color: #94a3b8;
+  text-align: center;
+  font-style: italic;
+}
+
+/* LiDAR Legend Widget */
+.lidar-legend-widget {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  padding: 8px 12px;
+  min-width: 260px;
+  max-width: 360px;
+  z-index: 999;
+  backdrop-filter: blur(8px);
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.lidar-legend-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+.lidar-legend-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.lidar-legend-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  flex: 1;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.lidar-legend-toggle {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  border-radius: 3px;
+  transition: transform 0.2s ease;
+}
+
+.lidar-legend-toggle:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.lidar-legend-widget.collapsed .lidar-legend-body {
+  display: none;
+}
+
+.lidar-legend-widget.collapsed .lidar-legend-toggle {
+  transform: rotate(-90deg);
+}
+
+/* Categorical Swatches Grid: 2 columns */
+.lidar-swatch-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 8px;
+  margin: 4px 0 6px 0;
+  font-size: 10px;
+}
+
+.lidar-swatch-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1e293b;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.lidar-swatch-box {
+  width: 12px;
+  height: 12px;
+  border-radius: 2.5px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Continuous Gradient Scale */
+.lidar-ramp-container {
+  margin: 6px 0 4px 0;
+}
+
+.lidar-ramp-bar {
+  height: 10px;
+  border-radius: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.lidar-ramp-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 600;
+  color: #334155;
+  margin-top: 3px;
+}
+
+.lidar-legend-subtext {
+  font-size: 9px;
+  color: #94a3b8;
+  text-align: right;
+  font-style: italic;
+  margin-top: 6px;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 4px;
+}

@@ -33,7 +33,7 @@ namespace GeoStudio
         }
 
         #region Tabbed Ribbon Navigation
-        private void RibbonTab_Checked(object sender, RoutedEventArgs e)
+        internal void RibbonTab_Checked(object sender, RoutedEventArgs e)
         {
             if (sender is FrameworkElement fe && fe.Tag is string tag)
             {
@@ -41,7 +41,7 @@ namespace GeoStudio
             }
         }
 
-        private void SwitchRibbonTab(string tabName)
+        internal void SwitchRibbonTab(string tabName)
         {
             if (PanelRibbonFile == null) return;
 
@@ -54,23 +54,23 @@ namespace GeoStudio
             if (PanelRibbonAnalyze != null)
                 PanelRibbonAnalyze.Visibility = (tabName == "Analyze" || tabName == "Terrain") ? Visibility.Visible : Visibility.Collapsed;
 
-            PanelRibbonFile.Visibility = (tabName == "File" || tabName == "Project") ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonEdit.Visibility = tabName == "Edit" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonView.Visibility = tabName == "View" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonLayer.Visibility = tabName == "Layer" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonSettings.Visibility = tabName == "Settings" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonPlugins.Visibility = tabName == "Plugins" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonVector.Visibility = tabName == "Vector" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonRaster.Visibility = tabName == "Raster" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonSatellite.Visibility = tabName == "Satellite" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonTerrain.Visibility = tabName == "Terrain" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonLidar.Visibility = tabName == "LiDAR" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonProcessing.Visibility = tabName == "Processing" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbon3D.Visibility = tabName == "3D" ? Visibility.Visible : Visibility.Collapsed;
-            PanelRibbonHelp.Visibility = tabName == "Help" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonFile != null) PanelRibbonFile.Visibility = (tabName == "File" || tabName == "Project") ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonEdit != null) PanelRibbonEdit.Visibility = tabName == "Edit" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonView != null) PanelRibbonView.Visibility = tabName == "View" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonLayer != null) PanelRibbonLayer.Visibility = tabName == "Layer" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonSettings != null) PanelRibbonSettings.Visibility = tabName == "Settings" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonPlugins != null) PanelRibbonPlugins.Visibility = tabName == "Plugins" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonVector != null) PanelRibbonVector.Visibility = tabName == "Vector" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonRaster != null) PanelRibbonRaster.Visibility = tabName == "Raster" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonSatellite != null) PanelRibbonSatellite.Visibility = tabName == "Satellite" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonTerrain != null) PanelRibbonTerrain.Visibility = tabName == "Terrain" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonLidar != null) PanelRibbonLidar.Visibility = tabName == "LiDAR" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonProcessing != null) PanelRibbonProcessing.Visibility = tabName == "Processing" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbon3D != null) PanelRibbon3D.Visibility = tabName == "3D" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonHelp != null) PanelRibbonHelp.Visibility = tabName == "Help" ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void BtnToggleRibbon_Click(object sender, RoutedEventArgs e)
+        internal void BtnToggleRibbon_Click(object sender, RoutedEventArgs e)
         {
             if (RibbonContentBorder != null)
             {
@@ -87,12 +87,12 @@ namespace GeoStudio
             }
         }
 
-        private void CommandSearch_GotFocus(object sender, RoutedEventArgs e)
+        internal void CommandSearch_GotFocus(object sender, RoutedEventArgs e)
         {
             if (SearchWatermark != null) SearchWatermark.Visibility = Visibility.Collapsed;
         }
 
-        private void CommandSearch_LostFocus(object sender, RoutedEventArgs e)
+        internal void CommandSearch_LostFocus(object sender, RoutedEventArgs e)
         {
             if (SearchWatermark != null && CommandSearchBox != null)
             {
