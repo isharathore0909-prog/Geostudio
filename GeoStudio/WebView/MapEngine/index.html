@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #ffffff;">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoStudio Map Engine</title>
+  <style>
+    html, body, #map, #offlineBackground { background-color: #ffffff !important; }
+  </style>
+  <!-- Local OpenLayers Styles and Scripts (100% Offline-Safe) -->
+  <link rel="stylesheet" href="ol.css">
+  <link rel="stylesheet" href="map.css">
+  <script src="ol.js"></script>
+</head>
+
+<body style="background-color: #ffffff;">
+  <div id="offlineBackground" style="background-color: #ffffff;"></div>
+  <div id="map" style="background-color: #ffffff;"></div>
+  <canvas id="pointCloudCanvas"></canvas>
+  <div id="swipeContainer">
+    <div id="swipeLine"></div>
+    <div id="swipeHandle">◀▶</div>
+  </div>
+  <div id="swipeBadge">
+    <button id="btnSwapSwipe" style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); color: #fff; border-radius: 4px; padding: 2px 7px; cursor: pointer; font-size: 11px; font-weight: 600; margin-right: 6px;">⇄ Swap</button>
+    <span id="swipeLabel">◀ Layer A | Layer B ▶</span>
+    <button id="btnExitSwipe" style="background: rgba(255,255,255,0.25); border: none; color: #fff; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 11px; font-weight: bold; line-height: 20px; text-align: center; margin-left: 8px;">✕</button>
+  </div>
+  <div id="shaderScaleWidget" class="shader-scale-widget" style="display: none;">
+    <div class="shader-scale-header" id="shaderScaleHeader" title="Click to collapse / expand scale">
+      <span class="shader-scale-icon" id="shaderScaleIcon">🏔️</span>
+      <span class="shader-scale-title" id="shaderScaleTitle">Elevation</span>
+      <button class="shader-scale-toggle" id="shaderScaleToggle" title="Collapse / expand">▾</button>
+    </div>
+    <div class="shader-scale-body" id="shaderScaleBody">
+      <div class="shader-scale-bar-container">
+        <div class="shader-scale-bar" id="shaderScaleBar"></div>
+      </div>
+      <div class="shader-scale-ticks">
+        <span class="scale-tick min" id="shaderScaleMin">-- m</span>
+        <span class="scale-tick mid" id="shaderScaleMid">-- m</span>
+        <span class="scale-tick max" id="shaderScaleMax">-- m</span>
+      </div>
+      <div class="shader-scale-subtext" id="shaderScaleSubtext">Global Mapper 3D Shaded Relief</div>
+    </div>
+  </div>
+  <div id="lidarLegendWidget" class="lidar-legend-widget" style="display: none;">
+    <div class="lidar-legend-header" id="lidarLegendHeader" title="Click to collapse / expand LiDAR legend">
+      <span class="lidar-legend-icon" id="lidarLegendIcon">🏷️</span>
+      <span class="lidar-legend-title" id="lidarLegendTitle">LiDAR: Classification</span>
+      <button class="lidar-legend-toggle" id="lidarLegendToggle" title="Collapse / expand">▾</button>
+    </div>
+    <div class="lidar-legend-body" id="lidarLegendBody">
+      <div id="lidarLegendContent"></div>
+      <div class="lidar-legend-subtext" id="lidarLegendSubtext">ASPRS Standard Classes</div>
+    </div>
+  </div>
+
+  <!-- Modular Map Engine Architecture -->
+  <script src="pointCloudCanvas.js"></script>
+  <script src="rasterLayerManager.js"></script>
+  <script src="mapTelemetry.js"></script>
+  <script src="mapEngine.js"></script>
+  <script src="mapHostBridge.js"></script>
+</body>
+
+</html>
