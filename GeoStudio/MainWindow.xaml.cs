@@ -45,7 +45,16 @@ namespace GeoStudio
         {
             if (PanelRibbonFile == null) return;
 
-            PanelRibbonFile.Visibility = tabName == "File" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonHome != null)
+                PanelRibbonHome.Visibility = tabName == "Home" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonData != null)
+                PanelRibbonData.Visibility = (tabName == "Data" || tabName == "Layer") ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonStyle != null)
+                PanelRibbonStyle.Visibility = tabName == "Style" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonAnalyze != null)
+                PanelRibbonAnalyze.Visibility = (tabName == "Analyze" || tabName == "Terrain") ? Visibility.Visible : Visibility.Collapsed;
+
+            PanelRibbonFile.Visibility = (tabName == "File" || tabName == "Project") ? Visibility.Visible : Visibility.Collapsed;
             PanelRibbonEdit.Visibility = tabName == "Edit" ? Visibility.Visible : Visibility.Collapsed;
             PanelRibbonView.Visibility = tabName == "View" ? Visibility.Visible : Visibility.Collapsed;
             PanelRibbonLayer.Visibility = tabName == "Layer" ? Visibility.Visible : Visibility.Collapsed;
@@ -59,6 +68,36 @@ namespace GeoStudio
             PanelRibbonProcessing.Visibility = tabName == "Processing" ? Visibility.Visible : Visibility.Collapsed;
             PanelRibbon3D.Visibility = tabName == "3D" ? Visibility.Visible : Visibility.Collapsed;
             PanelRibbonHelp.Visibility = tabName == "Help" ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void BtnToggleRibbon_Click(object sender, RoutedEventArgs e)
+        {
+            if (RibbonContentBorder != null)
+            {
+                if (RibbonContentBorder.Visibility == Visibility.Visible)
+                {
+                    RibbonContentBorder.Visibility = Visibility.Collapsed;
+                    BtnToggleRibbon.Content = "⌄";
+                }
+                else
+                {
+                    RibbonContentBorder.Visibility = Visibility.Visible;
+                    BtnToggleRibbon.Content = "⌃";
+                }
+            }
+        }
+
+        private void CommandSearch_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (SearchWatermark != null) SearchWatermark.Visibility = Visibility.Collapsed;
+        }
+
+        private void CommandSearch_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (SearchWatermark != null && CommandSearchBox != null)
+            {
+                SearchWatermark.Visibility = string.IsNullOrWhiteSpace(CommandSearchBox.Text) ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
 
         private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)

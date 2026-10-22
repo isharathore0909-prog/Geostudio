@@ -97,441 +97,678 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <!-- 0: Menu Bar -->
+            <!-- 0: Top Chrome & Quick Access Bar -->
+            <RowDefinition Height="34"/>
+            <!-- 1: Ribbon Tab Navigation Strip -->
+            <RowDefinition Height="29"/>
+            <!-- 2: Categorized Ribbon Body Toolbar -->
             <RowDefinition Height="Auto"/>
-            <!-- 1: Categorized Ribbon Rows -->
-            <RowDefinition Height="Auto"/>
-            <!-- 2: Main Workspace (Sidebar + Map Canvas) -->
+            <!-- 3: Main Workspace (Sidebar + Map Canvas) -->
             <RowDefinition Height="*"/>
-            <!-- 3: Status Bar -->
+            <!-- 4: Status Bar -->
             <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
 
         <!-- ========================================================================= -->
-        <!-- ROW 0: TABBED RIBBON TABS STRIP                                            -->
+        <!-- ROW 0: RUSTGIS TOP CHROME & QUICK ACCESS BAR                              -->
         <!-- ========================================================================= -->
-        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="4,2,4,0">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" PanningMode="HorizontalOnly">
-                <StackPanel Orientation="Horizontal">
-                    <RadioButton x:Name="TabFile" Content="File" Style="{StaticResource RibbonFileTabRadio}" IsChecked="True" Checked="RibbonTab_Checked" Tag="File"/>
-                    <RadioButton x:Name="TabEdit" Content="Edit" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="Edit"/>
-                    <RadioButton x:Name="TabView" Content="View" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="View"/>
-                    <RadioButton x:Name="TabLayer" Content="Layer" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="Layer"/>
-                    <RadioButton x:Name="TabTerrain" Content="Terrain" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="Terrain"/>
-                    <RadioButton x:Name="TabLidar" Content="LiDAR" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="LiDAR"/>
-                    <RadioButton x:Name="TabVector" Content="Vector" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="Vector"/>
-                    <RadioButton x:Name="TabRaster" Content="Raster" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="Raster"/>
-                    <RadioButton x:Name="TabSatellite" Content="Satellite" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="Satellite"/>
-                    <RadioButton x:Name="TabProcessing" Content="Processing" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="Processing"/>
-                    <RadioButton x:Name="Tab3D" Content="3D" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="3D"/>
-                    <RadioButton x:Name="TabSettings" Content="Settings" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="Settings"/>
-                    <RadioButton x:Name="TabPlugins" Content="Plugins" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="Plugins"/>
-                    <RadioButton x:Name="TabHelp" Content="Help" Style="{StaticResource RibbonTabRadio}" Checked="RibbonTab_Checked" Tag="Help"/>
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
-
-        <!-- ========================================================================= -->
-        <!-- ROW 1: CATEGORIZED RESPONSIVE RIBBON TOOLBAR (TAB CONTENT PANELS)           -->
-        <!-- ========================================================================= -->
-        <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="4,4,4,2">
+        <Border Grid.Row="0" Background="#E2E7ED" BorderBrush="#CBD5E1" BorderThickness="0,0,0,1" Padding="8,2,8,2">
             <Grid>
-                <!-- 1. FILE TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonFile" Orientation="Horizontal" Visibility="Visible">
-                    <!-- PROJECT -->
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="New" Tag="/Resources/Icons/new_project.png" ToolTip="New Project (Ctrl+N)" Click="MenuNewProject_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Open" Tag="/Resources/Icons/open_project.png" ToolTip="Open Project (Ctrl+O)" Click="MenuOpenProject_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Save" Tag="/Resources/Icons/save_project.png" ToolTip="Save Project (Ctrl+S)" Click="MenuSaveProject_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Save As" Tag="/Resources/Icons/save_project_as.png" ToolTip="Save Project As (Ctrl+Shift+S)" Click="MenuSaveProject_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="PROJECT" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
+                <Grid.ColumnDefinitions>
+                    <!-- Left: Brand + Quick Access Toolbar -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Center: Document / Project Title -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Right: Command Search Box -->
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                    <!-- IMPORT / DATA SOURCES -->
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="BigTIFF" Tag="/Resources/Icons/add_raster.png" ToolTip="Load 100GB+ BigTIFF / DEM (Ctrl+Shift+R)" Click="BtnAddRaster_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="LiDAR" Tag="/Resources/Icons/load_las.png" ToolTip="Load LiDAR Point Cloud (LAS/LAZ)" Click="BtnAddLidar_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Vector" Tag="/Resources/Icons/add_vector.png" ToolTip="Load Vector Data (GeoJSON/SHP/GPKG) (Ctrl+Shift+V)" Click="BtnAddVector_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="CSV Points" Tag="/Resources/Icons/add_csv.png" ToolTip="Load Delimited Text (CSV Points)" Click="BtnAddVector_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="IMPORT DATA" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
+                <!-- Left: GIS Icon + GeoStudio Title + Quick Access Buttons -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image Source="/Resources/Icons/view_3d.png" Width="18" Height="18" Margin="0,0,6,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock Text="GeoStudio" FontWeight="Bold" FontSize="12.5" Foreground="#1E293B" VerticalAlignment="Center" Margin="0,0,12,0"/>
 
-                    <!-- PRINT & EXPORT -->
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Print Layout" Tag="/Resources/Icons/print_map.png" ToolTip="Print / Export Map Layout (Ctrl+P)" Click="BtnPrint_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="PRINT &amp; EXPORT" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
+                    <Rectangle Width="1" Fill="#CBD5E1" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
 
-                    <!-- SYSTEM & CACHE -->
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Clear Cache" Tag="/Resources/Icons/refresh.png" ToolTip="Clear Cache &amp; Reset Memory" Click="MenuClearCache_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Exit" Tag="/Resources/Icons/delete.png" ToolTip="Exit GeoStudio (Ctrl+Q)" Click="MenuExit_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="SYSTEM" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
+                    <!-- Quick Access Toolbar Buttons -->
+                    <Button Style="{StaticResource RustGisQuickBtn}" Tag="/Resources/Icons/new_project.png" ToolTip="New Project (Ctrl+N)" Click="MenuNewProject_Click"/>
+                    <Button Style="{StaticResource RustGisQuickBtn}" Tag="/Resources/Icons/open_project.png" ToolTip="Open Project (Ctrl+O)" Click="MenuOpenProject_Click"/>
+                    <Button Style="{StaticResource RustGisQuickBtn}" Tag="/Resources/Icons/save_project.png" ToolTip="Save Project (Ctrl+S)" Click="MenuSaveProject_Click"/>
+                    <Rectangle Width="1" Fill="#CBD5E1" Height="14" Margin="4,0,4,0" VerticalAlignment="Center"/>
+                    <Button Style="{StaticResource RustGisQuickBtn}" Tag="/Resources/Icons/undo.png" ToolTip="Undo (Ctrl+Z)" Click="BtnUndo_Click"/>
+                    <Button Style="{StaticResource RustGisQuickBtn}" Tag="/Resources/Icons/redo.png" ToolTip="Redo (Ctrl+Y)" Click="BtnRedo_Click"/>
+                </StackPanel>
 
-                <!-- 2. EDIT TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonEdit" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Undo" Tag="/Resources/Icons/undo.png" ToolTip="Undo (Ctrl+Z)" Click="BtnUndo_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Redo" Tag="/Resources/Icons/redo.png" ToolTip="Redo (Ctrl+Y)" Click="BtnRedo_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="HISTORY" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Clear Select" Tag="/Resources/Icons/clear_selection.png" ToolTip="Clear Selection" Click="BtnClearSelection_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Clear Draw" Tag="/Resources/Icons/delete.png" ToolTip="Clear Digitized Geometries" Click="BtnClearDigitized_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Edit Mode" Tag="/Resources/Icons/toggle_edit.png" ToolTip="Toggle Editing (Ctrl+E)" Click="BtnToggleEdit_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="SELECTION &amp; EDIT" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Reset Cache" Tag="/Resources/Icons/refresh.png" ToolTip="Clear Cache &amp; Reset Memory" Click="MenuClearCache_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="MAINTENANCE" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
+                <!-- Center: Project Title -->
+                <TextBlock Grid.Column="1" Text="World Atlas — World Map" FontSize="11.5" Foreground="#64748B" 
+                           FontWeight="Medium" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-                <!-- 3. VIEW TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonView" Orientation="Horizontal" Visibility="Collapsed">
-                    <!-- NAVIGATION -->
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/pan.png" ToolTip="Pan Map (P)" Click="BtnPan_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/zoom_in.png" ToolTip="Zoom In (+)" Click="BtnZoomIn_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/zoom_out.png" ToolTip="Zoom Out (-)" Click="BtnZoomOut_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/zoom_full.png" ToolTip="Zoom to Full Extent (Ctrl+Shift+F)" Click="BtnZoomFull_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/refresh.png" ToolTip="Refresh Map Canvas (F5)" Click="BtnRefresh_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/swipe.png" ToolTip="Layer Swipe Compare (Ctrl+Shift+W)" Click="BtnSplit_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/blend_mode.png" ToolTip="Blend Mode / Inset Overview" Click="BtnOverview_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="NAVIGATION" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                    <!-- SELECTION -->
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/identify.png" ToolTip="Identify Features (I / F6)" Click="BtnIdentify_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/select.png" ToolTip="Select Feature" Click="BtnSelectPointer_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/select_rect.png" ToolTip="Select by Rectangle" Click="BtnSelectBox_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/select_poly.png" ToolTip="Select by Polygon" Click="BtnSelectPolygon_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/select_radius.png" ToolTip="Select by Radius / Lasso" Click="BtnSelectRadius_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/clear_selection.png" ToolTip="Clear Selection" Click="BtnClearSelection_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="SELECTION" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                    <!-- MEASUREMENT -->
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/measure_dist.png" ToolTip="Measure Distance" Click="BtnMeasureDistance_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/measure_area.png" ToolTip="Measure Area" Click="BtnMeasureArea_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/measure_angle.png" ToolTip="Measure Angle / Bearing" Click="BtnMeasureAngle_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="MEASUREMENT" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
-
-                <!-- 4. LAYER TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonLayer" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Vector" Tag="/Resources/Icons/add_vector.png" ToolTip="Add Vector Layer (Ctrl+Shift+V)" Click="BtnAddVector_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Raster / DEM" Tag="/Resources/Icons/add_raster.png" ToolTip="Add 100GB+ BigTIFF / Raster (Ctrl+Shift+R)" Click="BtnAddRaster_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="LiDAR" Tag="/Resources/Icons/load_las.png" ToolTip="Add LiDAR Point Cloud (LAS/LAZ)" Click="BtnAddLidar_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="OSM Basemap" Tag="/Resources/Icons/add_xyz.png" ToolTip="Add OpenStreetMap XYZ Basemap" Click="BtnAddOsm_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="WMS / WMTS" Tag="/Resources/Icons/add_wms.png" ToolTip="Add WMS / WMTS Basemap Layer" Click="BtnDatabase_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="File Browser" Tag="/Resources/Icons/browser_panel.png" ToolTip="Browse Local Files / Layers Panel" Click="BtnFileBrowser_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="DATA SOURCES" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Remove Layer" Tag="/Resources/Icons/delete.png" ToolTip="Remove Selected Layer (Ctrl+D)" Click="MenuRemoveLayer_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="MANAGEMENT" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
-
-                <!-- 5. TERRAIN TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonTerrain" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Image Source="/Resources/Icons/shader.png" Width="18" Height="18" VerticalAlignment="Center" Margin="2,0,1,0"/>
-                                <ComboBox x:Name="ComboShader" Width="92" Style="{StaticResource RibbonComboBoxStyle}" SelectionChanged="ComboShader_SelectionChanged">
-                                    <ComboBoxItem Content="Shader ▾" IsSelected="True"/>
-                                    <ComboBoxItem Content="Atlas (Global Mapper)"/>
-                                    <ComboBoxItem Content="Elevation Terrain"/>
-                                    <ComboBoxItem Content="Slope Map"/>
-                                    <ComboBoxItem Content="Aspect Map"/>
-                                    <ComboBoxItem Content="Hillshade"/>
-                                    <ComboBoxItem Content="TRI (Ruggedness)"/>
-                                    <ComboBoxItem Content="TPI (Position)"/>
-                                    <ComboBoxItem Content="TWI (Wetness)"/>
-                                    <ComboBoxItem Content="Curvature"/>
-                                </ComboBox>
-                                <Image Source="/Resources/Icons/elevation.png" Width="18" Height="18" VerticalAlignment="Center" Margin="3,0,1,0"/>
-                                <ComboBox x:Name="ComboAtlas" Width="82" Style="{StaticResource RibbonComboBoxStyle}" SelectionChanged="ComboAtlas_SelectionChanged">
-                                    <ComboBoxItem Content="Atlas ▾" IsSelected="True"/>
-                                    <ComboBoxItem Content="Atlas (Global Mapper)"/>
-                                    <ComboBoxItem Content="Terrain (Earth Tones)"/>
-                                    <ComboBoxItem Content="Magma"/>
-                                    <ComboBoxItem Content="Viridis"/>
-                                </ComboBox>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/elevation.png" ToolTip="Elevation Symbology &amp; 3D Relief (Ctrl+Shift+E)" Click="MenuElevation_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/slope.png" ToolTip="Calculate Slope" Click="MenuSlope_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/aspect.png" ToolTip="Calculate Aspect Direction" Click="MenuAspect_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/hillshade.png" ToolTip="3D Hillshade Relief" Click="MenuHillshade_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/profile.png" ToolTip="Elevation Profile Tool" Click="MenuProfile_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/watershed.png" ToolTip="Generate Contour Lines" Click="MenuContour_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/cut_fill.png" ToolTip="Cut / Fill Earthwork Volume" Click="MenuCutFill_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/view_3d.png" ToolTip="Interactive 3D Surface / Viewer" Click="Btn3dMesh_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="TERRAIN / ELEVATION" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
-
-                <!-- 6. LIDAR TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonLidar" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/load_las.png" ToolTip="Load LAS / LAZ Point Cloud File" Click="BtnAddLidar_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/classify_ground.png" ToolTip="Auto-Classify Ground (SMRF / HAG)" Click="BtnLidarClassifyGround_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/classify_buildings.png" ToolTip="Classify Building Structures" Click="BtnLidarClassifyBuildings_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/classify_veg.png" ToolTip="Classify Vegetation Canopy" Click="BtnLidarClassifyVeg_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/thin.png" ToolTip="Point Density Decimation / Thinning" Click="BtnLidarThin_Click"/>
-                                <Image Source="/Resources/Icons/color_by.png" Width="18" Height="18" VerticalAlignment="Center" Margin="3,0,1,0"/>
-                                <ComboBox x:Name="ComboLidarColorBy" Width="220" Style="{StaticResource RibbonComboBoxStyle}" SelectionChanged="ComboLidarColorBy_SelectionChanged">
-                                    <ComboBoxItem Content="Color By ▾" IsSelected="True"/>
-                                    <ComboBoxItem Content="Color Lidar by RGB/Elev"/>
-                                    <ComboBoxItem Content="Color Lidar by Elevation"/>
-                                    <ComboBoxItem Content="Color Lidar by Intensity"/>
-                                    <ComboBoxItem Content="Color Lidar by Classification"/>
-                                    <ComboBoxItem Content="Color Lidar by Return Number"/>
-                                    <ComboBoxItem Content="Color Lidar by Height Above Ground"/>
-                                    <ComboBoxItem Content="Color Lidar by Scan Angle"/>
-                                    <ComboBoxItem Content="Color Lidar by Point Source ID"/>
-                                    <ComboBoxItem Content="Color Lidar by Source Layer"/>
-                                    <ComboBoxItem Content="Color Lidar by Segment"/>
-                                    <ComboBoxItem Content="Color Lidar by Point Index"/>
-                                    <ComboBoxItem Content="Color Lidar as CIR (Color Infrared)"/>
-                                    <ComboBoxItem Content="Color Lidar using NDVI (Vegetation)"/>
-                                    <ComboBoxItem Content="Color Lidar using NDWI (Water)"/>
-                                    <ComboBoxItem Content="Color Lidar by Point Density"/>
-                                    <ComboBoxItem Content="Color Lidar by Withheld Flag"/>
-                                    <ComboBoxItem Content="Color Lidar by Key Point Flag"/>
-                                    <ComboBoxItem Content="Color Lidar by Overlap Flag"/>
-                                    <ComboBoxItem Content="Color Lidar by Return Height Delta"/>
-                                    <Separator/>
-                                    <ComboBoxItem Content="⚡ Auto-Classify Ground &amp; Canopy (SMRF)..." FontWeight="SemiBold" Foreground="#D97706"/>
-                                </ComboBox>
-                            </StackPanel>
-                            <TextBlock Text="LIDAR / POINT CLOUD" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Bare DTM" Tag="/Resources/Icons/elevation.png" ToolTip="Generate Bare-Earth DTM" Click="MenuLidarDtm_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="CHM Canopy" Tag="/Resources/Icons/classify_veg.png" ToolTip="Canopy Height Model (CHM)" Click="MenuLidarChm_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="3D Viewer" Tag="/Resources/Icons/view_3d.png" ToolTip="Interactive 3D Point Cloud Workstation" Click="Btn3dMesh_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="DERIVATIVES &amp; 3D" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
-
-                <!-- 7. VECTOR TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonVector" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/toggle_edit.png" ToolTip="Toggle Vector Editing (Ctrl+E)" Click="BtnToggleEdit_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/add_point.png" ToolTip="Add Point Feature" Click="BtnDigitizePoint_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/add_line.png" ToolTip="Add Line Feature" Click="BtnDigitizeLine_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/add_poly.png" ToolTip="Add Polygon Feature" Click="BtnDigitizePolygon_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/split.png" ToolTip="Split Selected Feature" Click="BtnSplitGeometry_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/delete.png" ToolTip="Delete Selected Features (Delete)" Click="BtnDeleteFeature_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/vertex_tool.png" ToolTip="Vertex Node Editor Tool" Click="BtnVertexTool_Click"/>
-                                <Button Style="{StaticResource RibbonIconBtn}" Tag="/Resources/Icons/undo.png" ToolTip="Undo Last Vertex" Click="BtnUndoVertex_Click"/>
-                                <Image Source="/Resources/Icons/snapping.png" Width="18" Height="18" VerticalAlignment="Center" Margin="3,0,1,0"/>
-                                <ComboBox x:Name="ComboSnapping" Width="92" Style="{StaticResource RibbonComboBoxStyle}" SelectionChanged="ComboSnapping_SelectionChanged">
-                                    <ComboBoxItem Content="Snapping ▾" IsSelected="True"/>
-                                    <ComboBoxItem Content="Enable Snapping"/>
-                                    <ComboBoxItem Content="Snap to Vertices"/>
-                                    <ComboBoxItem Content="Snap to Segments"/>
-                                    <ComboBoxItem Content="Snap to Area"/>
-                                </ComboBox>
-                            </StackPanel>
-                            <TextBlock Text="DIGITIZING" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Buffer" Tag="/Resources/Icons/select_radius.png" ToolTip="Geodesic Buffer Geometry..." Click="MenuBuffer_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Convex Hull" Tag="/Resources/Icons/select_poly.png" ToolTip="Calculate Convex Hull" Click="MenuConvexHull_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Centroids" Tag="/Resources/Icons/add_point.png" ToolTip="Calculate Centroids" Click="MenuCentroids_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Voronoi" Tag="/Resources/Icons/select_poly.png" ToolTip="Voronoi Polygons" Click="MenuVoronoi_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Dissolve" Tag="/Resources/Icons/merge.png" ToolTip="Dissolve Boundaries" Click="MenuDissolve_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Attributes" Tag="/Resources/Icons/identify.png" ToolTip="Open Attribute Table (F6)" Click="BtnIdentify_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Clip Vector" Tag="/Resources/Icons/clip.png" ToolTip="Clip Vector Layer by Mask..." Click="MenuClipVector_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="GEOPROCESSING" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
-
-                <!-- 8. RASTER TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonRaster" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Hillshade" Tag="/Resources/Icons/hillshade.png" ToolTip="Compute 3D Hillshade Relief" Click="MenuHillshade_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Slope" Tag="/Resources/Icons/slope.png" ToolTip="Slope Gradient Analysis" Click="MenuSlope_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Aspect" Tag="/Resources/Icons/aspect.png" ToolTip="Aspect Direction Analysis" Click="MenuAspect_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="TRI" Tag="/Resources/Icons/profile.png" ToolTip="TRI (Terrain Ruggedness Index)" Click="MenuTri_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="TPI" Tag="/Resources/Icons/elevation.png" ToolTip="TPI (Topographic Position Index)" Click="MenuTpi_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="SURFACE ANALYSIS" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Clip Raster" Tag="/Resources/Icons/clip.png" ToolTip="Crop / Clip Raster by Mask..." Click="MenuClipRaster_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Statistics" Tag="/Resources/Icons/identify.png" ToolTip="Raster Statistics &amp; Histogram" Click="MenuRasterStats_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="EXTRACTION &amp; STATS" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
-
-                <!-- 9. SATELLITE TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonSatellite" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="NDVI" Tag="/Resources/Icons/classify_veg.png" ToolTip="NDVI (Normalized Difference Vegetation Index)" Click="MenuNdvi_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="NDWI" Tag="/Resources/Icons/add_xyz.png" ToolTip="NDWI (Normalized Difference Water Index)" Click="MenuNdwi_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="EVI" Tag="/Resources/Icons/classify_veg.png" ToolTip="EVI (Enhanced Vegetation Index)" Click="MenuEvi_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="NDBI" Tag="/Resources/Icons/classify_buildings.png" ToolTip="NDBI (Normalized Difference Built-up Index)" Click="MenuNdbi_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="NBR" Tag="/Resources/Icons/shader.png" ToolTip="NBR (Normalized Burn Ratio)" Click="MenuNbr_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="False Color" Tag="/Resources/Icons/color_by.png" ToolTip="False Color RGB Composite..." Click="MenuFalseColor_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="SPECTRAL INDICES" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
-
-                <!-- 10. PROCESSING TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonProcessing" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Toolbox" Tag="/Resources/Icons/control_center.png" ToolTip="Processing Toolbox (Ctrl+Alt+T)" Click="MenuProcessingToolbox_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Python Console" Tag="/Resources/Icons/configure.png" ToolTip="Python Pipeline Console (Ctrl+Alt+P)" Click="MenuPythonConsole_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Bridge Status" Tag="/Resources/Icons/refresh.png" ToolTip="Python Pipeline Bridge Status" Click="MenuPythonStatus_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="PROCESSING TOOLS" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
-
-                <!-- 11. 3D TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbon3D" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="3D Point Cloud" Tag="/Resources/Icons/view_3d.png" ToolTip="Open 3D Point Cloud Workstation" Click="Btn3dMesh_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="3D Elevation" Tag="/Resources/Icons/elevation.png" ToolTip="3D Elevation Surface Draping" Click="MenuElevation_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="3D WORKSTATION" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
-
-                <!-- 12. SETTINGS TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonSettings" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="GPU Status" Tag="/Resources/Icons/configure.png" ToolTip="Hardware Budget &amp; GPU Status" Click="MenuGpuStatus_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Purge Cache" Tag="/Resources/Icons/refresh.png" ToolTip="Clear Disk Cache &amp; Reset Memory" Click="MenuClearCache_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="HARDWARE &amp; PERFORMANCE" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
-
-                <!-- 13. PLUGINS TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonPlugins" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Python Console" Tag="/Resources/Icons/configure.png" ToolTip="Python Pipeline Console (Ctrl+Alt+P)" Click="MenuPythonConsole_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Bridge Status" Tag="/Resources/Icons/refresh.png" ToolTip="Python Pipeline Bridge Status" Click="MenuPythonStatus_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="PYTHON EXTENSIONS" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
-
-                <!-- 14. HELP TAB PANEL -->
-                <WrapPanel x:Name="PanelRibbonHelp" Orientation="Horizontal" Visibility="Collapsed">
-                    <Border Style="{StaticResource RibbonGroupCard}">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="Docs" Tag="/Resources/Icons/browser_panel.png" ToolTip="GeoStudio Documentation" Click="MenuDocs_Click"/>
-                                <Button Style="{StaticResource RibbonLabeledBtn}" Content="About" Tag="/Resources/Icons/control_center.png" ToolTip="About GeoStudio Standalone GIS" Click="MenuAbout_Click"/>
-                            </StackPanel>
-                            <TextBlock Text="HELP" Style="{StaticResource RibbonGroupHeaderStyle}"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
+                <!-- Right: Command Search Bar -->
+                <Border Grid.Column="2" Width="230" Height="24" Background="#FFFFFF" BorderBrush="#CBD5E1" 
+                        BorderThickness="1" CornerRadius="4" Padding="6,0" VerticalAlignment="Center">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="🔍" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox x:Name="CommandSearchBox" Grid.Column="1" Background="Transparent" BorderThickness="0" 
+                                 FontSize="11" Foreground="#1E293B" VerticalAlignment="Center"
+                                 GotFocus="CommandSearch_GotFocus" LostFocus="CommandSearch_LostFocus"/>
+                        <TextBlock x:Name="SearchWatermark" Grid.Column="1" Text="Command Search" FontSize="11" Foreground="#94A3B8" 
+                                   IsHitTestVisible="False" VerticalAlignment="Center"/>
+                        <Border Grid.Column="2" Background="#F1F5F9" CornerRadius="3" Padding="4,1" VerticalAlignment="Center">
+                            <TextBlock Text="Ctrl+K" FontSize="9.5" Foreground="#64748B" FontWeight="SemiBold"/>
+                        </Border>
+                    </Grid>
+                </Border>
             </Grid>
         </Border>
 
         <!-- ========================================================================= -->
-        <!-- ROW 2: MAIN WORKSPACE (SIDEBAR + MAP CANVAS)                               -->
+        <!-- ROW 1: RUSTGIS RIBBON TABS STRIP                                          -->
         <!-- ========================================================================= -->
-        <Grid Grid.Row="2">
+        <Border Grid.Row="1" Background="#E2E7ED" BorderBrush="#CBD5E1" BorderThickness="0,0,0,1" Padding="8,1,8,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <ScrollViewer Grid.Column="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" PanningMode="HorizontalOnly">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                        <!-- Project Tab (Terracotta Red) -->
+                        <RadioButton x:Name="TabProject" Content="Project" Style="{StaticResource RustGisProjectTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Project"/>
+                        <!-- Tabs matching RustGIS order -->
+                        <RadioButton x:Name="TabHome" Content="Home" Style="{StaticResource RustGisTabRadio}" 
+                                     IsChecked="True" Checked="RibbonTab_Checked" Tag="Home"/>
+                        <RadioButton x:Name="TabData" Content="Data" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Data"/>
+                        <RadioButton x:Name="TabStyle" Content="Style" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Style"/>
+                        <RadioButton x:Name="TabEdit" Content="Edit" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Edit"/>
+                        <RadioButton x:Name="TabAnalyze" Content="Analyze" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Analyze"/>
+                        <RadioButton x:Name="TabView" Content="View" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="View"/>
+                        <RadioButton x:Name="TabLidar" Content="LiDAR" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="LiDAR"/>
+                        <RadioButton x:Name="TabVector" Content="Vector" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Vector"/>
+                        <RadioButton x:Name="TabRaster" Content="Raster" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Raster"/>
+                        <RadioButton x:Name="TabSatellite" Content="Satellite" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Satellite"/>
+                        <RadioButton x:Name="TabProcessing" Content="Processing" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Processing"/>
+                        <RadioButton x:Name="Tab3D" Content="3D" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="3D"/>
+                        <RadioButton x:Name="TabSettings" Content="Settings" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Settings"/>
+                        <RadioButton x:Name="TabPlugins" Content="Plugins" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Plugins"/>
+                        <RadioButton x:Name="TabHelp" Content="Help" Style="{StaticResource RustGisTabRadio}" 
+                                     Checked="RibbonTab_Checked" Tag="Help"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Ribbon Collapse Button (Right) -->
+                <Button x:Name="BtnToggleRibbon" Grid.Column="1" Content="⌃" FontSize="11" FontWeight="Bold" Foreground="#64748B" 
+                        Background="Transparent" BorderThickness="0" Width="24" Height="22" Cursor="Hand" ToolTip="Minimize Ribbon"
+                        Click="BtnToggleRibbon_Click" Margin="0,0,2,2"/>
+            </Grid>
+        </Border>
+
+        <!-- ========================================================================= -->
+        <!-- ROW 2: RUSTGIS RIBBON TOOLBAR BODY (CLEAN WHITE AESTHETIC)                -->
+        <!-- ========================================================================= -->
+        <Border x:Name="RibbonContentBorder" Grid.Row="2" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="0,0,0,1" Padding="6,3,6,2">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" PanningMode="HorizontalOnly">
+                <Grid>
+                    <!-- ============================================================= -->
+                    <!-- 1. HOME TAB (RUSTGIS MAIN DASHBOARD)                          -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonHome" Orientation="Horizontal" Visibility="Visible">
+                        <!-- GROUP: PROJECT -->
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="New&#x0a;Map" Tag="/Resources/Icons/new_project.png" ToolTip="New Project / Map (Ctrl+N)" Click="MenuNewProject_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Toolbox" Tag="/Resources/Icons/control_center.png" ToolTip="Processing Toolbox (Ctrl+Alt+T)" Click="MenuProcessingToolbox_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Import&#x0a;Project" Tag="/Resources/Icons/open_project.png" ToolTip="Open Project (Ctrl+O)" Click="MenuOpenProject_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="New&#x0a;Layout ▾" Tag="/Resources/Icons/print_map.png" ToolTip="Print Map Layout (Ctrl+P)" Click="BtnPrint_Click"/>
+                                
+                                <!-- Stacked Column: Browser, Add Data, Add Folder -->
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Browser" Tag="/Resources/Icons/browser_panel.png" ToolTip="Open File Browser" Click="BtnFileBrowser_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Add Data ▾" Tag="/Resources/Icons/add_raster.png" ToolTip="Add Layer Data (Ctrl+Shift+R)" Click="BtnAddRaster_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Add Folder" Tag="/Resources/Icons/open_project.png" ToolTip="Connect Folder / Project" Click="MenuOpenProject_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock Text="Project" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <!-- DIVIDER -->
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <!-- GROUP: NAVIGATE -->
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtnActive}" Content="Pan" Tag="/Resources/Icons/pan.png" ToolTip="Pan Tool (P)" Click="BtnPan_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Bookmarks ▾" Tag="/Resources/Icons/map_layout.png" ToolTip="Bookmarks / Spatial Views" Click="BtnZoomFull_Click"/>
+
+                                <!-- Column 1: Full Extent, Zoom In, Zoom Out -->
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Full Extent" Tag="/Resources/Icons/zoom_full.png" ToolTip="Zoom to Full Extent (Ctrl+Shift+F)" Click="BtnZoomFull_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom In" Tag="/Resources/Icons/zoom_in.png" ToolTip="Zoom In (+)" Click="BtnZoomIn_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom Out" Tag="/Resources/Icons/zoom_out.png" ToolTip="Zoom Out (-)" Click="BtnZoomOut_Click"/>
+                                </StackPanel>
+
+                                <!-- Column 2: Previous, Next, Go To XY -->
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="2,0,1,0">
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Previous" Tag="/Resources/Icons/undo.png" ToolTip="Previous Extent" Click="BtnUndo_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Next" Tag="/Resources/Icons/redo.png" ToolTip="Next Extent" Click="BtnRedo_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Go To XY" Tag="/Resources/Icons/coord_capture.png" ToolTip="Coordinate Capture / Go to XY" Click="BtnIdentify_Click"/>
+                                </StackPanel>
+
+                                <!-- Column 3: Planar, Identify, Find Place -->
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="2,0,1,0">
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Planar ▾" Tag="/Resources/Icons/view_3d.png" ToolTip="Map View Mode / 3D Workstation" Click="Btn3dMesh_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Identify ▾" Tag="/Resources/Icons/identify.png" ToolTip="Identify Features (I / F6)" Click="BtnIdentify_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Find Place" Tag="/Resources/Icons/zoom.png" ToolTip="Find / Search Location" Click="BtnZoomFull_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock Text="Navigate" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <!-- DIVIDER -->
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <!-- GROUP: ADD -->
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Basemap ▾" Tag="/Resources/Icons/add_xyz.png" ToolTip="Add OpenStreetMap Basemap" Click="BtnAddOsm_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Add&#x0a;Data ▾" Tag="/Resources/Icons/add_vector.png" ToolTip="Add Vector / Shapefile / GeoJSON (Ctrl+Shift+V)" Click="BtnAddVector_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Web&#x0a;Data ▾" Tag="/Resources/Icons/add_wms.png" ToolTip="Add WMS / WMTS Service" Click="BtnDatabase_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Add" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <!-- DIVIDER -->
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <!-- GROUP: SELECTION -->
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Select" Tag="/Resources/Icons/select.png" ToolTip="Select Feature" Click="BtnSelectPointer_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Select By&#x0a;Attributes" Tag="/Resources/Icons/identify.png" ToolTip="Select by Attributes" Click="BtnIdentify_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Select By&#x0a;Location" Tag="/Resources/Icons/select_poly.png" ToolTip="Select by Polygon / Location" Click="BtnSelectPolygon_Click"/>
+
+                                <!-- Stacked Column: Clear, Zoom To, Attributes -->
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Clear" Tag="/Resources/Icons/clear_selection.png" ToolTip="Clear Selection" Click="BtnClearSelection_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom To" Tag="/Resources/Icons/zoom.png" ToolTip="Zoom to Selected" Click="BtnZoomFull_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Attributes" Tag="/Resources/Icons/identify.png" ToolTip="Attribute Table (F6)" Click="BtnIdentify_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock Text="Selection" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <!-- DIVIDER -->
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <!-- GROUP: INSPECT -->
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Measure ▾" Tag="/Resources/Icons/measure.png" ToolTip="Measure Distance &amp; Area" Click="BtnMeasureDistance_Click"/>
+
+                                <!-- Stacked Column: Locate, Zoom Box, Infographics -->
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Locate" Tag="/Resources/Icons/coord_capture.png" ToolTip="Capture Coordinates" Click="BtnIdentify_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom Box" Tag="/Resources/Icons/zoom_in.png" ToolTip="Select Box Zoom" Click="BtnSelectBox_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Profile" Tag="/Resources/Icons/profile.png" ToolTip="Elevation Profile" Click="MenuProfile_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock Text="Inspect" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 2. PROJECT TAB PANEL (FILE MANAGEMENT)                        -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonFile" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="New" Tag="/Resources/Icons/new_project.png" ToolTip="New Project (Ctrl+N)" Click="MenuNewProject_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Open" Tag="/Resources/Icons/open_project.png" ToolTip="Open Project (Ctrl+O)" Click="MenuOpenProject_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Save" Tag="/Resources/Icons/save_project.png" ToolTip="Save Project (Ctrl+S)" Click="MenuSaveProject_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Save As" Tag="/Resources/Icons/save_project_as.png" ToolTip="Save Project As (Ctrl+Shift+S)" Click="MenuSaveProject_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Project" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="BigTIFF" Tag="/Resources/Icons/add_raster.png" ToolTip="Load 100GB+ BigTIFF / DEM (Ctrl+Shift+R)" Click="BtnAddRaster_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="LiDAR" Tag="/Resources/Icons/load_las.png" ToolTip="Load LiDAR Point Cloud (LAS/LAZ)" Click="BtnAddLidar_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Vector" Tag="/Resources/Icons/add_vector.png" ToolTip="Load Vector Data (GeoJSON/SHP/GPKG) (Ctrl+Shift+V)" Click="BtnAddVector_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="CSV Points" Tag="/Resources/Icons/add_csv.png" ToolTip="Load Delimited Text (CSV Points)" Click="BtnAddVector_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Import Data" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Print Layout" Tag="/Resources/Icons/print_map.png" ToolTip="Print / Export Map Layout (Ctrl+P)" Click="BtnPrint_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Print &amp; Export" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Clear Cache" Tag="/Resources/Icons/refresh.png" ToolTip="Clear Cache &amp; Reset Memory" Click="MenuClearCache_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Exit" Tag="/Resources/Icons/delete.png" ToolTip="Exit GeoStudio (Ctrl+Q)" Click="MenuExit_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="System" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 3. DATA TAB PANEL                                             -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonData" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Vector" Tag="/Resources/Icons/add_vector.png" ToolTip="Add Vector Layer (Ctrl+Shift+V)" Click="BtnAddVector_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Raster / DEM" Tag="/Resources/Icons/add_raster.png" ToolTip="Add 100GB+ BigTIFF / Raster (Ctrl+Shift+R)" Click="BtnAddRaster_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="LiDAR" Tag="/Resources/Icons/load_las.png" ToolTip="Add LiDAR Point Cloud (LAS/LAZ)" Click="BtnAddLidar_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="OSM Basemap" Tag="/Resources/Icons/add_xyz.png" ToolTip="Add OpenStreetMap XYZ Basemap" Click="BtnAddOsm_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="WMS / WMTS" Tag="/Resources/Icons/add_wms.png" ToolTip="Add WMS / WMTS Basemap Layer" Click="BtnDatabase_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="File Browser" Tag="/Resources/Icons/browser_panel.png" ToolTip="Browse Local Files / Layers Panel" Click="BtnFileBrowser_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Data Sources" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Remove Layer" Tag="/Resources/Icons/delete.png" ToolTip="Remove Selected Layer (Ctrl+D)" Click="MenuRemoveLayer_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Attributes" Tag="/Resources/Icons/identify.png" ToolTip="Attribute Table (F6)" Click="BtnIdentify_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Management" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Also Alias for PanelRibbonLayer to maintain compatibility -->
+                    <StackPanel x:Name="PanelRibbonLayer" Orientation="Horizontal" Visibility="Collapsed"/>
+
+                    <!-- ============================================================= -->
+                    <!-- 4. STYLE TAB PANEL                                            -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonStyle" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="2,0,4,0">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                        <Image Source="/Resources/Icons/shader.png" Width="14" Height="14" Margin="0,0,4,0"/>
+                                        <ComboBox x:Name="ComboShader" Width="110" Style="{StaticResource RustGisComboBox}" SelectionChanged="ComboShader_SelectionChanged">
+                                            <ComboBoxItem Content="Shader ▾" IsSelected="True"/>
+                                            <ComboBoxItem Content="Atlas (Global Mapper)"/>
+                                            <ComboBoxItem Content="Elevation Terrain"/>
+                                            <ComboBoxItem Content="Slope Map"/>
+                                            <ComboBoxItem Content="Aspect Map"/>
+                                            <ComboBoxItem Content="Hillshade"/>
+                                            <ComboBoxItem Content="TRI (Ruggedness)"/>
+                                            <ComboBoxItem Content="TPI (Position)"/>
+                                            <ComboBoxItem Content="TWI (Wetness)"/>
+                                            <ComboBoxItem Content="Curvature"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="/Resources/Icons/elevation.png" Width="14" Height="14" Margin="0,0,4,0"/>
+                                        <ComboBox x:Name="ComboAtlas" Width="110" Style="{StaticResource RustGisComboBox}" SelectionChanged="ComboAtlas_SelectionChanged">
+                                            <ComboBoxItem Content="Atlas ▾" IsSelected="True"/>
+                                            <ComboBoxItem Content="Atlas (Global Mapper)"/>
+                                            <ComboBoxItem Content="Terrain (Earth Tones)"/>
+                                            <ComboBoxItem Content="Magma"/>
+                                            <ComboBoxItem Content="Viridis"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </StackPanel>
+                                
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="3D Relief" Tag="/Resources/Icons/elevation.png" ToolTip="Elevation Symbology &amp; 3D Relief (Ctrl+Shift+E)" Click="MenuElevation_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Hillshade" Tag="/Resources/Icons/hillshade.png" ToolTip="3D Hillshade Relief" Click="MenuHillshade_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="3D Mesh" Tag="/Resources/Icons/view_3d.png" ToolTip="Interactive 3D Surface / Viewer" Click="Btn3dMesh_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Symbology &amp; Shaders" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 5. EDIT TAB PANEL                                             -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonEdit" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Undo" Tag="/Resources/Icons/undo.png" ToolTip="Undo (Ctrl+Z)" Click="BtnUndo_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Redo" Tag="/Resources/Icons/redo.png" ToolTip="Redo (Ctrl+Y)" Click="BtnRedo_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="History" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Edit Mode" Tag="/Resources/Icons/toggle_edit.png" ToolTip="Toggle Editing (Ctrl+E)" Click="BtnToggleEdit_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Add Point" Tag="/Resources/Icons/add_point.png" ToolTip="Add Point Feature" Click="BtnDigitizePoint_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Add Line" Tag="/Resources/Icons/add_line.png" ToolTip="Add Line Feature" Click="BtnDigitizeLine_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Add Poly" Tag="/Resources/Icons/add_poly.png" ToolTip="Add Polygon Feature" Click="BtnDigitizePolygon_Click"/>
+                                
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Vertex Tool" Tag="/Resources/Icons/vertex_tool.png" ToolTip="Vertex Node Editor Tool" Click="BtnVertexTool_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Split Geometry" Tag="/Resources/Icons/split.png" ToolTip="Split Selected Feature" Click="BtnSplitGeometry_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Delete Feature" Tag="/Resources/Icons/delete.png" ToolTip="Delete Selected Features" Click="BtnDeleteFeature_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock Text="Digitizing" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Clear Select" Tag="/Resources/Icons/clear_selection.png" ToolTip="Clear Selection" Click="BtnClearSelection_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Clear Draw" Tag="/Resources/Icons/delete.png" ToolTip="Clear Digitized Geometries" Click="BtnClearDigitized_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Selection &amp; Maintenance" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 6. ANALYZE TAB PANEL (TERRAIN & GEOPROCESSING)                -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonAnalyze" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Slope" Tag="/Resources/Icons/slope.png" ToolTip="Calculate Slope" Click="MenuSlope_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Aspect" Tag="/Resources/Icons/aspect.png" ToolTip="Calculate Aspect Direction" Click="MenuAspect_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Hillshade" Tag="/Resources/Icons/hillshade.png" ToolTip="3D Hillshade Relief" Click="MenuHillshade_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Profile" Tag="/Resources/Icons/profile.png" ToolTip="Elevation Profile Tool" Click="MenuProfile_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Contours" Tag="/Resources/Icons/watershed.png" ToolTip="Generate Contour Lines" Click="MenuContour_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Cut / Fill" Tag="/Resources/Icons/cut_fill.png" ToolTip="Cut / Fill Earthwork Volume" Click="MenuCutFill_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Terrain Analysis" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Buffer" Tag="/Resources/Icons/select_radius.png" ToolTip="Geodesic Buffer Geometry..." Click="MenuBuffer_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Convex Hull" Tag="/Resources/Icons/select_poly.png" ToolTip="Calculate Convex Hull" Click="MenuConvexHull_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Centroids" Tag="/Resources/Icons/add_point.png" ToolTip="Calculate Centroids" Click="MenuCentroids_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Voronoi" Tag="/Resources/Icons/select_poly.png" ToolTip="Voronoi Polygons" Click="MenuVoronoi_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Clip Vector" Tag="/Resources/Icons/clip.png" ToolTip="Clip Vector Layer by Mask..." Click="MenuClipVector_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Geoprocessing" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Also Alias for PanelRibbonTerrain to maintain compatibility -->
+                    <StackPanel x:Name="PanelRibbonTerrain" Orientation="Horizontal" Visibility="Collapsed"/>
+
+                    <!-- ============================================================= -->
+                    <!-- 7. VIEW TAB PANEL                                             -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonView" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Pan" Tag="/Resources/Icons/pan.png" ToolTip="Pan Map (P)" Click="BtnPan_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Zoom In" Tag="/Resources/Icons/zoom_in.png" ToolTip="Zoom In (+)" Click="BtnZoomIn_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Zoom Out" Tag="/Resources/Icons/zoom_out.png" ToolTip="Zoom Out (-)" Click="BtnZoomOut_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Full Extent" Tag="/Resources/Icons/zoom_full.png" ToolTip="Zoom to Full Extent (Ctrl+Shift+F)" Click="BtnZoomFull_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Refresh" Tag="/Resources/Icons/refresh.png" ToolTip="Refresh Map Canvas (F5)" Click="BtnRefresh_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Navigation" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Swipe" Tag="/Resources/Icons/swipe.png" ToolTip="Layer Swipe Compare (Ctrl+Shift+W)" Click="BtnSplit_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Blend Mode" Tag="/Resources/Icons/blend_mode.png" ToolTip="Blend Mode / Inset Overview" Click="BtnOverview_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="3D View" Tag="/Resources/Icons/view_3d.png" ToolTip="3D Point Cloud Workstation" Click="Btn3dMesh_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Comparison &amp; 3D" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 8. LIDAR TAB PANEL                                            -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonLidar" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Load LAS" Tag="/Resources/Icons/load_las.png" ToolTip="Load LAS / LAZ Point Cloud File" Click="BtnAddLidar_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Classify Ground" Tag="/Resources/Icons/classify_ground.png" ToolTip="Auto-Classify Ground (SMRF / HAG)" Click="BtnLidarClassifyGround_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Buildings" Tag="/Resources/Icons/classify_buildings.png" ToolTip="Classify Building Structures" Click="BtnLidarClassifyBuildings_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Vegetation" Tag="/Resources/Icons/classify_veg.png" ToolTip="Classify Vegetation Canopy" Click="BtnLidarClassifyVeg_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Thinning" Tag="/Resources/Icons/thin.png" ToolTip="Point Density Decimation / Thinning" Click="BtnLidarThin_Click"/>
+
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="/Resources/Icons/color_by.png" Width="14" Height="14" Margin="0,0,4,0"/>
+                                        <ComboBox x:Name="ComboLidarColorBy" Width="160" Style="{StaticResource RustGisComboBox}" SelectionChanged="ComboLidarColorBy_SelectionChanged">
+                                            <ComboBoxItem Content="Color By ▾" IsSelected="True"/>
+                                            <ComboBoxItem Content="Color Lidar by RGB/Elev"/>
+                                            <ComboBoxItem Content="Color Lidar by Elevation"/>
+                                            <ComboBoxItem Content="Color Lidar by Intensity"/>
+                                            <ComboBoxItem Content="Color Lidar by Classification"/>
+                                            <ComboBoxItem Content="Color Lidar by Return Number"/>
+                                            <ComboBoxItem Content="Color Lidar by Height Above Ground"/>
+                                            <ComboBoxItem Content="Color Lidar by Scan Angle"/>
+                                            <ComboBoxItem Content="Color Lidar by Point Source ID"/>
+                                            <ComboBoxItem Content="Color Lidar by Segment"/>
+                                            <ComboBoxItem Content="Color Lidar using NDVI (Veg)"/>
+                                            <ComboBoxItem Content="Color Lidar using NDWI (Water)"/>
+                                            <ComboBoxItem Content="Color Lidar by Point Density"/>
+                                            <Separator/>
+                                            <ComboBoxItem Content="⚡ Auto-Classify Ground &amp; Canopy (SMRF)..." FontWeight="SemiBold" Foreground="#D97706"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock Text="LiDAR / Point Cloud" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Bare DTM" Tag="/Resources/Icons/elevation.png" ToolTip="Generate Bare-Earth DTM" Click="MenuLidarDtm_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="CHM Canopy" Tag="/Resources/Icons/classify_veg.png" ToolTip="Canopy Height Model (CHM)" Click="MenuLidarChm_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="3D Viewer" Tag="/Resources/Icons/view_3d.png" ToolTip="Interactive 3D Point Cloud Workstation" Click="Btn3dMesh_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Derivatives &amp; 3D" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 9. VECTOR TAB PANEL                                           -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonVector" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Toggle Edit" Tag="/Resources/Icons/toggle_edit.png" ToolTip="Toggle Vector Editing (Ctrl+E)" Click="BtnToggleEdit_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Add Point" Tag="/Resources/Icons/add_point.png" ToolTip="Add Point Feature" Click="BtnDigitizePoint_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Add Line" Tag="/Resources/Icons/add_line.png" ToolTip="Add Line Feature" Click="BtnDigitizeLine_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Add Poly" Tag="/Resources/Icons/add_poly.png" ToolTip="Add Polygon Feature" Click="BtnDigitizePolygon_Click"/>
+                                
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Split Geometry" Tag="/Resources/Icons/split.png" ToolTip="Split Selected Feature" Click="BtnSplitGeometry_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Delete Feature" Tag="/Resources/Icons/delete.png" ToolTip="Delete Selected Features" Click="BtnDeleteFeature_Click"/>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Vertex Tool" Tag="/Resources/Icons/vertex_tool.png" ToolTip="Vertex Node Editor Tool" Click="BtnVertexTool_Click"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="/Resources/Icons/snapping.png" Width="14" Height="14" Margin="0,0,4,0"/>
+                                        <ComboBox x:Name="ComboSnapping" Width="95" Style="{StaticResource RustGisComboBox}" SelectionChanged="ComboSnapping_SelectionChanged">
+                                            <ComboBoxItem Content="Snapping ▾" IsSelected="True"/>
+                                            <ComboBoxItem Content="Enable Snapping"/>
+                                            <ComboBoxItem Content="Snap to Vertices"/>
+                                            <ComboBoxItem Content="Snap to Segments"/>
+                                            <ComboBoxItem Content="Snap to Area"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <Button Style="{StaticResource RustGisSmallBtn}" Content="Undo Vertex" Tag="/Resources/Icons/undo.png" ToolTip="Undo Last Vertex" Click="BtnUndoVertex_Click" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock Text="Digitizing" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Buffer" Tag="/Resources/Icons/select_radius.png" ToolTip="Geodesic Buffer Geometry..." Click="MenuBuffer_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Convex Hull" Tag="/Resources/Icons/select_poly.png" ToolTip="Calculate Convex Hull" Click="MenuConvexHull_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Centroids" Tag="/Resources/Icons/add_point.png" ToolTip="Calculate Centroids" Click="MenuCentroids_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Voronoi" Tag="/Resources/Icons/select_poly.png" ToolTip="Voronoi Polygons" Click="MenuVoronoi_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Dissolve" Tag="/Resources/Icons/merge.png" ToolTip="Dissolve Boundaries" Click="MenuDissolve_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Attributes" Tag="/Resources/Icons/identify.png" ToolTip="Open Attribute Table (F6)" Click="BtnIdentify_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Geoprocessing" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 10. RASTER TAB PANEL                                          -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonRaster" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Hillshade" Tag="/Resources/Icons/hillshade.png" ToolTip="Compute 3D Hillshade Relief" Click="MenuHillshade_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Slope" Tag="/Resources/Icons/slope.png" ToolTip="Slope Gradient Analysis" Click="MenuSlope_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Aspect" Tag="/Resources/Icons/aspect.png" ToolTip="Aspect Direction Analysis" Click="MenuAspect_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="TRI" Tag="/Resources/Icons/profile.png" ToolTip="TRI (Terrain Ruggedness Index)" Click="MenuTri_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="TPI" Tag="/Resources/Icons/elevation.png" ToolTip="TPI (Topographic Position Index)" Click="MenuTpi_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Surface Analysis" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Clip Raster" Tag="/Resources/Icons/clip.png" ToolTip="Crop / Clip Raster by Mask..." Click="MenuClipRaster_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Statistics" Tag="/Resources/Icons/identify.png" ToolTip="Raster Statistics &amp; Histogram" Click="MenuRasterStats_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Extraction &amp; Stats" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 11. SATELLITE TAB PANEL                                       -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonSatellite" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="NDVI" Tag="/Resources/Icons/classify_veg.png" ToolTip="NDVI (Normalized Difference Vegetation Index)" Click="MenuNdvi_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="NDWI" Tag="/Resources/Icons/add_xyz.png" ToolTip="NDWI (Normalized Difference Water Index)" Click="MenuNdwi_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="EVI" Tag="/Resources/Icons/classify_veg.png" ToolTip="EVI (Enhanced Vegetation Index)" Click="MenuEvi_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="NDBI" Tag="/Resources/Icons/classify_buildings.png" ToolTip="NDBI (Normalized Difference Built-up Index)" Click="MenuNdbi_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="NBR" Tag="/Resources/Icons/shader.png" ToolTip="NBR (Normalized Burn Ratio)" Click="MenuNbr_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="False Color" Tag="/Resources/Icons/color_by.png" ToolTip="False Color RGB Composite..." Click="MenuFalseColor_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Spectral Indices" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 12. PROCESSING TAB PANEL                                      -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonProcessing" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Toolbox" Tag="/Resources/Icons/control_center.png" ToolTip="Processing Toolbox (Ctrl+Alt+T)" Click="MenuProcessingToolbox_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Python Console" Tag="/Resources/Icons/configure.png" ToolTip="Python Pipeline Console (Ctrl+Alt+P)" Click="MenuPythonConsole_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Bridge Status" Tag="/Resources/Icons/refresh.png" ToolTip="Python Pipeline Bridge Status" Click="MenuPythonStatus_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Processing Tools" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 13. 3D TAB PANEL                                              -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbon3D" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="3D Point Cloud" Tag="/Resources/Icons/view_3d.png" ToolTip="Open 3D Point Cloud Workstation" Click="Btn3dMesh_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="3D Elevation" Tag="/Resources/Icons/elevation.png" ToolTip="3D Elevation Surface Draping" Click="MenuElevation_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="3D Workstation" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 14. SETTINGS TAB PANEL                                        -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonSettings" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="GPU Status" Tag="/Resources/Icons/configure.png" ToolTip="Hardware Budget &amp; GPU Status" Click="MenuGpuStatus_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Purge Cache" Tag="/Resources/Icons/refresh.png" ToolTip="Clear Disk Cache &amp; Reset Memory" Click="MenuClearCache_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Hardware &amp; Performance" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 15. PLUGINS TAB PANEL                                         -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonPlugins" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Python Console" Tag="/Resources/Icons/configure.png" ToolTip="Python Pipeline Console (Ctrl+Alt+P)" Click="MenuPythonConsole_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Bridge Status" Tag="/Resources/Icons/refresh.png" ToolTip="Python Pipeline Bridge Status" Click="MenuPythonStatus_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Python Extensions" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ============================================================= -->
+                    <!-- 16. HELP TAB PANEL                                            -->
+                    <!-- ============================================================= -->
+                    <StackPanel x:Name="PanelRibbonHelp" Orientation="Horizontal" Visibility="Collapsed">
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="Docs" Tag="/Resources/Icons/browser_panel.png" ToolTip="GeoStudio Documentation" Click="MenuDocs_Click"/>
+                                <Button Style="{StaticResource RustGisLargeBtn}" Content="About" Tag="/Resources/Icons/control_center.png" ToolTip="About GeoStudio Standalone GIS" Click="MenuAbout_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Help &amp; Support" Style="{StaticResource RustGisGroupLabel}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+
+        <!-- ========================================================================= -->
+        <!-- ROW 3: MAIN WORKSPACE (SIDEBAR + MAP CANVAS)                              -->
+        <!-- ========================================================================= -->
+        <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <!-- Left Sidebar: Layers Panel -->
                 <ColumnDefinition Width="280" MinWidth="180" MaxWidth="500"/>
@@ -749,9 +986,9 @@
         </Grid>
 
         <!-- ========================================================================= -->
-        <!-- ROW 3: STATUS BAR                                                         -->
+        <!-- ROW 4: STATUS BAR                                                         -->
         <!-- ========================================================================= -->
-        <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="8,2">
+        <Border Grid.Row="4" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="8,2">
             <Grid VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
                     <!-- Coordinate X/Y -->
