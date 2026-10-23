@@ -42,6 +42,21 @@ function getActiveElementsDescription() {
   if (isPointCloudVisible && pointCloudBatch && pointCloudBatch.count > 0) return `${pointCloudBatch.count.toLocaleString()} Pts Quad`;
   if (isPointCloudVisible && pointCloudData && pointCloudData.length > 0) return `${pointCloudData.length.toLocaleString()} Pts Cloud`;
   if (activeRasterInfo) return `${activeRasterInfo.width || 4096}x${activeRasterInfo.height || 4096} Raster`;
+
+  if (typeof map !== 'undefined' && map && map.getLayers) {
+    const vLayers = map.getLayers().getArray().filter(l => l && l.get && l.get('type') === 'Vector' && (!l.getVisible || l.getVisible()));
+    if (vLayers.length > 0) {
+      const isGpu = vLayers.some(l => l.get('gpuAccelerated') || (typeof ol !== 'undefined' && ol.layer && ol.layer.VectorImage && l instanceof ol.layer.VectorImage));
+      let totalFeats = 0;
+      vLayers.forEach(l => {
+        const src = l.getSource && l.getSource();
+        if (src && src.getFeatures) totalFeats += src.getFeatures().length;
+      });
+      const featCountStr = totalFeats > 0 ? `${totalFeats.toLocaleString()} feats` : 'Vector';
+      return isGpu ? `⚡ GPU Vector (${featCountStr})` : `Vector (${featCountStr})`;
+    }
+  }
+
   return 'Base Vector / Tiles';
 }
 
@@ -67,10 +82,15 @@ function initTelemetryHandlers() {
     const currentZoom = mapView.getZoom() || 5.0;
     const activity = lastInteractionType !== 'IDLE' ? lastInteractionType : 'PAN';
 
+    const centerLonLat = ol.proj.toLonLat(mapView.getCenter());
+
     postToHost({
       action: 'viewportTelemetry',
       activity: activity,
       zoom: currentZoom.toFixed(1),
+      zoomNum: currentZoom,
+      centerLon: centerLonLat[0],
+      centerLat: centerLonLat[1],
       redrawMs: redrawMs,
       fps: currentFps,
       frameTimeMs: (redrawMs > 0 && redrawMs < 50 ? redrawMs / 8 : 1.6).toFixed(1),
@@ -109,3 +129,5 @@ function initTelemetryHandlers() {
     }
   }, 1000);
 }
+
+initTelemetryHandlers();

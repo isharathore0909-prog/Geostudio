@@ -171,3 +171,64 @@ function applyTerrainShader(shaderMode) {
     canvasEl.style.filter = 'none';
   }
 }
+
+// ── Layer Compositing & Blend Modes (ArcGIS Appearance → Layer Blend) ──
+let currentRasterBlendMode = 'source-over';
+
+function applyLayerBlendMode(modeName) {
+  const modeKey = (modeName || 'Normal').toLowerCase().replace(/\s+/g, '');
+  const blendMap = {
+    'normal': 'source-over',
+    'multiply': 'multiply',
+    'screen': 'screen',
+    'overlay': 'overlay',
+    'darken': 'darken',
+    'lighten': 'lighten',
+    'colordodge': 'color-dodge',
+    'colorburn': 'color-burn',
+    'hardlight': 'hard-light',
+    'softlight': 'soft-light',
+    'difference': 'difference',
+    'exclusion': 'exclusion'
+  };
+  const compositeOp = blendMap[modeKey] || 'source-over';
+  currentRasterBlendMode = compositeOp;
+
+  const rasterLayers = map.getLayers().getArray().filter(l => {
+    const id = l.get('id') || '';
+    return id.startsWith('raster_img_') || id === 'hires_viewport_layer';
+  });
+
+  rasterLayers.forEach(l => {
+    l.un('prerender', blendPreRender);
+    l.un('postrender', blendPostRender);
+  });
+
+  if (compositeOp !== 'source-over') {
+    rasterLayers.forEach(l => {
+      l.on('prerender', blendPreRender);
+      l.on('postrender', blendPostRender);
+    });
+  }
+
+  // Also apply mixBlendMode to ol-layer canvas
+  const canvasElements = document.querySelectorAll('.ol-layer canvas');
+  canvasElements.forEach(c => {
+    c.style.mixBlendMode = (compositeOp !== 'source-over') ? compositeOp : 'normal';
+  });
+
+  map.render();
+}
+
+function blendPreRender(event) {
+  const ctx = event.context;
+  if (!ctx || currentRasterBlendMode === 'source-over') return;
+  ctx.save();
+  ctx.globalCompositeOperation = currentRasterBlendMode;
+}
+
+function blendPostRender(event) {
+  const ctx = event.context;
+  if (!ctx || currentRasterBlendMode === 'source-over') return;
+  ctx.restore();
+}

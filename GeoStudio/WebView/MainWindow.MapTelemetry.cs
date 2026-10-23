@@ -38,6 +38,13 @@ namespace GeoStudio
                 if (!string.IsNullOrEmpty(activeElements) && TxtActiveElements != null) TxtActiveElements.Text = activeElements;
                 if (TxtGpuFps != null) TxtGpuFps.Text = $"{fps} FPS";
                 if (TxtGpuFrameTime != null) TxtGpuFrameTime.Text = $"~{frameMs} ms";
+
+                if (root.TryGetProperty("centerLon", out var cLon) &&
+                    root.TryGetProperty("centerLat", out var cLat) &&
+                    root.TryGetProperty("zoomNum", out var zNum))
+                {
+                    RecordViewportExtent(cLon.GetDouble(), cLat.GetDouble(), zNum.GetDouble());
+                }
             }
             else if (action == "layerBenchmark")
             {

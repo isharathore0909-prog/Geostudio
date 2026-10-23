@@ -81,7 +81,13 @@ namespace GeoStudio
                         double lon2 = p2.GetProperty("lon").GetDouble();
                         double lat2 = p2.GetProperty("lat").GetDouble();
 
-                        var activeRaster = Layers.LastOrDefault(l => l.Type == LayerType.Raster);
+                        var activeRaster = (_activeRasterLayerId != null ? FindLayer(_activeRasterLayerId) : null);
+                        if (activeRaster == null || string.IsNullOrEmpty(activeRaster.FilePath) || !File.Exists(activeRaster.FilePath))
+                        {
+                            activeRaster = Layers.LastOrDefault(l => (l.Type == LayerType.Raster || l.Type == LayerType.Elevation) && l.IsElevation && !string.IsNullOrEmpty(l.FilePath) && File.Exists(l.FilePath))
+                                        ?? Layers.LastOrDefault(l => (l.Type == LayerType.Raster || l.Type == LayerType.Elevation) && !string.IsNullOrEmpty(l.FilePath) && File.Exists(l.FilePath));
+                        }
+
                         if (activeRaster != null && !string.IsNullOrEmpty(activeRaster.FilePath) && File.Exists(activeRaster.FilePath))
                         {
                             var (distances, elevations) = GdalRasterService.SampleProfileLine(activeRaster.FilePath, lon1, lat1, lon2, lat2);
@@ -113,10 +119,43 @@ namespace GeoStudio
                                 TxtStatus.Text = "No valid elevation data found along the drawn profile transect.";
                             }
                         }
+                        else
+                        {
+                            TxtStatus.Text = "Please load a DEM / Elevation raster layer to extract profile transects.";
+                        }
                     }
                     catch (Exception ex)
                     {
                         TxtStatus.Text = $"Profile extraction error: {ex.Message}";
+                    }
+                }
+                else if (action == "clipMaskDrawn")
+                {
+                    try
+                    {
+                        string geojson = root.GetProperty("geojson").GetString() ?? "";
+                        bool isBox = root.TryGetProperty("isBox", out var ib) && ib.GetBoolean();
+
+                        string cacheDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cache");
+                        Directory.CreateDirectory(cacheDir);
+                        string maskPath = Path.Combine(cacheDir, "drawn_clip_mask.geojson");
+                        File.WriteAllText(maskPath, geojson);
+
+                        if (ActiveClipRasterWindow != null && ActiveClipRasterWindow.IsLoaded)
+                        {
+                            ActiveClipRasterWindow.SetDrawnMask(maskPath, "Drawn Custom Polygon (on Canvas)");
+                            ActiveClipRasterWindow.Activate();
+                        }
+
+                        if (ActiveClipVectorWindow != null && ActiveClipVectorWindow.IsLoaded)
+                        {
+                            ActiveClipVectorWindow.SetDrawnMask(maskPath, "Drawn Custom Polygon (on Canvas)");
+                            ActiveClipVectorWindow.Activate();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        TxtStatus.Text = $"Clip mask capture error: {ex.Message}";
                     }
                 }
                 else if (action == "requestRasterWindow")
@@ -223,6 +262,66 @@ namespace GeoStudio
                 else if (action == "viewportTelemetry" || action == "layerBenchmark")
                 {
                     HandleTelemetryMessage(root, action);
+                }
+                else if (action == "featureIdentified")
+                {
+                    bool hasFeature = root.TryGetProperty("hasFeature", out var hf) && hf.GetBoolean();
+                    string lon = root.TryGetProperty("lon", out var ln) ? ln.GetString() ?? "" : "";
+                    string lat = root.TryGetProperty("lat", out var lt) ? lt.GetString() ?? "" : "";
+                    int elev = root.TryGetProperty("elev", out var el) ? el.GetInt32() : 0;
+                    string layerName = root.TryGetProperty("layerName", out var ly) ? ly.GetString() ?? "Vector Feature" : "Vector Feature";
+
+                    if (hasFeature)
+                    {
+                        TxtStatus.Text = $"🏷️ Identified [{layerName}]: Clicked at ({lat}°, {lon}°), Elevation: {elev}m";
+                    }
+                    else
+                    {
+                        TxtStatus.Text = $"Surface inspected: Lat {lat}°, Lon {lon}°, Elevation: {elev}m";
+                    }
+                }
+                else if (action == "vectorAttributesLoaded")
+                {
+                    string lId = root.TryGetProperty("layerId", out var li) ? li.GetString() ?? "" : "";
+                    if (!string.IsNullOrEmpty(lId) && root.TryGetProperty("fields", out var flds) && flds.ValueKind == JsonValueKind.Array)
+                    {
+                        var target = System.Linq.Enumerable.FirstOrDefault(Layers, l => l.Id == lId);
+                        if (target != null)
+                        {
+                            var fList = new System.Collections.Generic.List<string>();
+                            foreach (var f in flds.EnumerateArray())
+                            {
+                                string? fn = f.GetString();
+                                if (!string.IsNullOrEmpty(fn)) fList.Add(fn);
+                            }
+                            target.AttributeFields = fList;
+                        }
+                    }
+                }
+                else if (action == "locateCoord")
+                {
+                    string lon = root.TryGetProperty("lon", out var ln) ? ln.GetString() ?? "" : "";
+                    string lat = root.TryGetProperty("lat", out var lt) ? lt.GetString() ?? "" : "";
+                    int elev = root.TryGetProperty("elev", out var el) ? el.GetInt32() : 0;
+                    try { Clipboard.SetText($"{lat}, {lon}"); } catch { }
+                    TxtStatus.Text = $"Captured & copied to clipboard: Lat {lat}°, Lon {lon}° (Elev: {elev}m)";
+                }
+                else if (action == "featuresSelected")
+                {
+                    int count = root.TryGetProperty("count", out var c) ? c.GetInt32() : 0;
+                    TxtStatus.Text = count > 0 ? $"{count} feature(s) currently selected" : "Selection cleared";
+                }
+                else if (action == "selectByAttributeResult")
+                {
+                    int count = root.TryGetProperty("count", out var c) ? c.GetInt32() : 0;
+                    string key = root.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
+                    string val = root.TryGetProperty("value", out var v) ? v.GetString() ?? "" : "";
+                    TxtStatus.Text = $"{count} feature(s) matched attribute query ({key} = '{val}')";
+                }
+                else if (action == "statusMessage")
+                {
+                    string msg = root.TryGetProperty("message", out var m) ? m.GetString() ?? "" : "";
+                    if (!string.IsNullOrEmpty(msg)) TxtStatus.Text = msg;
                 }
             }
             catch { }

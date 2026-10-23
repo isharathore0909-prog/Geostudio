@@ -159,9 +159,9 @@
         <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <!-- Left Sidebar: Layers Panel -->
-                <ColumnDefinition Width="280" MinWidth="180" MaxWidth="500"/>
+                <ColumnDefinition x:Name="SidebarColumn" Width="280" MinWidth="0" MaxWidth="500"/>
                 <!-- Splitter -->
-                <ColumnDefinition Width="3"/>
+                <ColumnDefinition x:Name="SplitterColumn" Width="3"/>
                 <!-- Central Map Canvas -->
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>

@@ -25,6 +25,7 @@
                 <Border.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Zoom to Layer" Click="BtnZoomToLayer_Click" Tag="{Binding Id}"/>
+                        <MenuItem Header="⚡ GPU Acceleration" IsCheckable="True" IsChecked="{Binding UseGpuAcceleration}" Click="MenuToggleGpu_Click" Tag="{Binding Id}"/>
                         <Separator/>
                         <MenuItem Header="Remove Layer" Click="BtnRemoveLayer_Click" Tag="{Binding Id}" Foreground="#EF4444"/>
                     </ContextMenu>
@@ -43,10 +44,15 @@
 
                     <!-- Layer Details & Opacity -->
                     <StackPanel Grid.Column="1" Orientation="Vertical">
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Border Width="10" Height="10" CornerRadius="2" Margin="0,0,6,0" VerticalAlignment="Center" Background="#2563EB"/>
                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="11.5" Foreground="#1E293B" 
-                                       TextTrimming="CharacterEllipsis" MaxWidth="170" ToolTip="{Binding Name}"/>
+                                       TextTrimming="CharacterEllipsis" MaxWidth="125" ToolTip="{Binding Name}"/>
+                            <Border Visibility="{Binding UseGpuAcceleration, Converter={StaticResource BoolToVis}}" 
+                                    Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="2" 
+                                    Padding="2,0" Margin="4,0,0,0" VerticalAlignment="Center" ToolTip="GPU Hardware Accelerated Layer">
+                                <TextBlock Text="⚡ GPU" FontSize="8" FontWeight="Bold" Foreground="#2563EB"/>
+                            </Border>
                         </StackPanel>
                         <TextBlock Text="{Binding Details}" FontSize="9.5" Foreground="#64748B" Margin="16,2,0,0" 
                                    TextTrimming="CharacterEllipsis" MaxWidth="170" ToolTip="{Binding Details}"/>

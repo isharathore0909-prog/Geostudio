@@ -3,6 +3,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
+  left: 50%;
   width: 0;
   pointer-events: none;
   z-index: 1000;
@@ -13,19 +14,33 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 0;
-  width: 2px;
+  left: -1.5px;
+  width: 3px;
   background: #ffffff;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6), 0 0 1px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.7), 0 0 2px rgba(0, 0, 0, 0.9);
+  pointer-events: auto;
+  cursor: ew-resize;
+}
+
+/* Expanded invisible hover/drag target along the vertical line */
+#swipeLine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -14px;
+  width: 31px;
+  cursor: ew-resize;
+  pointer-events: auto;
 }
 
 #swipeHandle {
   position: absolute;
   top: 50%;
-  left: 50%;
+  left: 0;
   transform: translate(-50%, -50%);
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   background: #2563eb;
   color: #ffffff;
   border: 2.5px solid #ffffff;
@@ -35,20 +50,21 @@
   justify-content: center;
   cursor: ew-resize;
   pointer-events: auto;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  font-size: 11px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  font-size: 13px;
   user-select: none;
-  transition: transform 0.1s ease, background 0.15s ease;
+  transition: transform 0.12s ease, background 0.15s ease;
+  z-index: 2;
 }
 
 #swipeHandle:hover {
   background: #1d4ed8;
-  transform: translate(-50%, -50%) scale(1.1);
+  transform: translate(-50%, -50%) scale(1.12);
 }
 
 #swipeHandle:active {
   background: #1e40af;
-  transform: translate(-50%, -50%) scale(0.95);
+  transform: translate(-50%, -50%) scale(0.96);
 }
 
 #swipeBadge {

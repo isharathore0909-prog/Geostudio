@@ -79,7 +79,7 @@
                 <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,6,0">
                         <TextBlock Text="Snapping Tolerance:" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
-                        <ComboBox x:Name="ComboSnapping" Width="100" Style="{StaticResource RustGisComboBox}">
+                        <ComboBox x:Name="ComboSnapping" Width="100" Style="{StaticResource RustGisComboBox}" SelectionChanged="ComboSnapping_SelectionChanged">
                             <ComboBoxItem Content="Disabled"/>
                             <ComboBoxItem Content="5 Pixels"/>
                             <ComboBoxItem Content="10 Pixels" IsSelected="True"/>
@@ -106,12 +106,12 @@
         <StackPanel x:Name="PanelRibbonSatellite" Orientation="Horizontal" Visibility="Collapsed">
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="NDVI" Tag="/Resources/Icons/classify_veg.png" ToolTip="Normalized Difference Veg Index" Click="MenuNdvi_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="NDWI" Tag="/Resources/Icons/add_wms.png" ToolTip="Normalized Difference Water Index" Click="MenuNdwi_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="EVI" Tag="/Resources/Icons/classify_ground.png" ToolTip="Enhanced Vegetation Index" Click="MenuEvi_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="NDBI" Tag="/Resources/Icons/classify_buildings.png" ToolTip="Built-up Urban Index" Click="MenuNdbi_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="NBR" Tag="/Resources/Icons/cut_fill.png" ToolTip="Normalized Burn Ratio" Click="MenuNbr_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="False Color" Tag="/Resources/Icons/shader.png" ToolTip="Infrared False-Color Composite" Click="MenuFalseColor_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="NDVI" Tag="/Resources/Icons/ndvi.png" ToolTip="Normalized Difference Vegetation Index (Photosynthetic Canopy)" Click="MenuNdvi_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="NDWI" Tag="/Resources/Icons/ndwi.png" ToolTip="Normalized Difference Water Index (Moisture &amp; Water Bodies)" Click="MenuNdwi_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="EVI" Tag="/Resources/Icons/evi.png" ToolTip="Enhanced Vegetation Index (Canopy Structure &amp; Biomass)" Click="MenuEvi_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="NDBI" Tag="/Resources/Icons/ndbi.png" ToolTip="Normalized Difference Built-up Index (Urban Extent)" Click="MenuNdbi_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="NBR" Tag="/Resources/Icons/nbr.png" ToolTip="Normalized Burn Ratio (Wildfire &amp; Burn Severity)" Click="MenuNbr_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="False Color" Tag="/Resources/Icons/false_color.png" ToolTip="Standard Infrared False-Color Composite (NIR / Red / Green)" Click="MenuFalseColor_Click"/>
                 </StackPanel>
                 <TextBlock Text="Spectral Indices" Style="{StaticResource RustGisGroupLabel}"/>
             </StackPanel>

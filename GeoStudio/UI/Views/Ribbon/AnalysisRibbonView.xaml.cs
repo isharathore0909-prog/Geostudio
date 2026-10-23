@@ -34,6 +34,23 @@ namespace GeoStudio.UI.Views.Ribbon
         private void BtnRefresh_Click(object s, RoutedEventArgs e) => Main?.BtnRefresh_Click(s, e);
         private void BtnSplit_Click(object s, RoutedEventArgs e) => Main?.BtnSplit_Click(s, e);
         private void BtnOverview_Click(object s, RoutedEventArgs e) => Main?.BtnOverview_Click(s, e);
+        private void BtnBlend_Click(object s, RoutedEventArgs e)
+        {
+            if (s is Button btn && btn.ContextMenu != null)
+            {
+                btn.ContextMenu.PlacementTarget = btn;
+                btn.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+                btn.ContextMenu.IsOpen = true;
+            }
+        }
+        private void MenuBlendMode_Click(object s, RoutedEventArgs e)
+        {
+            if (s is MenuItem mi && mi.Tag is string mode)
+            {
+                Main?.ApplyLayerBlendMode(mode);
+            }
+        }
+        private void BtnTranspose_Click(object s, RoutedEventArgs e) => Main?.BtnTranspose_Click(s, e);
         private void Btn3dMesh_Click(object s, RoutedEventArgs e) => Main?.Btn3dMesh_Click(s, e);
     }
 }

@@ -12,6 +12,22 @@ public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
+        DispatcherUnhandledException += (s, args) =>
+        {
+            System.Diagnostics.Debug.WriteLine($"[UNHANDLED UI EXCEPTION] {args.Exception}");
+            MessageBox.Show($"An unexpected error occurred:\n{args.Exception.Message}", "GeoStudio", MessageBoxButton.OK, MessageBoxImage.Warning);
+            args.Handled = true;
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+        {
+            if (args.ExceptionObject is Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FATAL DOMAIN EXCEPTION] {ex}");
+                MessageBox.Show($"Application error:\n{ex.Message}", "GeoStudio Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        };
+
         Environment.SetEnvironmentVariable("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0xFFFFFFFF");
         if (e.Args.Length > 1 && e.Args[0] == "--test-preview")
         {

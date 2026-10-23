@@ -21,6 +21,9 @@ namespace GeoStudio
         private string? _activeRasterShaderMode = null;
         private string? _activeRasterPalette = null;
         private UI.ElevationProfileWindow? _activeProfileWindow = null;
+        public UI.Dialogs.ClipRasterWindow? ActiveClipRasterWindow { get; set; }
+        public UI.Dialogs.GeoprocessingWindow? ActiveClipVectorWindow { get; set; }
+        public UI.Dialogs.SpectralIndicesWindow? ActiveSpectralIndicesWindow { get; set; }
         private PointCloud.PointCloudBatch? _activePointCloudBatch = null;
 
         public MainWindow()
@@ -30,6 +33,21 @@ namespace GeoStudio
             _isInitialized = true;
             LayersListControl.ItemsSource = Layers;
             Loaded += MainWindow_Loaded;
+            KeyDown += MainWindow_KeyDown;
+        }
+
+        private void MainWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Z && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+            {
+                BtnUndo_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+            else if (e.Key == System.Windows.Input.Key.Y && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+            {
+                BtnRedo_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
         }
 
         #region Tabbed Ribbon Navigation
@@ -152,7 +170,7 @@ namespace GeoStudio
 
                         Directory.CreateDirectory(folder);
                         var options = new CoreWebView2EnvironmentOptions();
-                        options.AdditionalBrowserArguments = "--enable-gpu-rasterization --enable-zero-copy --ignore-gpu-blocklist --enable-webgl --default-background-color=0xFFFFFFFF";
+                        options.AdditionalBrowserArguments = "--enable-gpu-rasterization --enable-zero-copy --ignore-gpu-blocklist --enable-webgl --enable-webgl2-compute-context --enable-features=CanvasOopRasterization,SkiaGraphite --default-background-color=0xFFFFFFFF";
                         var env = await CoreWebView2Environment.CreateAsync(null, folder, options);
                         var controllerOptions = env.CreateCoreWebView2ControllerOptions();
                         controllerOptions.DefaultBackgroundColor = System.Drawing.Color.White;
@@ -170,7 +188,7 @@ namespace GeoStudio
                 {
                     MapWebView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
                     await MapWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(
-                        "document.documentElement.style.backgroundColor = '#ffffff'; if (document.body) document.body.style.backgroundColor = '#ffffff';"
+                        "if (document.documentElement) document.documentElement.style.backgroundColor = '#ffffff'; if (document.body) document.body.style.backgroundColor = '#ffffff';"
                     );
                     MapWebView.NavigationCompleted += (s, args) =>
                     {
@@ -238,7 +256,7 @@ namespace GeoStudio
             }
         }
 
-        private void PostMessageToMap(object payload)
+        public void PostMessageToMap(object payload)
         {
             if (!_isMapReady || MapWebView.CoreWebView2 == null) return;
             string json = JsonSerializer.Serialize(payload);

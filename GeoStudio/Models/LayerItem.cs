@@ -35,6 +35,20 @@ namespace GeoStudio.Models
         private bool _isElevation = false;
         private double _minElevation = 0;
         private double _maxElevation = 0;
+        private bool _useGpuAcceleration = true;
+        private System.Collections.Generic.List<string> _attributeFields = new();
+
+        public bool UseGpuAcceleration
+        {
+            get => _useGpuAcceleration;
+            set { _useGpuAcceleration = value; OnPropertyChanged(); }
+        }
+
+        public System.Collections.Generic.List<string> AttributeFields
+        {
+            get => _attributeFields;
+            set { _attributeFields = value; OnPropertyChanged(); }
+        }
 
         public string? ShaderMode
         {

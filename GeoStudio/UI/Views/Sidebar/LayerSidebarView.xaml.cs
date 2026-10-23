@@ -23,5 +23,6 @@ namespace GeoStudio.UI.Views.Sidebar
         private void BtnAddRaster_Click(object s, RoutedEventArgs e) => Main?.BtnAddRaster_Click(s, e);
         private void BtnAddOsm_Click(object s, RoutedEventArgs e) => Main?.BtnAddOsm_Click(s, e);
         private void BtnToggleTelemetry_Click(object s, RoutedEventArgs e) => Main?.BtnToggleTelemetry_Click(s, e);
+        private void MenuToggleGpu_Click(object s, RoutedEventArgs e) => Main?.MenuToggleGpu_Click(s, e);
     }
 }

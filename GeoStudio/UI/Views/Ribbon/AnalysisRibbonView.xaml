@@ -37,7 +37,32 @@
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Full&#x0a;Extent" Tag="/Resources/Icons/zoom_full.png" ToolTip="Zoom to Full Extent" Click="BtnZoomFull_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Refresh" Tag="/Resources/Icons/refresh.png" ToolTip="Refresh Canvas Display" Click="BtnRefresh_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Swipe&#x0a;Compare" Tag="/Resources/Icons/swipe.png" ToolTip="Interactive Swipe &amp; Compare Surfaces" Click="BtnSplit_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Overview&#x0a;Inset" Tag="/Resources/Icons/map_layout.png" ToolTip="Toggle Overview Inset Map" Click="BtnOverview_Click"/>
+                    <Button x:Name="BtnBlendMode" Style="{StaticResource RustGisLargeBtn}" Content="Blending ▾" Tag="/Resources/Icons/blend_mode.png" ToolTip="Layer Blend Mode (Multiply, Screen, Overlay...)" Click="BtnBlend_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="── Darken ──" IsEnabled="False" FontWeight="SemiBold"/>
+                                <MenuItem Header="Normal" Tag="Normal" Click="MenuBlendMode_Click"/>
+                                <MenuItem Header="Multiply  ★" Tag="Multiply" FontWeight="SemiBold" Click="MenuBlendMode_Click"/>
+                                <MenuItem Header="Darken" Tag="Darken" Click="MenuBlendMode_Click"/>
+                                <MenuItem Header="Color Burn" Tag="Color Burn" Click="MenuBlendMode_Click"/>
+                                <Separator/>
+                                <MenuItem Header="── Lighten ──" IsEnabled="False" FontWeight="SemiBold"/>
+                                <MenuItem Header="Screen  ★" Tag="Screen" FontWeight="SemiBold" Click="MenuBlendMode_Click"/>
+                                <MenuItem Header="Lighten" Tag="Lighten" Click="MenuBlendMode_Click"/>
+                                <MenuItem Header="Color Dodge" Tag="Color Dodge" Click="MenuBlendMode_Click"/>
+                                <Separator/>
+                                <MenuItem Header="── Contrast ──" IsEnabled="False" FontWeight="SemiBold"/>
+                                <MenuItem Header="Overlay" Tag="Overlay" Click="MenuBlendMode_Click"/>
+                                <MenuItem Header="Hard Light" Tag="Hard Light" Click="MenuBlendMode_Click"/>
+                                <MenuItem Header="Soft Light" Tag="Soft Light" Click="MenuBlendMode_Click"/>
+                                <Separator/>
+                                <MenuItem Header="── Compare ──" IsEnabled="False" FontWeight="SemiBold"/>
+                                <MenuItem Header="Difference" Tag="Difference" Click="MenuBlendMode_Click"/>
+                                <MenuItem Header="Exclusion" Tag="Exclusion" Click="MenuBlendMode_Click"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Transpose" Tag="/Resources/Icons/transpose.png" ToolTip="Transpose / Pivot Fields (Wide to Long Table Normalization)" Click="BtnTranspose_Click"/>
                 </StackPanel>
                 <TextBlock Text="Map Views" Style="{StaticResource RustGisGroupLabel}"/>
             </StackPanel>

@@ -227,6 +227,24 @@ namespace GeoStudio.Python
 
             Process.Start(startInfo);
         }
+
+        public static void LaunchTransposeFields(string? filePath = null)
+        {
+            string pythonExe = ResolvePythonExecutable();
+            string bridgeScript = ResolveBridgeScriptPath();
+            string args = $"\"{bridgeScript}\" --task transpose_fields";
+            if (!string.IsNullOrEmpty(filePath)) args += $" --input \"{filePath}\"";
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = pythonExe.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) ? "cmd.exe" : pythonExe,
+                Arguments = pythonExe.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) ? $"/c \"\"{pythonExe}\" {args}\"" : args,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            Process.Start(startInfo);
+        }
     }
 
     public class PipelineResult

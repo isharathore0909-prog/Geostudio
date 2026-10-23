@@ -9,6 +9,7 @@
     html, body, #map, #offlineBackground { background-color: #ffffff !important; }
   </style>
   <!-- Local OpenLayers Styles and Modular CSS (100% Offline-Safe) -->
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="ol.css">
   <link rel="stylesheet" href="map.css">
   <link rel="stylesheet" href="Styles/widgets.css">
@@ -18,10 +19,23 @@
 <body style="background-color: #ffffff;">
   <div id="offlineBackground" style="background-color: #ffffff;"></div>
   <div id="map" style="background-color: #ffffff;"></div>
+  
+  <!-- Map Feature Info & Coordinate Popup Overlay -->
+  <div id="mapPopup" class="ol-popup">
+    <a href="#" id="mapPopupCloser" class="ol-popup-closer">✖</a>
+    <div id="mapPopupContent"></div>
+  </div>
+
   <canvas id="pointCloudCanvas"></canvas>
   <div id="swipeContainer">
     <div id="swipeLine"></div>
-    <div id="swipeHandle">◀▶</div>
+    <div id="swipeHandle" title="Drag left/right to compare layers">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
+        <polyline points="7 16 3 12 7 8"></polyline>
+        <polyline points="17 8 21 12 17 16"></polyline>
+        <line x1="12" y1="5" x2="12" y2="19" stroke-width="2"></line>
+      </svg>
+    </div>
   </div>
   <div id="swipeBadge">
     <button id="btnSwapSwipe" style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); color: #fff; border-radius: 4px; padding: 2px 7px; cursor: pointer; font-size: 11px; font-weight: 600; margin-right: 6px;">⇄ Swap</button>
@@ -67,10 +81,10 @@
 
   <!-- 2. Core Map & Source Modules -->
   <script src="Core/mapSources.js"></script>
+  <script src="mapEngine.js"></script>
   <script src="Core/mapInteractions.js"></script>
   <script src="Core/mapSwipe.js"></script>
   <script src="mapTelemetry.js"></script>
-  <script src="mapEngine.js"></script>
 
   <!-- 3. Raster Modules -->
   <script src="Raster/shaderScaleWidget.js"></script>

@@ -40,6 +40,7 @@ namespace GeoStudio.UI.Views.Ribbon
         private void MenuLidarDtm_Click(object s, RoutedEventArgs e) => Main?.MenuLidarDtm_Click(s, e);
         private void MenuLidarChm_Click(object s, RoutedEventArgs e) => Main?.MenuLidarChm_Click(s, e);
         private void BtnLidarThin_Click(object s, RoutedEventArgs e) => Main?.BtnLidarThin_Click(s, e);
+        private void ComboSnapping_SelectionChanged(object s, SelectionChangedEventArgs e) => Main?.ComboSnapping_SelectionChanged(s, e);
         private void MenuClipVector_Click(object s, RoutedEventArgs e) => Main?.MenuClipVector_Click(s, e);
         private void MenuBuffer_Click(object s, RoutedEventArgs e) => Main?.MenuBuffer_Click(s, e);
         private void MenuConvexHull_Click(object s, RoutedEventArgs e) => Main?.MenuConvexHull_Click(s, e);

@@ -147,7 +147,9 @@ namespace GeoStudio
 
         internal void MenuProfile_Click(object sender, RoutedEventArgs e)
         {
-            var activeRaster = Layers.LastOrDefault(l => l.Type == LayerType.Raster);
+            var activeRaster = (_activeRasterLayerId != null ? FindLayer(_activeRasterLayerId) : null)
+                ?? Layers.LastOrDefault(l => (l.Type == LayerType.Raster || l.Type == LayerType.Elevation) && l.IsElevation && !string.IsNullOrEmpty(l.FilePath) && File.Exists(l.FilePath))
+                ?? Layers.LastOrDefault(l => (l.Type == LayerType.Raster || l.Type == LayerType.Elevation) && !string.IsNullOrEmpty(l.FilePath) && File.Exists(l.FilePath));
             if (activeRaster == null || string.IsNullOrEmpty(activeRaster.FilePath) || !File.Exists(activeRaster.FilePath))
             {
                 MessageBox.Show("Please load a DEM / Elevation raster layer first.", "Elevation Profile", MessageBoxButton.OK, MessageBoxImage.Information);

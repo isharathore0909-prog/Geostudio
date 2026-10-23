@@ -1,13 +1,22 @@
 using System.Windows;
 using System.Windows.Controls;
+using GeoStudio.UI.Dialogs;
 
 namespace GeoStudio
 {
     public partial class MainWindow
     {
         #region Vector Digitizing Tools
-        internal void BtnToggleEdit_Click(object sender, RoutedEventArgs e) =>
-            TxtStatus.Text = "Digitizing Mode toggled (Snapping enabled)";
+        private bool _isEditingActive = false;
+
+        internal void BtnToggleEdit_Click(object sender, RoutedEventArgs e)
+        {
+            _isEditingActive = !_isEditingActive;
+            PostMessageToMap(new { action = "toggleEditing", active = _isEditingActive });
+            TxtStatus.Text = _isEditingActive
+                ? "✏️ Editing Mode ON: Vertex Tool active & snapping enabled"
+                : "Editing Mode OFF: Standard navigation mode active";
+        }
 
         internal void BtnDigitizePoint_Click(object sender, RoutedEventArgs e)
         {
@@ -27,20 +36,29 @@ namespace GeoStudio
             TxtStatus.Text = "Digitize Polygon: Click to draw polygon boundary, double click to close";
         }
 
-        internal void BtnSplitGeometry_Click(object sender, RoutedEventArgs e) =>
-            TxtStatus.Text = "Split Geometry tool active";
+        internal void BtnSplitGeometry_Click(object sender, RoutedEventArgs e)
+        {
+            PostMessageToMap(new { action = "setTool", tool = "split" });
+            TxtStatus.Text = "Split Tool: Draw a cutting line across any feature to split it, double-click to finish";
+        }
 
         internal void BtnDeleteFeature_Click(object sender, RoutedEventArgs e)
         {
-            PostMessageToMap(new { action = "clearDigitized" });
-            TxtStatus.Text = "Deleted digitized features";
+            PostMessageToMap(new { action = "deleteSelectedFeature" });
+            TxtStatus.Text = "Deleted selected feature";
         }
 
-        internal void BtnVertexTool_Click(object sender, RoutedEventArgs e) =>
-            TxtStatus.Text = "Vertex Move / Edit Tool active";
+        internal void BtnVertexTool_Click(object sender, RoutedEventArgs e)
+        {
+            PostMessageToMap(new { action = "setTool", tool = "vertex_tool" });
+            TxtStatus.Text = "Vertex Tool active: Click and drag vertices to reshape; click edge to insert vertex; Alt+click to delete vertex";
+        }
 
-        internal void BtnUndoVertex_Click(object sender, RoutedEventArgs e) =>
-            TxtStatus.Text = "Last vertex undone";
+        internal void BtnUndoVertex_Click(object sender, RoutedEventArgs e)
+        {
+            PostMessageToMap(new { action = "undoVertex" });
+            TxtStatus.Text = "Undid last vertex / feature";
+        }
 
         internal void BtnClearDigitized_Click(object sender, RoutedEventArgs e)
         {
@@ -53,29 +71,63 @@ namespace GeoStudio
             if (!_isInitialized || TxtStatus == null) return;
             if (ComboSnapping.SelectedItem is ComboBoxItem item)
             {
-                TxtStatus.Text = $"Snapping mode: {item.Content}";
+                string text = item.Content?.ToString() ?? "";
+                int tolerance = 10;
+                if (text.Contains("Disabled", System.StringComparison.OrdinalIgnoreCase)) tolerance = 0;
+                else if (text.Contains("5")) tolerance = 5;
+                else if (text.Contains("10")) tolerance = 10;
+                else if (text.Contains("20")) tolerance = 20;
+
+                TxtStatus.Text = $"Snapping tolerance: {text}";
+                PostMessageToMap(new { action = "setSnappingTolerance", tolerance = tolerance });
             }
         }
         #endregion
 
         #region Vector Spatial Algorithms
-        internal void MenuBuffer_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Geodesic Buffer Tool: Creates a 250m buffer around selected vector geometries.", "Vector Processing", MessageBoxButton.OK, MessageBoxImage.Information);
+        internal void MenuBuffer_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new GeoprocessingWindow(this, "buffer");
+            dlg.ShowDialog();
+        }
 
-        internal void MenuConvexHull_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Convex Hull: Computes the minimum convex enclosing polygon.", "Vector Processing", MessageBoxButton.OK, MessageBoxImage.Information);
+        internal void MenuConvexHull_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new GeoprocessingWindow(this, "convex_hull");
+            dlg.ShowDialog();
+        }
 
-        internal void MenuCentroids_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Vector Centroids: Calculates the geometric center point for each polygon feature.", "Centroids", MessageBoxButton.OK, MessageBoxImage.Information);
+        internal void MenuCentroids_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new GeoprocessingWindow(this, "centroids");
+            dlg.ShowDialog();
+        }
 
-        internal void MenuVoronoi_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Voronoi Polygons: Constructs Thiessen polygon partition from point dataset.", "Voronoi", MessageBoxButton.OK, MessageBoxImage.Information);
+        internal void MenuVoronoi_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new GeoprocessingWindow(this, "voronoi");
+            dlg.ShowDialog();
+        }
 
-        internal void MenuDissolve_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Dissolve Boundaries: Merges contiguous vector polygons sharing identical attributes.", "Dissolve", MessageBoxButton.OK, MessageBoxImage.Information);
+        internal void MenuDissolve_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new GeoprocessingWindow(this, "dissolve");
+            dlg.ShowDialog();
+        }
 
-        internal void MenuClipVector_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Clip Vector by Mask: Extracts vector geometries falling within boundary polygon.", "Clip Vector", MessageBoxButton.OK, MessageBoxImage.Information);
+        internal void MenuClipVector_Click(object sender, RoutedEventArgs e)
+        {
+            if (ActiveClipVectorWindow != null && ActiveClipVectorWindow.IsLoaded)
+            {
+                ActiveClipVectorWindow.SetMode("clip");
+                ActiveClipVectorWindow.Activate();
+                return;
+            }
+
+            var dlg = new GeoprocessingWindow(this, "clip");
+            ActiveClipVectorWindow = dlg;
+            dlg.Show();
+        }
         #endregion
     }
 }

@@ -108,6 +108,7 @@ namespace GeoStudio.Raster
             double p1X = lon1, p1Y = lat1;
             double p2X = lon2, p2Y = lat2;
 
+            bool isProjected = false;
             string projWkt = ds.GetProjectionRef();
             if (!string.IsNullOrWhiteSpace(projWkt))
             {
@@ -126,16 +127,34 @@ namespace GeoStudio.Raster
                     ct.TransformPoint(ptB);
                     p1X = ptA[0]; p1Y = ptA[1];
                     p2X = ptB[0]; p2Y = ptB[1];
+                    isProjected = true;
                 }
             }
 
-            double totalDist = Math.Sqrt(Math.Pow(p2X - p1X, 2) + Math.Pow(p2Y - p1Y, 2));
+            double totalDist;
+            if (isProjected)
+            {
+                totalDist = Math.Sqrt(Math.Pow(p2X - p1X, 2) + Math.Pow(p2Y - p1Y, 2));
+            }
+            else
+            {
+                // Haversine geodesic distance in meters for geographic (lat/lon) coordinates
+                double dLat = (lat2 - lat1) * Math.PI / 180.0;
+                double dLon = (lon2 - lon1) * Math.PI / 180.0;
+                double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                           Math.Cos(lat1 * Math.PI / 180.0) * Math.Cos(lat2 * Math.PI / 180.0) *
+                           Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+                double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+                totalDist = 6371000.0 * c;
+            }
+
             var distances = new double[numSamples];
             var elevations = new double[numSamples];
 
             var band = ds.GetRasterBand(1);
             band.GetNoDataValue(out double noData, out int hasNoData);
 
+            int validCount = 0;
             for (int i = 0; i < numSamples; i++)
             {
                 double t = (double)i / (numSamples - 1);
@@ -155,6 +174,7 @@ namespace GeoStudio.Raster
                     if (!float.IsNaN(v) && !float.IsInfinity(v) && (hasNoData == 0 || Math.Abs(v - noData) >= 1e-4))
                     {
                         elevations[i] = v;
+                        validCount++;
                     }
                     else
                     {
@@ -164,6 +184,26 @@ namespace GeoStudio.Raster
                 else
                 {
                     elevations[i] = i > 0 ? elevations[i - 1] : 0;
+                }
+            }
+
+            if (validCount == 0)
+            {
+                return (Array.Empty<double>(), Array.Empty<double>());
+            }
+
+            // If the start of transect was outside/no-data, backfill leading zeros with first valid elevation
+            double firstValid = 0;
+            for (int i = 0; i < numSamples; i++)
+            {
+                if (elevations[i] != 0) { firstValid = elevations[i]; break; }
+            }
+            if (firstValid != 0)
+            {
+                for (int i = 0; i < numSamples; i++)
+                {
+                    if (elevations[i] == 0) elevations[i] = firstValid;
+                    else break;
                 }
             }
 

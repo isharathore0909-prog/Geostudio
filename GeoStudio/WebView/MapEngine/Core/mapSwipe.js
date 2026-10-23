@@ -2,13 +2,17 @@
 let isSwipeActive = false;
 let swipeFraction = 0.5;
 let swipeInverted = false;
+let swipeInitialized = false;
 
 function initSwipeInteraction() {
+  if (swipeInitialized) return;
   const container = document.getElementById('swipeContainer');
   const handle = document.getElementById('swipeHandle');
+  const line = document.getElementById('swipeLine');
   const btnExit = document.getElementById('btnExitSwipe');
   const btnSwap = document.getElementById('btnSwapSwipe');
   if (!container || !handle) return;
+  swipeInitialized = true;
 
   if (btnExit) {
     btnExit.onclick = function (e) {
@@ -27,16 +31,7 @@ function initSwipeInteraction() {
   }
 
   let dragging = false;
-
-  function onPointerDown(e) {
-    dragging = true;
-    try { container.setPointerCapture(e.pointerId); } catch(err){}
-    document.body.style.cursor = 'ew-resize';
-    document.body.style.userSelect = 'none';
-    updatePosition(e.clientX);
-    e.preventDefault();
-    e.stopPropagation();
-  }
+  let activePointerId = null;
 
   function updatePosition(clientX) {
     const mapEl = document.getElementById('map');
@@ -46,6 +41,21 @@ function initSwipeInteraction() {
     swipeFraction = x / rect.width;
     container.style.left = (swipeFraction * 100) + '%';
     map.render();
+  }
+
+  function onPointerDown(e) {
+    dragging = true;
+    activePointerId = e.pointerId;
+    try {
+      if (typeof e.target.setPointerCapture === 'function') {
+        e.target.setPointerCapture(e.pointerId);
+      }
+    } catch (err) {}
+    document.body.style.cursor = 'ew-resize';
+    document.body.style.userSelect = 'none';
+    updatePosition(e.clientX);
+    e.preventDefault();
+    e.stopPropagation();
   }
 
   function onPointerMove(e) {
@@ -58,7 +68,14 @@ function initSwipeInteraction() {
   function onPointerUp(e) {
     if (dragging) {
       dragging = false;
-      try { container.releasePointerCapture(e.pointerId); } catch(err){}
+      if (activePointerId !== null) {
+        try {
+          if (e.target && typeof e.target.releasePointerCapture === 'function') {
+            e.target.releasePointerCapture(activePointerId);
+          }
+        } catch (err) {}
+        activePointerId = null;
+      }
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       e.preventDefault();
@@ -66,13 +83,20 @@ function initSwipeInteraction() {
     }
   }
 
-  container.addEventListener('pointerdown', onPointerDown);
-  container.addEventListener('mousedown', onPointerDown);
+  handle.addEventListener('pointerdown', onPointerDown);
+  if (line) line.addEventListener('pointerdown', onPointerDown);
+
   window.addEventListener('pointermove', onPointerMove, { passive: false });
-  window.addEventListener('mousemove', onPointerMove, { passive: false });
   window.addEventListener('pointerup', onPointerUp, { passive: false });
-  window.addEventListener('mouseup', onPointerUp, { passive: false });
   window.addEventListener('pointercancel', onPointerUp);
+
+  window.addEventListener('resize', function () {
+    if (isSwipeActive) {
+      const c = document.getElementById('swipeContainer');
+      if (c) c.style.left = (swipeFraction * 100) + '%';
+      if (typeof map !== 'undefined' && map) map.render();
+    }
+  });
 }
 
 function updateSwipeBadgeText() {
@@ -96,7 +120,16 @@ function toggleSwipe(forceState) {
   isSwipeActive = typeof forceState === 'boolean' ? forceState : !isSwipeActive;
   const container = document.getElementById('swipeContainer');
   const badge = document.getElementById('swipeBadge');
-  if (container) container.style.display = isSwipeActive ? 'block' : 'none';
+
+  if (container) {
+    container.style.display = isSwipeActive ? 'block' : 'none';
+    if (isSwipeActive) {
+      if (typeof swipeFraction !== 'number' || isNaN(swipeFraction)) {
+        swipeFraction = 0.5;
+      }
+      container.style.left = (swipeFraction * 100) + '%';
+    }
+  }
   if (badge) badge.style.display = isSwipeActive ? 'flex' : 'none';
 
   if (typeof hiresRasterLayer !== 'undefined' && hiresRasterLayer) {
@@ -130,29 +163,41 @@ function swipePreRender(event) {
   if (!mapSize) return;
 
   const canvas = ctx.canvas;
-  const canvasW = canvas ? canvas.width : mapSize[0];
-  const canvasH = canvas ? canvas.height : mapSize[1];
+  if (!canvas) return;
+  const canvasW = canvas.width;
+  const canvasH = canvas.height;
 
   let scaleX = 1;
   let scaleY = 1;
+  let offsetX = 0;
+  let offsetY = 0;
+
   if (typeof ctx.getTransform === 'function') {
-    const m = ctx.getTransform();
-    scaleX = m.a || 1;
-    scaleY = m.d || 1;
+    try {
+      const m = ctx.getTransform();
+      scaleX = m.a || 1;
+      scaleY = m.d || 1;
+      offsetX = m.e || 0;
+      offsetY = m.f || 0;
+    } catch (err) {}
   } else {
     scaleX = canvasW / mapSize[0];
     scaleY = canvasH / mapSize[1];
   }
 
-  const clipW = (canvasW / scaleX) * swipeFraction;
-  const clipH = canvasH / scaleY;
+  const screenSplitX = canvasW * swipeFraction;
+  const xSplit = (screenSplitX - offsetX) / scaleX;
+  const xLeft = (0 - offsetX) / scaleX;
+  const xRight = (canvasW - offsetX) / scaleX;
+  const yTop = (0 - offsetY) / scaleY;
+  const yBottom = (canvasH - offsetY) / scaleY;
 
   ctx.save();
   ctx.beginPath();
   if (!swipeInverted) {
-    ctx.rect(0, 0, clipW, clipH);
+    ctx.rect(xLeft, yTop, xSplit - xLeft, yBottom - yTop);
   } else {
-    ctx.rect(clipW, 0, (canvasW / scaleX) - clipW, clipH);
+    ctx.rect(xSplit, yTop, xRight - xSplit, yBottom - yTop);
   }
   ctx.clip();
 }

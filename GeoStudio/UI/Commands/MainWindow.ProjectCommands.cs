@@ -7,6 +7,7 @@ using GeoStudio.Python;
 using GeoStudio.DuckDB;
 using GeoStudio.Raster;
 using GeoStudio.PointCloud;
+using GeoStudio.UI.Dialogs;
 
 namespace GeoStudio
 {
@@ -67,72 +68,50 @@ namespace GeoStudio
         internal void BtnPrint_Click(object sender, RoutedEventArgs e) =>
             MessageBox.Show("Export Map Layout: Generating high-resolution 300 DPI print layout (PDF / PNG)...", "Print Layout", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        internal void BtnUndo_Click(object sender, RoutedEventArgs e) => TxtStatus.Text = "Undo last action";
-        internal void BtnRedo_Click(object sender, RoutedEventArgs e) => TxtStatus.Text = "Redo action";
+        internal void BtnUndo_Click(object sender, RoutedEventArgs e) => BtnPreviousExtent_Click(sender, e);
+        internal void BtnRedo_Click(object sender, RoutedEventArgs e) => BtnNextExtent_Click(sender, e);
         internal void MenuExit_Click(object sender, RoutedEventArgs e) => Close();
         #endregion
 
         #region Satellite & Remote Sensing
-        internal async void MenuNdvi_Click(object sender, RoutedEventArgs e)
+        internal void OpenSpectralIndicesDialog(string mode)
         {
-            if (string.IsNullOrEmpty(_activeRasterFilePath) || !File.Exists(_activeRasterFilePath))
+            if (ActiveSpectralIndicesWindow != null && ActiveSpectralIndicesWindow.IsLoaded)
             {
-                MessageBox.Show("Please load a multispectral raster layer first.", "Spectral Index", MessageBoxButton.OK, MessageBoxImage.Information);
+                ActiveSpectralIndicesWindow.SetMode(mode);
+                ActiveSpectralIndicesWindow.Activate();
                 return;
             }
 
-            TxtStatus.Text = "Calculating NDVI (Normalized Difference Vegetation Index)...";
-            var result = await PythonPipelineService.ExecuteTaskAsync("satellite", _activeRasterFilePath, param1: "NDVI", onProgress: (pct, msg) =>
-            {
-                Dispatcher.Invoke(() => TxtStatus.Text = $"NDVI Calculation: {pct}% {msg}");
-            });
-
-            if (result.Success)
-            {
-                TxtStatus.Text = "NDVI raster calculated successfully";
-                MessageBox.Show("NDVI (Vegetation Index) calculation finished.", "NDVI Analysis", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
+            var dlg = new UI.Dialogs.SpectralIndicesWindow(this, defaultMode: mode);
+            dlg.Show();
         }
 
-        internal async void MenuNdwi_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(_activeRasterFilePath) || !File.Exists(_activeRasterFilePath))
-            {
-                MessageBox.Show("Please load a multispectral raster layer first.", "Spectral Index", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            TxtStatus.Text = "Calculating NDWI (Normalized Difference Water Index)...";
-            var result = await PythonPipelineService.ExecuteTaskAsync("satellite", _activeRasterFilePath, param1: "NDWI", onProgress: (pct, msg) =>
-            {
-                Dispatcher.Invoke(() => TxtStatus.Text = $"NDWI Calculation: {pct}% {msg}");
-            });
-
-            if (result.Success)
-            {
-                TxtStatus.Text = "NDWI water index calculated successfully";
-            }
-        }
-
-        internal void MenuEvi_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Enhanced Vegetation Index (EVI): Computes atmospheric-corrected canopy greenness.", "EVI Index", MessageBoxButton.OK, MessageBoxImage.Information);
-
-        internal void MenuNdbi_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Normalized Difference Built-up Index (NDBI): Highlights urban structures.", "NDBI Index", MessageBoxButton.OK, MessageBoxImage.Information);
-
-        internal void MenuNbr_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Normalized Burn Ratio (NBR): Identifies burned areas and wildfire severity.", "NBR Index", MessageBoxButton.OK, MessageBoxImage.Information);
-
-        internal void MenuFalseColor_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("False Color Composite: Composites NIR (Band 8/5), Red (Band 4), and Green (Band 3) for vegetation reflectance visualization.", "False Color Composite", MessageBoxButton.OK, MessageBoxImage.Information);
+        internal void MenuNdvi_Click(object sender, RoutedEventArgs e) => OpenSpectralIndicesDialog("NDVI");
+        internal void MenuNdwi_Click(object sender, RoutedEventArgs e) => OpenSpectralIndicesDialog("NDWI");
+        internal void MenuEvi_Click(object sender, RoutedEventArgs e) => OpenSpectralIndicesDialog("EVI");
+        internal void MenuNdbi_Click(object sender, RoutedEventArgs e) => OpenSpectralIndicesDialog("NDBI");
+        internal void MenuNbr_Click(object sender, RoutedEventArgs e) => OpenSpectralIndicesDialog("NBR");
+        internal void MenuFalseColor_Click(object sender, RoutedEventArgs e) => OpenSpectralIndicesDialog("FALSE_COLOR");
         #endregion
 
         #region Raster Operations & Diagnostics
-        internal void MenuClipRaster_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Crop / Clip Raster by Mask: Subsets raster dataset using vector boundary polygon.", "Clip Raster", MessageBoxButton.OK, MessageBoxImage.Information);
+        internal void MenuClipRaster_Click(object sender, RoutedEventArgs e)
+        {
+            if (ActiveClipRasterWindow != null && ActiveClipRasterWindow.IsLoaded)
+            {
+                ActiveClipRasterWindow.Activate();
+                return;
+            }
+            var dlg = new ClipRasterWindow(this);
+            dlg.Show();
+        }
 
-        internal void MenuRasterStats_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Raster Statistics: Min, Max, Mean, Standard Deviation, and 256-bin histogram.", "Raster Statistics", MessageBoxButton.OK, MessageBoxImage.Information);
+        internal void MenuRasterStats_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new RasterStatsWindow(this);
+            dlg.ShowDialog();
+        }
 
         internal void MenuRemoveLayer_Click(object sender, RoutedEventArgs e)
         {

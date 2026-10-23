@@ -126,5 +126,23 @@ namespace GeoStudio
                 }
             }
         }
+
+        internal void MenuToggleGpu_Click(object sender, RoutedEventArgs e)
+        {
+            string? layerId = (sender as FrameworkElement)?.Tag as string;
+            if (string.IsNullOrEmpty(layerId)) return;
+            var layer = FindLayer(layerId);
+            if (layer != null)
+            {
+                layer.UseGpuAcceleration = !layer.UseGpuAcceleration;
+                PostMessageToMap(new
+                {
+                    action = "toggleLayerGpu",
+                    id = layer.Id,
+                    useGpu = layer.UseGpuAcceleration
+                });
+                TxtStatus.Text = $"Layer '{layer.Name}' GPU Acceleration: {(layer.UseGpuAcceleration ? "Enabled" : "Disabled")}";
+            }
+        }
     }
 }

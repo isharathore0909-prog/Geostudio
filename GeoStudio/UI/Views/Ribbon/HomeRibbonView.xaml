@@ -8,7 +8,7 @@
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
                     <Button Style="{StaticResource RustGisLargeBtnActive}" Content="Pan" Tag="/Resources/Icons/pan.png" ToolTip="Pan Tool (P)" Click="BtnPan_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Bookmarks ▾" Tag="/Resources/Icons/map_layout.png" ToolTip="Bookmarks / Spatial Views" Click="BtnZoomFull_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Bookmarks ▾" Tag="/Resources/Icons/map_layout.png" ToolTip="Bookmarks / Spatial Views" Click="BtnBookmarks_Click"/>
 
                     <!-- Column 1: Full Extent, Zoom In, Zoom Out -->
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
@@ -19,15 +19,15 @@
 
                     <!-- Column 2: Previous, Next, Go To XY -->
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="2,0,1,0">
-                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Previous" Tag="/Resources/Icons/undo.png" ToolTip="Previous Extent" Click="BtnUndo_Click"/>
-                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Next" Tag="/Resources/Icons/redo.png" ToolTip="Next Extent" Click="BtnRedo_Click"/>
-                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Go To XY" Tag="/Resources/Icons/coord_capture.png" ToolTip="Coordinate Capture / Go to XY" Click="BtnIdentify_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Previous" Tag="/Resources/Icons/undo.png" ToolTip="Previous Extent" Click="BtnPreviousExtent_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Next" Tag="/Resources/Icons/redo.png" ToolTip="Next Extent" Click="BtnNextExtent_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Go To XY" Tag="/Resources/Icons/coord_capture.png" ToolTip="Coordinate Capture / Go to XY" Click="BtnGoToXy_Click"/>
                     </StackPanel>
 
                     <!-- Column 3: Identify, Find Place -->
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="2,0,1,0">
-                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Identify ▾" Tag="/Resources/Icons/identify.png" ToolTip="Identify Features (I / F6)" Click="BtnIdentify_Click"/>
-                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Find Place" Tag="/Resources/Icons/zoom.png" ToolTip="Find / Search Location" Click="BtnZoomFull_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Identify ▾" Tag="/Resources/Icons/identify.png" ToolTip="Identify Features &amp; Surface (I)" Click="BtnIdentify_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Find Place" Tag="/Resources/Icons/zoom.png" ToolTip="Find / Search Location" Click="BtnFindPlace_Click"/>
                     </StackPanel>
                 </StackPanel>
                 <TextBlock Text="Navigate" Style="{StaticResource RustGisGroupLabel}"/>
@@ -39,15 +39,15 @@
             <!-- GROUP: SELECTION -->
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Select" Tag="/Resources/Icons/select.png" ToolTip="Select Feature" Click="BtnSelectPointer_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Select By&#x0a;Attributes" Tag="/Resources/Icons/identify.png" ToolTip="Select by Attributes" Click="BtnIdentify_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Select By&#x0a;Location" Tag="/Resources/Icons/select_poly.png" ToolTip="Select by Polygon / Location" Click="BtnSelectPolygon_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Select" Tag="/Resources/Icons/select.png" ToolTip="Single Feature Selection" Click="BtnSelectPointer_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Select By&#x0a;Attributes" Tag="/Resources/Icons/identify.png" ToolTip="Query Features by Attributes" Click="BtnSelectByAttributes_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Select By&#x0a;Location" Tag="/Resources/Icons/select_poly.png" ToolTip="Select by Polygon Boundary" Click="BtnSelectPolygon_Click"/>
 
                     <!-- Stacked Column: Clear, Zoom To, Attributes -->
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
                         <Button Style="{StaticResource RustGisSmallBtn}" Content="Clear" Tag="/Resources/Icons/clear_selection.png" ToolTip="Clear Selection" Click="BtnClearSelection_Click"/>
-                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom To" Tag="/Resources/Icons/zoom.png" ToolTip="Zoom to Selected" Click="BtnZoomFull_Click"/>
-                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Attributes" Tag="/Resources/Icons/identify.png" ToolTip="Attribute Table (F6)" Click="BtnIdentify_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom To" Tag="/Resources/Icons/zoom.png" ToolTip="Zoom to Selected Features" Click="BtnZoomToSelection_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Attributes" Tag="/Resources/Icons/identify.png" ToolTip="Open Attribute Table" Click="BtnOpenAttributeTable_Click"/>
                     </StackPanel>
                 </StackPanel>
                 <TextBlock Text="Selection" Style="{StaticResource RustGisGroupLabel}"/>
@@ -59,12 +59,19 @@
             <!-- GROUP: INSPECT -->
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Measure ▾" Tag="/Resources/Icons/measure.png" ToolTip="Measure Distance &amp; Area" Click="BtnMeasureDistance_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Measure ▾" Tag="/Resources/Icons/measure.png" ToolTip="Measure Distance &amp; Area" Click="BtnMeasureDistance_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="📏 Measure Distance (Line)" Click="BtnMeasureDistance_Click"/>
+                                <MenuItem Header="📐 Measure Area (Polygon)" Click="BtnMeasureArea_Click"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
 
                     <!-- Stacked Column: Locate, Zoom Box -->
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,1,0">
-                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Locate" Tag="/Resources/Icons/coord_capture.png" ToolTip="Capture Coordinates" Click="BtnIdentify_Click"/>
-                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom Box" Tag="/Resources/Icons/zoom_in.png" ToolTip="Select Box Zoom" Click="BtnSelectBox_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Locate" Tag="/Resources/Icons/coord_capture.png" ToolTip="Pinpoint &amp; Copy Coordinates" Click="BtnLocate_Click"/>
+                        <Button Style="{StaticResource RustGisSmallBtn}" Content="Zoom Box" Tag="/Resources/Icons/zoom_in.png" ToolTip="Drag Rectangle Box Zoom" Click="BtnZoomBox_Click"/>
                     </StackPanel>
                 </StackPanel>
                 <TextBlock Text="Inspect" Style="{StaticResource RustGisGroupLabel}"/>
@@ -76,7 +83,7 @@
             <!-- GROUP: PANELS -->
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Browser" Tag="/Resources/Icons/browser_panel.png" ToolTip="Open File Browser Panel" Click="BtnFileBrowser_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Browser" Tag="/Resources/Icons/browser_panel.png" ToolTip="Toggle Layers &amp; Data Panel" Click="BtnToggleSidebar_Click"/>
                 </StackPanel>
                 <TextBlock Text="Panels" Style="{StaticResource RustGisGroupLabel}"/>
             </StackPanel>

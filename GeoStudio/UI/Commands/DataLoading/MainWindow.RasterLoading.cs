@@ -20,10 +20,15 @@ namespace GeoStudio
 
             if (dlg.ShowDialog() == true)
             {
-                try
-                {
-                    string selectedFile = dlg.FileName;
-                    var sw = Stopwatch.StartNew();
+                await LoadRasterFile(dlg.FileName);
+            }
+        }
+
+        public async System.Threading.Tasks.Task LoadRasterFile(string selectedFile)
+        {
+            try
+            {
+                var sw = Stopwatch.StartNew();
                     if (CardBenchmark != null) CardBenchmark.Visibility = Visibility.Visible;
                     if (TxtBenchmarkFileName != null) TxtBenchmarkFileName.Text = Path.GetFileName(selectedFile);
                     if (TxtBenchmarkTotalTime != null) TxtBenchmarkTotalTime.Text = "Loading...";
@@ -111,7 +116,6 @@ namespace GeoStudio
                     if (ProgressBarFileLoad != null) ProgressBarFileLoad.Visibility = Visibility.Collapsed;
                     TxtStatus.Text = $"GDAL reader warning: {ex.Message}";
                 }
-            }
         }
     }
 }
