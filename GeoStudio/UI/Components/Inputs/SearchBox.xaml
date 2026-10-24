@@ -1,0 +1,38 @@
+<UserControl x:Class="GeoStudio.UI.Components.SearchBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignWidth="400" d:DesignHeight="38">
+    <Border Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="8,3">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock x:Name="TxtIcon" Grid.Column="0" Text="🔎" FontSize="12" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,6,0"/>
+
+            <TextBox x:Name="InputBox" Grid.Column="1" Height="26" BorderThickness="0" Background="Transparent" 
+                     VerticalContentAlignment="Center" FontSize="12" TextChanged="InputBox_TextChanged" KeyDown="InputBox_KeyDown"/>
+
+            <!-- Clear button -->
+            <Button x:Name="BtnClear" Grid.Column="2" Content="✕" Width="20" Height="20" Background="Transparent" BorderThickness="0" 
+                    Foreground="#94A3B8" FontSize="10" Cursor="Hand" Visibility="Collapsed" Margin="2,0" Click="BtnClear_Click">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- Optional action button (e.g. Online Search) -->
+            <Button x:Name="BtnExtra" Grid.Column="3" Content="Search" Style="{StaticResource DialogSecondaryButton}" Height="26" Padding="8,0" FontSize="11" Margin="4,0,0,0" Visibility="Collapsed" Click="BtnExtra_Click"/>
+        </Grid>
+    </Border>
+</UserControl>

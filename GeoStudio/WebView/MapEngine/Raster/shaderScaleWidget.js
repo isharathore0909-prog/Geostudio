@@ -115,6 +115,11 @@ function updateShaderScaleWidget(shaderMode, palette, minElev, maxElev) {
   const widget = document.getElementById('shaderScaleWidget');
   if (!widget) return;
 
+  if (typeof activeRasterInfo !== 'undefined' && activeRasterInfo && activeRasterInfo.visible === false) {
+    widget.style.display = 'none';
+    return;
+  }
+
   const key = (shaderMode || 'atlas').toLowerCase();
   const palKey = (palette || '').toLowerCase();
 

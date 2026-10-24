@@ -272,5 +272,437 @@ namespace GeoStudio.PointCloud
             progress?.Invoke(100, "Surface generation complete!");
             return outTif;
         }
+
+        public static string GenerateDtmRaster(string lasFilePath, int targetResolution = 2048, Action<int, string>? progress = null)
+        {
+            GdalRasterService.Initialize();
+            if (!File.Exists(lasFilePath))
+                throw new FileNotFoundException("Point cloud file not found", lasFilePath);
+
+            progress?.Invoke(10, "Inspecting LiDAR ground returns for Bare-Earth DTM...");
+            string actualPath = LasPointCloudService.EnsureUncompressedLas(lasFilePath, (p, m) => progress?.Invoke(p, m));
+            var header = LasPointCloudService.InspectLasHeader(actualPath);
+            if (header.TotalPointCount == 0)
+                throw new InvalidOperationException("Invalid or empty LAS point cloud file");
+
+            double minX = header.MinX, maxX = header.MaxX;
+            double minY = header.MinY, maxY = header.MaxY;
+
+            SpatialReference? srcSrs = null;
+            CoordinateTransformation? ct = null;
+            try
+            {
+                if (!string.IsNullOrEmpty(header.CrsWkt))
+                {
+                    srcSrs = new SpatialReference(header.CrsWkt);
+                    srcSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+                }
+                else if (header.EpsgCode.HasValue && header.EpsgCode.Value > 0)
+                {
+                    srcSrs = new SpatialReference("");
+                    srcSrs.ImportFromEPSG(header.EpsgCode.Value);
+                    srcSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+                }
+                else if (header.IsProjected || Math.Abs(minX) > 180 || Math.Abs(maxY) > 90)
+                {
+                    srcSrs = new SpatialReference("");
+                    srcSrs.ImportFromEPSG(32643);
+                    srcSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+                }
+
+                if (srcSrs != null)
+                {
+                    using var dstSrs = new SpatialReference("");
+                    dstSrs.ImportFromEPSG(4326);
+                    dstSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+
+                    if (srcSrs.IsSame(dstSrs, null) == 0 && (srcSrs.IsProjected() == 1 || header.IsProjected))
+                    {
+                        ct = new CoordinateTransformation(srcSrs, dstSrs);
+                        double[] pMin = new double[] { minX, minY, header.MinZ };
+                        double[] pMax = new double[] { maxX, maxY, header.MaxZ };
+                        ct.TransformPoint(pMin);
+                        ct.TransformPoint(pMax);
+                        minX = Math.Min(pMin[0], pMax[0]);
+                        maxX = Math.Max(pMin[0], pMax[0]);
+                        minY = Math.Min(pMin[1], pMax[1]);
+                        maxY = Math.Max(pMin[1], pMax[1]);
+                    }
+                }
+            }
+            catch { }
+
+            double spanX = Math.Max(1e-9, maxX - minX);
+            double spanY = Math.Max(1e-9, maxY - minY);
+            double aspect = spanX / spanY;
+
+            int gridW = aspect >= 1.0 ? targetResolution : Math.Max(256, (int)(targetResolution * aspect));
+            int gridH = aspect >= 1.0 ? Math.Max(256, (int)(targetResolution / aspect)) : targetResolution;
+            gridW = Math.Min(4096, Math.Max(256, gridW));
+            gridH = Math.Min(4096, Math.Max(256, gridH));
+
+            int totalPixels = gridW * gridH;
+            float[] dtmGrid = new float[totalPixels];
+            bool[] validGrid = new bool[totalPixels];
+            Array.Fill(dtmGrid, float.MaxValue);
+
+            int recordLen = header.PointDataRecordLength;
+            ulong total = header.TotalPointCount;
+            ulong step = Math.Max(1, total / 20_000_000UL);
+
+            progress?.Invoke(30, "Filtering & interpolating ground terrain elevation cells...");
+            using (var fs = new FileStream(actualPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4194304))
+            {
+                byte[] buf = new byte[recordLen];
+                long startPos = (long)header.OffsetToPointData;
+                double[] ptBuf = new double[3];
+
+                for (ulong i = 0; i < total; i += step)
+                {
+                    long pos = startPos + ((long)i * recordLen);
+                    if (pos + recordLen > fs.Length) break;
+                    fs.Seek(pos, SeekOrigin.Begin);
+                    if (fs.Read(buf, 0, recordLen) < recordLen) break;
+
+                    byte cls = header.PointDataRecordFormat >= 6 ? buf[16] : (byte)(buf[15] & 0x1F);
+                    // Accept ASPRS Class 2 (Ground) or unclassified minimum
+                    if (cls != 2 && cls != 8 && cls > 1) continue;
+
+                    int rawX = BitConverter.ToInt32(buf, 0);
+                    int rawY = BitConverter.ToInt32(buf, 4);
+                    int rawZ = BitConverter.ToInt32(buf, 8);
+
+                    double x = (rawX * header.ScaleX) + header.OffsetX;
+                    double y = (rawY * header.ScaleY) + header.OffsetY;
+                    float z = (float)((rawZ * header.ScaleZ) + header.OffsetZ);
+
+                    if (ct != null)
+                    {
+                        ptBuf[0] = x; ptBuf[1] = y; ptBuf[2] = z;
+                        ct.TransformPoint(ptBuf);
+                        x = ptBuf[0]; y = ptBuf[1];
+                    }
+
+                    int px = (int)((x - minX) / spanX * (gridW - 1));
+                    int py = (int)((maxY - y) / spanY * (gridH - 1));
+                    if (px < 0 || px >= gridW || py < 0 || py >= gridH) continue;
+
+                    int idx = py * gridW + px;
+                    if (z < dtmGrid[idx])
+                    {
+                        dtmGrid[idx] = z;
+                        validGrid[idx] = true;
+                    }
+                }
+            }
+
+            // Infill void holes in DTM terrain surface
+            progress?.Invoke(70, "Infilling bare-earth terrain surface gaps...");
+            float avgElev = (float)header.MinZ;
+            for (int pass = 0; pass < 3; pass++)
+            {
+                for (int y = 1; y < gridH - 1; y++)
+                {
+                    int row = y * gridW;
+                    for (int x = 1; x < gridW - 1; x++)
+                    {
+                        int idx = row + x;
+                        if (!validGrid[idx])
+                        {
+                            float sumZ = 0; int count = 0;
+                            if (validGrid[idx - 1]) { sumZ += dtmGrid[idx - 1]; count++; }
+                            if (validGrid[idx + 1]) { sumZ += dtmGrid[idx + 1]; count++; }
+                            if (validGrid[idx - gridW]) { sumZ += dtmGrid[idx - gridW]; count++; }
+                            if (validGrid[idx + gridW]) { sumZ += dtmGrid[idx + gridW]; count++; }
+                            if (count >= 2)
+                            {
+                                dtmGrid[idx] = sumZ / count;
+                                validGrid[idx] = true;
+                            }
+                        }
+                    }
+                }
+            }
+            for (int i = 0; i < totalPixels; i++)
+            {
+                if (!validGrid[i]) dtmGrid[i] = avgElev;
+            }
+
+            progress?.Invoke(85, "Writing high-resolution Bare-Earth DTM GeoTIFF...");
+            string outDir = Path.Combine(Path.GetTempPath(), "GeoStudio", "Surfaces");
+            Directory.CreateDirectory(outDir);
+            string baseName = Path.GetFileNameWithoutExtension(lasFilePath);
+            string outTif = Path.Combine(outDir, $"{baseName}_DTM.tif");
+            if (File.Exists(outTif)) { try { File.Delete(outTif); } catch { } }
+
+            var drv = Gdal.GetDriverByName("GTiff");
+            string[] options = new string[] { "COMPRESS=DEFLATE", "TILED=YES", "PREDICTOR=3" };
+            using (var ds = drv.Create(outTif, gridW, gridH, 1, DataType.GDT_Float32, options))
+            {
+                double resX = spanX / gridW;
+                double resY = spanY / gridH;
+                ds.SetGeoTransform(new double[] { minX, resX, 0, maxY, 0, -resY });
+
+                using var srs = new SpatialReference("");
+                srs.ImportFromEPSG(4326);
+                srs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+                srs.ExportToWkt(out string wkt, null);
+                ds.SetProjection(wkt);
+
+                var band = ds.GetRasterBand(1);
+                band.SetNoDataValue(-9999.0);
+                band.WriteRaster(0, 0, gridW, gridH, dtmGrid, gridW, gridH, 0, 0);
+                band.FlushCache();
+                ds.FlushCache();
+            }
+
+            progress?.Invoke(100, "Bare-Earth DTM generation complete!");
+            return outTif;
+        }
+
+        public static string GenerateChmRaster(string lasFilePath, int targetResolution = 2048, Action<int, string>? progress = null)
+        {
+            GdalRasterService.Initialize();
+            if (!File.Exists(lasFilePath))
+                throw new FileNotFoundException("Point cloud file not found", lasFilePath);
+
+            progress?.Invoke(10, "Extracting DSM and DTM surfaces for Canopy Height Model...");
+            string actualPath = LasPointCloudService.EnsureUncompressedLas(lasFilePath, (p, m) => progress?.Invoke(p, m));
+            var header = LasPointCloudService.InspectLasHeader(actualPath);
+            if (header.TotalPointCount == 0)
+                throw new InvalidOperationException("Invalid or empty LAS point cloud file");
+
+            double minX = header.MinX, maxX = header.MaxX;
+            double minY = header.MinY, maxY = header.MaxY;
+
+            SpatialReference? srcSrs = null;
+            CoordinateTransformation? ct = null;
+            try
+            {
+                if (!string.IsNullOrEmpty(header.CrsWkt))
+                {
+                    srcSrs = new SpatialReference(header.CrsWkt);
+                    srcSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+                }
+                else if (header.EpsgCode.HasValue && header.EpsgCode.Value > 0)
+                {
+                    srcSrs = new SpatialReference("");
+                    srcSrs.ImportFromEPSG(header.EpsgCode.Value);
+                    srcSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+                }
+                else if (header.IsProjected || Math.Abs(minX) > 180 || Math.Abs(maxY) > 90)
+                {
+                    srcSrs = new SpatialReference("");
+                    srcSrs.ImportFromEPSG(32643);
+                    srcSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+                }
+
+                if (srcSrs != null)
+                {
+                    using var dstSrs = new SpatialReference("");
+                    dstSrs.ImportFromEPSG(4326);
+                    dstSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+
+                    if (srcSrs.IsSame(dstSrs, null) == 0 && (srcSrs.IsProjected() == 1 || header.IsProjected))
+                    {
+                        ct = new CoordinateTransformation(srcSrs, dstSrs);
+                        double[] pMin = new double[] { minX, minY, header.MinZ };
+                        double[] pMax = new double[] { maxX, maxY, header.MaxZ };
+                        ct.TransformPoint(pMin);
+                        ct.TransformPoint(pMax);
+                        minX = Math.Min(pMin[0], pMax[0]);
+                        maxX = Math.Max(pMin[0], pMax[0]);
+                        minY = Math.Min(pMin[1], pMax[1]);
+                        maxY = Math.Max(pMin[1], pMax[1]);
+                    }
+                }
+            }
+            catch { }
+
+            double spanX = Math.Max(1e-9, maxX - minX);
+            double spanY = Math.Max(1e-9, maxY - minY);
+            double aspect = spanX / spanY;
+
+            int gridW = aspect >= 1.0 ? targetResolution : Math.Max(256, (int)(targetResolution * aspect));
+            int gridH = aspect >= 1.0 ? Math.Max(256, (int)(targetResolution / aspect)) : targetResolution;
+            gridW = Math.Min(4096, Math.Max(256, gridW));
+            gridH = Math.Min(4096, Math.Max(256, gridH));
+
+            int totalPixels = gridW * gridH;
+            float[] dsmGrid = new float[totalPixels];
+            float[] dtmGrid = new float[totalPixels];
+            bool[] validDsm = new bool[totalPixels];
+            bool[] validDtm = new bool[totalPixels];
+            Array.Fill(dsmGrid, float.MinValue);
+            Array.Fill(dtmGrid, float.MaxValue);
+
+            int recordLen = header.PointDataRecordLength;
+            ulong total = header.TotalPointCount;
+            ulong step = Math.Max(1, total / 20_000_000UL);
+
+            progress?.Invoke(30, "Calculating tree crown DSM and bare-earth DTM heights...");
+            using (var fs = new FileStream(actualPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4194304))
+            {
+                byte[] buf = new byte[recordLen];
+                long startPos = (long)header.OffsetToPointData;
+                double[] ptBuf = new double[3];
+
+                for (ulong i = 0; i < total; i += step)
+                {
+                    long pos = startPos + ((long)i * recordLen);
+                    if (pos + recordLen > fs.Length) break;
+                    fs.Seek(pos, SeekOrigin.Begin);
+                    if (fs.Read(buf, 0, recordLen) < recordLen) break;
+
+                    byte cls = header.PointDataRecordFormat >= 6 ? buf[16] : (byte)(buf[15] & 0x1F);
+                    int rawX = BitConverter.ToInt32(buf, 0);
+                    int rawY = BitConverter.ToInt32(buf, 4);
+                    int rawZ = BitConverter.ToInt32(buf, 8);
+
+                    double x = (rawX * header.ScaleX) + header.OffsetX;
+                    double y = (rawY * header.ScaleY) + header.OffsetY;
+                    float z = (float)((rawZ * header.ScaleZ) + header.OffsetZ);
+
+                    if (ct != null)
+                    {
+                        ptBuf[0] = x; ptBuf[1] = y; ptBuf[2] = z;
+                        ct.TransformPoint(ptBuf);
+                        x = ptBuf[0]; y = ptBuf[1];
+                    }
+
+                    int px = (int)((x - minX) / spanX * (gridW - 1));
+                    int py = (int)((maxY - y) / spanY * (gridH - 1));
+                    if (px < 0 || px >= gridW || py < 0 || py >= gridH) continue;
+
+                    int idx = py * gridW + px;
+                    if (z > dsmGrid[idx]) { dsmGrid[idx] = z; validDsm[idx] = true; }
+                    if (cls == 2 || z < dtmGrid[idx]) { dtmGrid[idx] = z; validDtm[idx] = true; }
+                }
+            }
+
+            // Infill gaps
+            for (int pass = 0; pass < 2; pass++)
+            {
+                for (int y = 1; y < gridH - 1; y++)
+                {
+                    int row = y * gridW;
+                    for (int x = 1; x < gridW - 1; x++)
+                    {
+                        int idx = row + x;
+                        if (!validDtm[idx] && validDtm[idx - 1] && validDtm[idx + 1])
+                        {
+                            dtmGrid[idx] = (dtmGrid[idx - 1] + dtmGrid[idx + 1]) * 0.5f;
+                            validDtm[idx] = true;
+                        }
+                        if (!validDsm[idx] && validDsm[idx - 1] && validDsm[idx + 1])
+                        {
+                            dsmGrid[idx] = (dsmGrid[idx - 1] + dsmGrid[idx + 1]) * 0.5f;
+                            validDsm[idx] = true;
+                        }
+                    }
+                }
+            }
+
+            progress?.Invoke(70, "Computing Canopy Height Model: CHM = DSM - DTM...");
+            float[] chmGrid = new float[totalPixels];
+            for (int i = 0; i < totalPixels; i++)
+            {
+                if (validDsm[i] && validDtm[i])
+                {
+                    float chm = dsmGrid[i] - dtmGrid[i];
+                    chmGrid[i] = Math.Clamp(chm, 0f, 150f);
+                }
+                else
+                {
+                    chmGrid[i] = 0f;
+                }
+            }
+
+            progress?.Invoke(85, "Writing Canopy Height Model (CHM) GeoTIFF...");
+            string outDir = Path.Combine(Path.GetTempPath(), "GeoStudio", "Surfaces");
+            Directory.CreateDirectory(outDir);
+            string baseName = Path.GetFileNameWithoutExtension(lasFilePath);
+            string outTif = Path.Combine(outDir, $"{baseName}_CHM.tif");
+            if (File.Exists(outTif)) { try { File.Delete(outTif); } catch { } }
+
+            var drv = Gdal.GetDriverByName("GTiff");
+            string[] options = new string[] { "COMPRESS=DEFLATE", "TILED=YES", "PREDICTOR=3" };
+            using (var ds = drv.Create(outTif, gridW, gridH, 1, DataType.GDT_Float32, options))
+            {
+                double resX = spanX / gridW;
+                double resY = spanY / gridH;
+                ds.SetGeoTransform(new double[] { minX, resX, 0, maxY, 0, -resY });
+
+                using var srs = new SpatialReference("");
+                srs.ImportFromEPSG(4326);
+                srs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+                srs.ExportToWkt(out string wkt, null);
+                ds.SetProjection(wkt);
+
+                var band = ds.GetRasterBand(1);
+                band.SetNoDataValue(-9999.0);
+                band.WriteRaster(0, 0, gridW, gridH, chmGrid, gridW, gridH, 0, 0);
+                band.FlushCache();
+                ds.FlushCache();
+            }
+
+            progress?.Invoke(100, "Canopy Height Model (CHM) complete!");
+            return outTif;
+        }
+
+        public static string ThinLasFile(string lasFilePath, string outFilePath, int step = 2, Action<int, string>? progress = null)
+        {
+            if (!File.Exists(lasFilePath)) throw new FileNotFoundException("File not found", lasFilePath);
+            step = Math.Max(2, step);
+
+            progress?.Invoke(15, $"Thinning point cloud by decimation factor {step}...");
+            string actualPath = LasPointCloudService.EnsureUncompressedLas(lasFilePath, (p, m) => progress?.Invoke(p, m));
+            var header = LasPointCloudService.InspectLasHeader(actualPath);
+
+            using var fsIn = new FileStream(actualPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4194304);
+            using var fsOut = new FileStream(outFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 4194304);
+
+            byte[] headerBuf = new byte[header.OffsetToPointData];
+            fsIn.Read(headerBuf, 0, headerBuf.Length);
+
+            ulong origTotal = header.TotalPointCount;
+            ulong thinnedTotal = origTotal / (ulong)step;
+
+            // Update point count in LAS header
+            if (header.VersionMajor == 1 && header.VersionMinor >= 4 && headerBuf.Length >= 255)
+            {
+                byte[] thinnedBytes = BitConverter.GetBytes(thinnedTotal);
+                Array.Copy(thinnedBytes, 0, headerBuf, 247, 8);
+            }
+            byte[] legacyBytes = BitConverter.GetBytes((uint)Math.Min((ulong)uint.MaxValue, thinnedTotal));
+            Array.Copy(legacyBytes, 0, headerBuf, 107, 4);
+
+            fsOut.Write(headerBuf, 0, headerBuf.Length);
+
+            int recLen = header.PointDataRecordLength;
+            byte[] recBuf = new byte[recLen];
+            long startPos = (long)header.OffsetToPointData;
+            ulong written = 0;
+
+            for (ulong i = 0; i < origTotal; i += (ulong)step)
+            {
+                long pos = startPos + ((long)i * recLen);
+                if (pos + recLen > fsIn.Length) break;
+                fsIn.Seek(pos, SeekOrigin.Begin);
+                int n = fsIn.Read(recBuf, 0, recLen);
+                if (n < recLen) break;
+
+                fsOut.Write(recBuf, 0, recLen);
+                written++;
+                if (written % 50000 == 0 && thinnedTotal > 0)
+                {
+                    progress?.Invoke(15 + (int)((written * 80) / thinnedTotal), $"Writing decimated points ({written:N0}/{thinnedTotal:N0})...");
+                }
+            }
+
+            fsOut.Flush();
+            progress?.Invoke(100, $"Point cloud decimation complete: {written:N0} points written.");
+            return outFilePath;
+        }
     }
 }

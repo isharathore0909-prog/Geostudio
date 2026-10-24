@@ -159,20 +159,15 @@ def classify_point_cloud(input_path: str, output_path: Optional[str] = None, pro
         "value": [
             (
                 "Classification = 3 WHERE HeightAboveGround >= 0.3 "
-                "&& HeightAboveGround < 1.5 && Classification != 2"
+                "&& HeightAboveGround < 1.8 && Classification != 2"
             ),
             (
-                "Classification = 4 WHERE HeightAboveGround >= 1.5 "
-                "&& HeightAboveGround < 3.5 && Planarity < 0.65 "
+                "Classification = 4 WHERE HeightAboveGround >= 1.8 "
+                "&& HeightAboveGround < 4.0 && Classification != 2"
+            ),
+            (
+                "Classification = 5 WHERE HeightAboveGround >= 4.0 "
                 "&& Classification != 2"
-            ),
-            (
-                "Classification = 5 WHERE HeightAboveGround >= 3.5 "
-                "&& Planarity < 0.65 && Classification != 2"
-            ),
-            (
-                "Classification = 6 WHERE HeightAboveGround >= 1.8 "
-                "&& Planarity >= 0.65 && Classification != 2"
             ),
         ]
     })

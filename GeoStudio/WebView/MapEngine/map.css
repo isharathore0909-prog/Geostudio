@@ -1,6 +1,6 @@
-@import "Styles/overlays.css";
-@import "Styles/swipe.css";
-@import "Styles/widgets.css";
+@import "Styles/Overlays/overlays.css";
+@import "Styles/Tools/swipe.css";
+@import "Styles/Widgets/widgets.css";
 
 * {
   box-sizing: border-box;

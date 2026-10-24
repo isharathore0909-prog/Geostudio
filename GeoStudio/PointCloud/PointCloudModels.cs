@@ -75,6 +75,7 @@ namespace GeoStudio.PointCloud
         public byte[]? ps { get; set; }
         public byte[]? fl { get; set; }
         public byte[]? nir { get; set; }
+        public byte[]? t { get; set; }
         public bool hasRgb { get; set; }
     }
 }

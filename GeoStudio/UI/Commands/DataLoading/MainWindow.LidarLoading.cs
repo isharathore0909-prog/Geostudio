@@ -68,6 +68,8 @@ namespace GeoStudio
                     Layers.Add(layer);
                     UpdateLayerCount();
                     _activePointCloudBatch = sampleResult.Batch;
+                    _lidarClassifiedWithSmrf = sampleResult.Batch.c != null && System.Linq.Enumerable.Any(sampleResult.Batch.c, c => c >= 3 && c <= 5);
+                    _activeLidarClassificationState = null;
 
                     PostMessageToMap(new
                     {

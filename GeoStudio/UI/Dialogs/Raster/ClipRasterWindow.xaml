@@ -1,0 +1,60 @@
+<Window x:Class="GeoStudio.UI.Dialogs.ClipRasterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:GeoStudio.UI.Components"
+        Title="Crop / Clip Raster by Mask"
+        Height="460" Width="680" MinHeight="420" MinWidth="600"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC" Foreground="#0F172A"
+        FontFamily="Segoe UI" ResizeMode="NoResize">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Component -->
+        <components:DialogHeader Grid.Row="0"
+            Icon="✂" IconBrush="#E11D48" IconBg="#FFE4E6"
+            Title="Crop / Clip Raster by Mask"
+            Description="Subsets raster dataset using vector boundary polygon or bounding box via Python GDAL Warp."/>
+
+        <!-- 2. Form Parameters Card -->
+        <Border Grid.Row="1" Style="{StaticResource DialogCard}">
+            <StackPanel>
+                <!-- Input Raster Picker -->
+                <components:LayerPicker x:Name="PickerRaster"
+                    Label="Input Raster Dataset:"
+                    BrowseTitle="Select Input Raster Dataset"
+                    BrowseFilter="GeoTIFF &amp; BigTIFF (*.tif;*.tiff;*.dem;*.vrt)|*.tif;*.tiff;*.dem;*.vrt|All Files (*.*)|*.*"
+                    SelectionChanged="PickerRaster_SelectionChanged"/>
+
+                <!-- Clipping Mask Vector Picker with Canvas Drawing -->
+                <components:LayerPicker x:Name="PickerMask"
+                    Label="Clipping Mask (Vector Polygon):"
+                    BrowseTitle="Select Clipping Mask Vector"
+                    BrowseFilter="Vector Layers (*.geojson;*.json;*.shp;*.gpkg;*.kml)|*.geojson;*.json;*.shp;*.gpkg;*.kml|All Files (*.*)|*.*"
+                    ExtraActionText="✏️ Draw Polygon"
+                    ExtraActionToolTip="Click points on the map canvas to draw custom clipping polygon (double-click to finish)"
+                    SelectionChanged="PickerMask_SelectionChanged"
+                    ExtraActionClick="BtnDrawPolygon_Click"/>
+
+                <!-- Output Path Picker -->
+                <components:OutputPathPicker x:Name="PickerOutput"
+                    Label="Output Clipped GeoTIFF:"
+                    DialogTitle="Save Clipped GeoTIFF"
+                    HelperText="Crop to cutline is automatically enabled; background pixels outside polygon will become NoData transparent."/>
+            </StackPanel>
+        </Border>
+
+        <!-- 3. Progress and Actions Footer Component -->
+        <components:ToolActionBar x:Name="ActionBar" Grid.Row="2"
+            ActionText="✂ Run Clip"
+            ActionBackground="#E11D48"
+            StatusText="Ready to clip raster."
+            RunClick="BtnRunClip_Click"
+            CancelClick="BtnCancel_Click"/>
+    </Grid>
+</Window>

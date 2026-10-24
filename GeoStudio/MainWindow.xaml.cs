@@ -25,6 +25,8 @@ namespace GeoStudio
         public UI.Dialogs.GeoprocessingWindow? ActiveClipVectorWindow { get; set; }
         public UI.Dialogs.SpectralIndicesWindow? ActiveSpectralIndicesWindow { get; set; }
         private PointCloud.PointCloudBatch? _activePointCloudBatch = null;
+        private bool _lidarClassifiedWithSmrf = false;
+        private string? _activeLidarClassificationState = null;
 
         public MainWindow()
         {

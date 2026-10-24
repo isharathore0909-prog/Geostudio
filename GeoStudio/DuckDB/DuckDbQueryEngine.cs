@@ -23,12 +23,12 @@ namespace GeoStudio.DuckDB
 
                     if (total <= maxPoints)
                     {
-                        cmd.CommandText = "SELECT x, y, z, intensity, classification, r, g, b FROM pointcloud;";
+                        cmd.CommandText = "SELECT x, y, z, intensity, classification, r, g, b, rn, nr, sa, ps, fl, nir, t FROM pointcloud;";
                     }
                     else
                     {
                         cmd.CommandText = $@"
-                            SELECT x, y, z, intensity, classification, r, g, b 
+                            SELECT x, y, z, intensity, classification, r, g, b, rn, nr, sa, ps, fl, nir, t 
                             FROM pointcloud 
                             USING SAMPLE reservoir({maxPoints} ROWS);";
                     }
@@ -74,7 +74,7 @@ namespace GeoStudio.DuckDB
                     if (vpCount <= maxPoints)
                     {
                         cmd.CommandText = $@"
-                            SELECT x, y, z, intensity, classification, r, g, b 
+                            SELECT x, y, z, intensity, classification, r, g, b, rn, nr, sa, ps, fl, nir, t 
                             FROM pointcloud 
                             WHERE x BETWEEN {realMinX} AND {realMaxX} 
                               AND y BETWEEN {realMinY} AND {realMaxY}
@@ -83,7 +83,7 @@ namespace GeoStudio.DuckDB
                     else
                     {
                         cmd.CommandText = $@"
-                            SELECT x, y, z, intensity, classification, r, g, b 
+                            SELECT x, y, z, intensity, classification, r, g, b, rn, nr, sa, ps, fl, nir, t 
                             FROM pointcloud 
                             WHERE x BETWEEN {realMinX} AND {realMaxX} 
                               AND y BETWEEN {realMinY} AND {realMaxY}
@@ -111,6 +111,13 @@ namespace GeoStudio.DuckDB
             var rList = new List<byte>(estimatedCapacity);
             var gList = new List<byte>(estimatedCapacity);
             var bList = new List<byte>(estimatedCapacity);
+            var rnList = new List<byte>(estimatedCapacity);
+            var nrList = new List<byte>(estimatedCapacity);
+            var saList = new List<byte>(estimatedCapacity);
+            var psList = new List<byte>(estimatedCapacity * 2);
+            var flList = new List<byte>(estimatedCapacity);
+            var nirList = new List<byte>(estimatedCapacity);
+            var tList = new List<byte>(estimatedCapacity);
 
             using var rdr = cmd.ExecuteReader();
             while (rdr.Read())
@@ -124,6 +131,15 @@ namespace GeoStudio.DuckDB
                 rList.Add(rdr.GetByte(5));
                 gList.Add(rdr.GetByte(6));
                 bList.Add(rdr.GetByte(7));
+                rnList.Add(rdr.FieldCount > 8 ? rdr.GetByte(8) : (byte)1);
+                nrList.Add(rdr.FieldCount > 9 ? rdr.GetByte(9) : (byte)1);
+                saList.Add(rdr.FieldCount > 10 ? rdr.GetByte(10) : (byte)128);
+                ushort psVal = rdr.FieldCount > 11 ? Convert.ToUInt16(rdr.GetValue(11)) : (ushort)1;
+                psList.Add((byte)(psVal & 0xFF));
+                psList.Add((byte)((psVal >> 8) & 0xFF));
+                flList.Add(rdr.FieldCount > 12 ? rdr.GetByte(12) : (byte)0);
+                nirList.Add(rdr.FieldCount > 13 ? rdr.GetByte(13) : (byte)0);
+                tList.Add(rdr.FieldCount > 14 ? rdr.GetByte(14) : (byte)0);
             }
 
             return new PointCloudBatch
@@ -136,7 +152,14 @@ namespace GeoStudio.DuckDB
                 c = cList.ToArray(),
                 r = rList.ToArray(),
                 g = gList.ToArray(),
-                b = bList.ToArray()
+                b = bList.ToArray(),
+                rn = rnList.ToArray(),
+                nr = nrList.ToArray(),
+                sa = saList.ToArray(),
+                ps = psList.ToArray(),
+                fl = flList.ToArray(),
+                nir = nirList.ToArray(),
+                t = tList.ToArray()
             };
         }
 

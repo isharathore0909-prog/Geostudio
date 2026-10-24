@@ -1,0 +1,67 @@
+<Window x:Class="GeoStudio.UI.Dialogs.FindPlaceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:GeoStudio.UI.Components"
+        Title="Find Place &amp; Spatial Search"
+        Height="520" Width="560" MinHeight="420" MinWidth="480"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC" Foreground="#0F172A"
+        FontFamily="Segoe UI">
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Component -->
+        <components:DialogHeader Grid.Row="0"
+            Icon="🔍" IconBrush="#0284C7" IconBg="#E0F2FE"
+            Title="Find Place or Location"
+            Description="Search global cities, geographic landmarks, mountain peaks, or geocode online."/>
+
+        <!-- 2. Search Box Component -->
+        <components:SearchBox x:Name="SearchBox" Grid.Row="1" Margin="0,0,0,12" 
+                              ExtraButtonText="Online Search"
+                              TextChanged="SearchBox_TextChanged"
+                              SearchKeyDown="SearchBox_KeyDown"
+                              ExtraButtonClick="BtnOnlineSearch_Click"/>
+
+        <!-- 3. Results List -->
+        <Border Grid.Row="2" Style="{StaticResource DialogCard}" Padding="2" Margin="0,0,0,12">
+            <ListBox x:Name="LstPlaces" BorderThickness="0" Background="Transparent" MouseDoubleClick="LstPlaces_MouseDoubleClick">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="10,8" Margin="2,1" CornerRadius="4">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding CategoryIcon}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12.5" Foreground="#1E293B" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Description}" FontSize="10.5" Foreground="#64748B" Margin="22,2,0,0"/>
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" Text="{Binding CoordinatesText}" FontSize="10.5" Foreground="#64748B" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <!-- 4. Footer -->
+        <Grid Grid.Row="3">
+            <TextBlock x:Name="TxtMatchCount" Text="Showing matches" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Close" Style="{StaticResource DialogSecondaryButton}" Margin="0,0,8,0" Click="BtnClose_Click"/>
+                <Button Content="🚀 Fly To Place" Style="{StaticResource DialogActionButton}" Background="#0284C7" Click="BtnFlyTo_Click"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

@@ -195,13 +195,155 @@ namespace GeoStudio.PointCloud
         {
             int count = x.Length;
             byte[] cls = (byte[])currentCls.Clone();
+            if (count == 0) return cls;
+
+            // Compute ground baseline via SMRF
+            double minX = double.MaxValue, maxX = double.MinValue;
+            double minY = double.MaxValue, maxY = double.MinValue;
             for (int i = 0; i < count; i++)
             {
-                if (cls[i] == 4 || cls[i] == 5) // Elevated non-ground objects
+                if (x[i] < minX) minX = x[i];
+                if (x[i] > maxX) maxX = x[i];
+                if (y[i] < minY) minY = y[i];
+                if (y[i] > maxY) maxY = y[i];
+            }
+
+            bool isDegrees = (minX >= -180.0 && maxX <= 180.0 && minY >= -90.0 && maxY <= 90.0);
+            double midLat = (minY + maxY) * 0.5;
+            double toMeterY = isDegrees ? 111139.0 : 1.0;
+            double toMeterX = isDegrees ? 111139.0 * Math.Cos(midLat * (Math.PI / 180.0)) : 1.0;
+
+            double cellSize = 1.5; // 1.5m spatial cell
+            int gw = Math.Max(1, (int)Math.Ceiling(((maxX - minX) * toMeterX) / cellSize) + 1);
+            int gh = Math.Max(1, (int)Math.Ceiling(((maxY - minY) * toMeterY) / cellSize) + 1);
+            if ((long)gw * gh > 2_000_000)
+            {
+                cellSize = 2.5;
+                gw = Math.Max(1, (int)Math.Ceiling(((maxX - minX) * toMeterX) / cellSize) + 1);
+                gh = Math.Max(1, (int)Math.Ceiling(((maxY - minY) * toMeterY) / cellSize) + 1);
+            }
+
+            // Estimate local ground per cell
+            float[] minZGrid = new float[gw * gh];
+            Array.Fill(minZGrid, float.MaxValue);
+            for (int i = 0; i < count; i++)
+            {
+                int gx = Math.Clamp((int)(((x[i] - minX) * toMeterX) / cellSize), 0, gw - 1);
+                int gy = Math.Clamp((int)(((y[i] - minY) * toMeterY) / cellSize), 0, gh - 1);
+                int idx = gy * gw + gx;
+                if (z[i] < minZGrid[idx]) minZGrid[idx] = z[i];
+            }
+
+            // Calculate z-stats per cell for elevated points (HAG >= 2.2m)
+            int[] cellCounts = new int[gw * gh];
+            double[] cellSumZ = new double[gw * gh];
+            double[] cellSumSqZ = new double[gw * gh];
+
+            for (int i = 0; i < count; i++)
+            {
+                int gx = Math.Clamp((int)(((x[i] - minX) * toMeterX) / cellSize), 0, gw - 1);
+                int gy = Math.Clamp((int)(((y[i] - minY) * toMeterY) / cellSize), 0, gh - 1);
+                int idx = gy * gw + gx;
+                float gElev = minZGrid[idx];
+                float hag = z[i] - gElev;
+
+                if (hag >= 2.2f && hag <= 65.0f && cls[i] != 2)
                 {
-                    cls[i] = 6; // ASPRS Class 6: Building / Rooftop
+                    cellCounts[idx]++;
+                    cellSumZ[idx] += z[i];
+                    cellSumSqZ[idx] += ((double)z[i] * z[i]);
                 }
             }
+
+            // Mark planar roof cells: low vertical standard deviation (zStd < 0.22m) and high density
+            bool[] isPlanarCell = new bool[gw * gh];
+            for (int idx = 0; idx < isPlanarCell.Length; idx++)
+            {
+                int c = cellCounts[idx];
+                if (c >= 6)
+                {
+                    double mean = cellSumZ[idx] / c;
+                    double variance = (cellSumSqZ[idx] / c) - (mean * mean);
+                    double std = variance > 0 ? Math.Sqrt(variance) : 0;
+                    if (std < 0.22)
+                    {
+                        isPlanarCell[idx] = true;
+                    }
+                }
+            }
+
+            // Connected component analysis on planar cells to require minimum continuous footprint (>= 5 cells ~ 11.25 m^2)
+            bool[] visited = new bool[gw * gh];
+            bool[] confirmedBuildingCell = new bool[gw * gh];
+
+            for (int gy = 0; gy < gh; gy++)
+            {
+                for (int gx = 0; gx < gw; gx++)
+                {
+                    int startIdx = gy * gw + gx;
+                    if (!isPlanarCell[startIdx] || visited[startIdx]) continue;
+
+                    var component = new System.Collections.Generic.List<int>();
+                    var queue = new System.Collections.Generic.Queue<int>();
+                    queue.Enqueue(startIdx);
+                    visited[startIdx] = true;
+
+                    while (queue.Count > 0)
+                    {
+                        int curr = queue.Dequeue();
+                        component.Add(curr);
+                        int cy = curr / gw;
+                        int cx = curr % gw;
+
+                        int[] dxs = { -1, 1, 0, 0 };
+                        int[] dys = { 0, 0, -1, 1 };
+                        for (int k = 0; k < 4; k++)
+                        {
+                            int nx = cx + dxs[k];
+                            int ny = cy + dys[k];
+                            if (nx >= 0 && nx < gw && ny >= 0 && ny < gh)
+                            {
+                                int nIdx = ny * gw + nx;
+                                if (isPlanarCell[nIdx] && !visited[nIdx])
+                                {
+                                    visited[nIdx] = true;
+                                    queue.Enqueue(nIdx);
+                                }
+                            }
+                        }
+                    }
+
+                    // Must have >= 5 connected planar cells to qualify as a building rooftop
+                    if (component.Count >= 5)
+                    {
+                        foreach (int cellIdx in component)
+                        {
+                            confirmedBuildingCell[cellIdx] = true;
+                        }
+                    }
+                }
+            }
+
+            // Assign ASPRS Class 6 only to points in confirmed continuous planar building cells
+            for (int i = 0; i < count; i++)
+            {
+                if (cls[i] == 2) continue; // Keep ground intact
+                int gx = Math.Clamp((int)(((x[i] - minX) * toMeterX) / cellSize), 0, gw - 1);
+                int gy = Math.Clamp((int)(((y[i] - minY) * toMeterY) / cellSize), 0, gh - 1);
+                int idx = gy * gw + gx;
+
+                if (confirmedBuildingCell[idx])
+                {
+                    cls[i] = 6; // Confirmed Building Rooftop
+                }
+                else if (cls[i] == 6)
+                {
+                    // Revert false buildings back to high/medium vegetation
+                    float hag = z[i] - minZGrid[idx];
+                    cls[i] = hag >= 4.0f ? (byte)5 : (byte)4;
+                }
+            }
+
             return cls;
         }
 
@@ -209,11 +351,15 @@ namespace GeoStudio.PointCloud
         {
             int count = x.Length;
             byte[] cls = (byte[])currentCls.Clone();
+            if (count == 0) return cls;
+
+            // Run SMRF to obtain ground surface and accurate HAG
+            var smrf = ClassifySMRF(x, y, z, existingCls: null);
             for (int i = 0; i < count; i++)
             {
-                if (cls[i] != 2) // Non-ground objects
+                if (cls[i] != 2 && cls[i] != 6) // Preserve confirmed ground & building structures
                 {
-                    cls[i] = (byte)(3 + (i % 3)); // 3: Low, 4: Med, 5: High canopy
+                    cls[i] = smrf[i] == 2 ? (byte)3 : smrf[i]; // Assign 3 (Low), 4 (Medium), 5 (High Canopy)
                 }
             }
             return cls;

@@ -8,7 +8,7 @@ function handleLoadPointCloud(msg) {
   if (msg.pointSize) userPointSize = parseFloat(msg.pointSize) || 4.5;
   if (msg.batch) {
     pointCloudBatch = msg.batch;
-    const keys = ['r', 'g', 'b', 'c', 'i', 'rn', 'nr', 'sa', 'ps', 'fl', 'nir'];
+    const keys = ['r', 'g', 'b', 'c', 'i', 'rn', 'nr', 'sa', 'ps', 'fl', 'nir', 't'];
     for (let k = 0; k < keys.length; k++) {
       const key = keys[k];
       if (pointCloudBatch[key]) pointCloudBatch[key] = decodeBuffer(pointCloudBatch[key]);
@@ -92,19 +92,49 @@ function handleRemoveLayer(msg) {
 }
 
 function handleToggleLayer(msg) {
+  const isVis = !!msg.visible;
   if (msg.id === 'osm_basemap' || msg.type === 'Basemap') {
-    cartoLayer.setVisible(msg.visible); satelliteLayer.setVisible(msg.visible);
-  } else if (msg.id === activePointCloudId || msg.type === 'PointCloud') {
-    isPointCloudVisible = !!msg.visible;
-    if (!isPointCloudVisible) pcCtx.clearRect(0, 0, pcCanvas.width, pcCanvas.height); else renderPointCloud();
+    cartoLayer.setVisible(isVis);
+    satelliteLayer.setVisible(isVis);
+  } else if (msg.id === activePointCloudId || msg.type === 'PointCloud' || (msg.id && msg.id.startsWith('pc_'))) {
+    isPointCloudVisible = isVis;
+    const lWidget = document.getElementById('lidarLegendWidget');
+    if (!isPointCloudVisible) {
+      pcCtx.clearRect(0, 0, pcCanvas.width, pcCanvas.height);
+      if (lWidget) lWidget.style.display = 'none';
+    } else {
+      renderPointCloud();
+      if (typeof updateLidarLegendWidget === 'function') {
+        updateLidarLegendWidget(lidarColorMode);
+      }
+    }
   } else if (msg.id === 'vector_active' || msg.type === 'Vector') {
-    vectorLayer.setVisible(msg.visible);
-    map.getLayers().getArray().filter(l => l.get('id') === msg.id || l.get('id') === 'vector_' + msg.id).forEach(l => l.setVisible(msg.visible));
+    vectorLayer.setVisible(isVis);
+    map.getLayers().getArray().filter(l => l.get('id') === msg.id || l.get('id') === 'vector_' + msg.id).forEach(l => l.setVisible(isVis));
   } else {
-    const rImg = map.getLayers().getArray().find(l => l.get('id') === 'raster_img_' + msg.id);
-    if (rImg) rImg.setVisible(msg.visible);
-    if (activeRasterInfo && msg.id === activeRasterInfo.id && hiresRasterLayer) hiresRasterLayer.setVisible(msg.visible);
-    map.getLayers().getArray().filter(l => l.get('id') === msg.id || l.get('id') === 'vector_' + msg.id).forEach(l => l.setVisible(msg.visible));
+    // Raster / DEM / DSM layers
+    if (activeRasterInfo && (msg.id === activeRasterInfo.id || msg.type === 'Raster')) {
+      activeRasterInfo.visible = isVis;
+      if (hiresRasterLayer) hiresRasterLayer.setVisible(isVis);
+    }
+
+    map.getLayers().getArray().forEach(l => {
+      const lid = l.get('id') || '';
+      if (lid === msg.id || lid === 'raster_img_' + msg.id || lid === 'hires_viewport_layer' || lid === 'raster_hires_layer') {
+        l.setVisible(isVis);
+      }
+    });
+
+    if (!isVis) {
+      if (typeof hideShaderScaleWidget === 'function') hideShaderScaleWidget();
+    } else {
+      if (typeof updateShaderScaleWidget === 'function') updateShaderScaleWidget();
+    }
+
+    // Refresh LiDAR legend position if both or one are visible
+    if (isPointCloudVisible && typeof updateLidarLegendWidget === 'function') {
+      updateLidarLegendWidget(lidarColorMode);
+    }
   }
   map.render();
 }
@@ -112,13 +142,40 @@ function handleToggleLayer(msg) {
 function handleSetLayerOpacity(msg) {
   const opacity = parseFloat(msg.opacity);
   if (isNaN(opacity)) return;
-  if (msg.id === 'osm_basemap') {
-    cartoLayer.setOpacity(opacity);
-    satelliteLayer.setOpacity(opacity);
-  } else if (msg.id === activePointCloudId) {
-    pcCanvas.style.opacity = opacity;
+  const clampedOpacity = Math.max(0, Math.min(1, opacity));
+
+  const isRaster = (msg.type === 'Raster' || msg.type === 'Elevation' || (activeRasterInfo && activeRasterInfo.id === msg.id));
+  if (isRaster) {
+    if (activeRasterInfo) {
+      activeRasterInfo.opacity = clampedOpacity;
+    }
+    if (typeof hiresRasterLayer !== 'undefined' && hiresRasterLayer) {
+      hiresRasterLayer.setOpacity(clampedOpacity);
+    }
+  }
+
+  if (msg.id === 'osm_basemap' || msg.id === 'satellite_basemap' || msg.type === 'Basemap') {
+    if (typeof cartoLayer !== 'undefined' && cartoLayer) cartoLayer.setOpacity(clampedOpacity);
+    if (typeof satelliteLayer !== 'undefined' && satelliteLayer) satelliteLayer.setOpacity(clampedOpacity);
+  } else if (msg.id === activePointCloudId || msg.type === 'PointCloud' || (msg.id && msg.id.startsWith('pc_'))) {
+    if (typeof pcCanvas !== 'undefined' && pcCanvas) {
+      pcCanvas.style.opacity = String(clampedOpacity);
+    }
   } else {
-    map.getLayers().getArray().filter(l => l.get('id') === msg.id || l.get('id') === 'raster_img_' + msg.id || l.get('id') === 'vector_' + msg.id).forEach(l => l.setOpacity(opacity));
+    if (msg.id === 'vector_active' || msg.type === 'Vector') {
+      if (typeof vectorLayer !== 'undefined' && vectorLayer) vectorLayer.setOpacity(clampedOpacity);
+    }
+    map.getLayers().getArray().forEach(l => {
+      const lid = l.get('id') || '';
+      const lType = l.get('type') || '';
+      if (lid === msg.id ||
+          lid === 'raster_img_' + msg.id ||
+          lid === 'vector_' + msg.id ||
+          (isRaster && (lid === 'hires_viewport_layer' || lid === 'raster_hires_layer' || lid.startsWith('raster_img_'))) ||
+          (msg.type && lType === msg.type)) {
+        l.setOpacity(clampedOpacity);
+      }
+    });
   }
   map.render();
 }

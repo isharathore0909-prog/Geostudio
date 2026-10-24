@@ -202,7 +202,8 @@ namespace GeoStudio
                                     action = "updateRasterWindow",
                                     layerId = layerId,
                                     imageUrl = win.ImageUrl,
-                                    bounds = win.Extent
+                                    bounds = win.Extent,
+                                    opacity = layer?.Opacity ?? 1.0
                                 });
                             });
                         }, token);
@@ -228,15 +229,33 @@ namespace GeoStudio
                             if (batch != null && batch.count > 0)
                             {
                                 int unassigned = 0;
-                                int checkMax = Math.Min(batch.count, 1000);
-                                for (int i = 0; i < checkMax; i++) if (batch.c == null || batch.c[i] <= 1) unassigned++;
-                                if (unassigned > (checkMax * 0.5))
+                                int checkMax = Math.Min(batch.count, 2000);
+                                if (batch.c != null)
                                 {
-                                    batch.c = PointCloud.PointCloudClassifier.ClassifySMRF(batch.x, batch.y, batch.z, batch.c);
+                                    for (int i = 0; i < checkMax; i++)
+                                    {
+                                        if (batch.c[i] <= 1) unassigned++;
+                                    }
+                                }
+
+                                // If dataset was SMRF classified or batch contains unassigned points (> 35% unassigned), run SMRF so trees remain green vegetation and ground remains brown
+                                if (_lidarClassifiedWithSmrf || batch.c == null || unassigned > (checkMax * 0.35))
+                                {
+                                    batch.c = PointCloudClassifier.ClassifySMRF(batch.x, batch.y, batch.z, batch.c);
+                                }
+
+                                if (_activeLidarClassificationState == "veg")
+                                {
+                                    batch.c = PointCloudClassifier.ClassifyVegetation(batch.x, batch.y, batch.z, batch.c);
+                                }
+                                else if (_activeLidarClassificationState == "buildings")
+                                {
+                                    batch.c = PointCloudClassifier.ClassifyBuildings(batch.x, batch.y, batch.z, batch.c);
                                 }
 
                                 Dispatcher.InvokeAsync(() =>
                                 {
+                                    _activePointCloudBatch = batch;
                                     PostMessageToMap(new
                                     {
                                         action = "updatePointCloud",

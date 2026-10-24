@@ -1,0 +1,161 @@
+<Window x:Class="GeoStudio.UI.Dialogs.SpectralIndicesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:GeoStudio.UI.Components"
+        Title="Multispectral Indices &amp; Remote Sensing"
+        Height="620" Width="740" MinHeight="580" MinWidth="680"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC" Foreground="#0F172A"
+        FontFamily="Segoe UI" ResizeMode="CanResizeWithGrip">
+
+    <Window.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#64748B"/>
+            <Setter Property="FontSize" Value="10.5"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Margin" Value="0,0,0,2"/>
+        </Style>
+
+        <Style x:Key="BandInput" TargetType="TextBox">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Component -->
+        <components:DialogHeader Grid.Row="0"
+            Icon="🛰️" IconBrush="#059669" IconBg="#ECFDF5"
+            Title="Multispectral Spectral Indices &amp; Composites"
+            Description="Calculate vegetation, water, urban built-up, burn ratio indices and false-color composites with automatic map canvas integration."/>
+
+        <!-- 2. Main Form Parameters -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Border Style="{StaticResource DialogCard}">
+                <StackPanel>
+                    <!-- Input Multispectral Raster -->
+                    <components:LayerPicker x:Name="PickerRaster"
+                        Label="Input Multispectral Raster Dataset:"
+                        BrowseTitle="Select Multispectral Raster Dataset"
+                        BrowseFilter="GeoTIFF &amp; BigTIFF (*.tif;*.tiff;*.dem;*.vrt)|*.tif;*.tiff;*.dem;*.vrt|All Files (*.*)|*.*"
+                        SelectionChanged="PickerRaster_SelectionChanged"/>
+
+                    <!-- Index / Operation Mode -->
+                    <TextBlock Text="Spectral Index / Transformation Mode:" Style="{StaticResource DialogParamLabel}"/>
+                    <ComboBox x:Name="ComboIndexMode" Height="32" VerticalContentAlignment="Center" Background="#F8FAFC" BorderBrush="#CBD5E1" Margin="0,0,0,10" SelectionChanged="ComboIndexMode_SelectionChanged">
+                        <ComboBoxItem Content="🌿 NDVI — Normalized Difference Vegetation Index" Tag="NDVI" IsSelected="True"/>
+                        <ComboBoxItem Content="💧 NDWI — Normalized Difference Water Index (McFeeters)" Tag="NDWI"/>
+                        <ComboBoxItem Content="🌾 EVI — Enhanced Vegetation Index (Atmospheric Corrected)" Tag="EVI"/>
+                        <ComboBoxItem Content="🏙️ NDBI — Normalized Difference Built-up Index (Urban Extent)" Tag="NDBI"/>
+                        <ComboBoxItem Content="🔥 NBR — Normalized Burn Ratio (Wildfire / Burn Severity)" Tag="NBR"/>
+                        <ComboBoxItem Content="🎨 False Color Composite — Infrared (NIR / Red / Green)" Tag="FALSE_COLOR"/>
+                    </ComboBox>
+
+                    <!-- Formula & Mode Description Card -->
+                    <Border x:Name="CardFormulaInfo" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,12">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Formula: " FontWeight="Bold" FontSize="11" Foreground="#334155"/>
+                                <TextBlock x:Name="TxtFormula" Grid.Column="1" Text="(NIR - Red) / (NIR + Red)" FontFamily="Consolas" FontWeight="SemiBold" FontSize="11" Foreground="#059669"/>
+                            </Grid>
+                            <TextBlock x:Name="TxtModeDesc" Text="Measures vegetation density and health by quantifying the difference between near-infrared (which vegetation strongly reflects) and red light (which vegetation absorbs). Typical values: -1.0 to +1.0." FontSize="10.5" Foreground="#475569" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Sensor Preset -->
+                    <TextBlock Text="Satellite / Sensor Band Preset:" Style="{StaticResource DialogParamLabel}"/>
+                    <ComboBox x:Name="ComboSensorPreset" Height="30" VerticalContentAlignment="Center" Background="#F8FAFC" BorderBrush="#CBD5E1" Margin="0,0,0,10" SelectionChanged="ComboSensorPreset_SelectionChanged">
+                        <ComboBoxItem Content="Sentinel-2 MSI (B8=NIR, B4=Red, B3=Green, B2=Blue, B11=SWIR1, B12=SWIR2)" Tag="sentinel2" IsSelected="True"/>
+                        <ComboBoxItem Content="Landsat 8 / 9 OLI (B5=NIR, B4=Red, B3=Green, B2=Blue, B6=SWIR1, B7=SWIR2)" Tag="landsat8"/>
+                        <ComboBoxItem Content="Landsat 4 / 5 / 7 TM/ETM+ (B4=NIR, B3=Red, B2=Green, B1=Blue, B5=SWIR1, B7=SWIR2)" Tag="landsat7"/>
+                        <ComboBoxItem Content="PlanetScope / 4-Band Drone (B4=NIR, B1=Red, B2=Green, B3=Blue)" Tag="planetscope"/>
+                        <ComboBoxItem Content="Custom / Manual Band Numbers" Tag="custom"/>
+                    </ComboBox>
+
+                    <!-- Band Channel Mapping Inputs -->
+                    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="Band Channel Mapping (1-based index):" FontSize="10.5" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- NIR -->
+                                <StackPanel x:Name="PanelBandNir" Grid.Column="0" Margin="2,0">
+                                    <TextBlock Text="NIR (B8/5)" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox x:Name="TxtBandNir" Text="8" Style="{StaticResource BandInput}" TextChanged="BandInput_TextChanged"/>
+                                </StackPanel>
+
+                                <!-- Red -->
+                                <StackPanel x:Name="PanelBandRed" Grid.Column="1" Margin="2,0">
+                                    <TextBlock Text="Red (B4)" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox x:Name="TxtBandRed" Text="4" Style="{StaticResource BandInput}" TextChanged="BandInput_TextChanged"/>
+                                </StackPanel>
+
+                                <!-- Green -->
+                                <StackPanel x:Name="PanelBandGreen" Grid.Column="2" Margin="2,0">
+                                    <TextBlock Text="Green (B3)" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox x:Name="TxtBandGreen" Text="3" Style="{StaticResource BandInput}" TextChanged="BandInput_TextChanged"/>
+                                </StackPanel>
+
+                                <!-- Blue -->
+                                <StackPanel x:Name="PanelBandBlue" Grid.Column="3" Margin="2,0">
+                                    <TextBlock Text="Blue (B2)" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox x:Name="TxtBandBlue" Text="2" Style="{StaticResource BandInput}" TextChanged="BandInput_TextChanged"/>
+                                </StackPanel>
+
+                                <!-- SWIR1 -->
+                                <StackPanel x:Name="PanelBandSwir1" Grid.Column="4" Margin="2,0">
+                                    <TextBlock Text="SWIR1 (B11/6)" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox x:Name="TxtBandSwir1" Text="11" Style="{StaticResource BandInput}" TextChanged="BandInput_TextChanged"/>
+                                </StackPanel>
+
+                                <!-- SWIR2 -->
+                                <StackPanel x:Name="PanelBandSwir2" Grid.Column="5" Margin="2,0">
+                                    <TextBlock Text="SWIR2 (B12/7)" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox x:Name="TxtBandSwir2" Text="12" Style="{StaticResource BandInput}" TextChanged="BandInput_TextChanged"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Output Path Picker -->
+                    <components:OutputPathPicker x:Name="PickerOutput"
+                        Label="Output GeoTIFF Dataset:"
+                        DialogTitle="Save Spectral Index GeoTIFF"
+                        HelperText="The output GeoTIFF will be computed with Deflate compression and immediately displayed on the map canvas."/>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
+
+        <!-- 3. Progress and Actions Footer Component -->
+        <components:ToolActionBar x:Name="ActionBar" Grid.Row="2"
+            ActionText="⚡ Calculate &amp; Add to Map"
+            ActionBackground="#059669"
+            StatusText="Ready to calculate spectral index."
+            RunClick="BtnRunIndex_Click"
+            CancelClick="BtnCancel_Click"/>
+    </Grid>
+</Window>

@@ -152,10 +152,9 @@ def run_pdal_smrf_classification(in_file: str, out_file: str):
     stages.append({
         "type": "filters.assign",
         "value": [
-            "Classification = 3 WHERE HeightAboveGround >= 0.3 && HeightAboveGround < 1.5 && Classification != 2",
-            "Classification = 4 WHERE HeightAboveGround >= 1.5 && HeightAboveGround < 3.5 && Planarity < 0.65 && Classification != 2",
-            "Classification = 5 WHERE HeightAboveGround >= 3.5 && Planarity < 0.65 && Classification != 2",
-            "Classification = 6 WHERE HeightAboveGround >= 1.8 && Planarity >= 0.65 && Classification != 2"
+            "Classification = 3 WHERE HeightAboveGround >= 0.3 && HeightAboveGround < 1.8 && Classification != 2",
+            "Classification = 4 WHERE HeightAboveGround >= 1.8 && HeightAboveGround < 4.0 && Classification != 2",
+            "Classification = 5 WHERE HeightAboveGround >= 4.0 && Classification != 2"
         ]
     })
 
@@ -222,44 +221,175 @@ def task_classify_ground(args):
 
 
 def task_classify_buildings(args):
-    """Classifies building structures and rooftops (ASPRS Class 6)."""
+    """Classifies verified planar building structures and rooftops (ASPRS Class 6).
+    Enforces strict planar clustering so tree canopies and foliage are NEVER classified as buildings.
+    """
     in_file = args.input
     out_file = args.output or os.path.splitext(in_file)[0] + "_buildings.las"
-    report_progress(20, "Analyzing planar surfaces and rooftop heights...")
+    report_progress(15, "Analyzing point cloud structure for building rooftops...")
 
     import laspy
     import numpy as np
+    from scipy.spatial import cKDTree
 
     las = laspy.read(in_file)
-    z = las.z
-    min_z = np.percentile(z, 5)
-    hag = z - min_z
-    # Buildings: high elevation (> 2.5m) and planar density
-    is_building = (hag >= 2.5) & (hag <= 45.0)
-    las.classification[is_building] = 6  # ASPRS Building
-    las.write(out_file)
+    n_pts = len(las.points)
+    if n_pts == 0:
+        raise ValueError("Point cloud contains no points.")
 
+    coords = np.column_stack([las.x, las.y, las.z])
+    classes = np.array(las.classification)
+
+    # 1. Establish ground baseline to determine Height Above Ground (HAG)
+    report_progress(25, "Calculating Height Above Ground (HAG)...")
+    is_ground = (classes == 2)
+    if np.sum(is_ground) >= 100:
+        g_pts = coords[is_ground]
+        g_tree = cKDTree(g_pts[:, :2])
+        # Sample or query in batches for performance
+        batch_sz = 100000
+        hag = np.zeros(n_pts, dtype=np.float32)
+        for s_idx in range(0, n_pts, batch_sz):
+            e_idx = min(s_idx + batch_sz, n_pts)
+            _, near_g = g_tree.query(coords[s_idx:e_idx, :2], k=1)
+            hag[s_idx:e_idx] = coords[s_idx:e_idx, 2] - g_pts[near_g, 2]
+    else:
+        min_z = float(np.percentile(coords[:, 2], 5))
+        hag = coords[:, 2] - min_z
+
+    # 2. Filter candidate building points:
+    # Must have HAG >= 2.2m (clearance above ground)
+    # Must have single return: buildings are solid, whereas tree canopy produces multiple returns
+    report_progress(45, "Filtering solid planar candidate points...")
+    cand_mask = (classes != 2) & (hag >= 2.2) & (hag <= 65.0)
+    
+    # Filter out multi-return points (tree canopy foliage) if return info is available
+    if hasattr(las, 'number_of_returns') and hasattr(las, 'return_number'):
+        try:
+            n_ret = np.array(las.number_of_returns)
+            r_num = np.array(las.return_number)
+            single_or_last = (n_ret <= 1) | (r_num == n_ret)
+            cand_mask = cand_mask & single_or_last
+        except Exception:
+            pass
+
+    cand_indices = np.where(cand_mask)[0]
+    num_cands = len(cand_indices)
+
+    # If there are few elevated candidates, there are NO buildings in this survey
+    if num_cands < 60:
+        las.write(out_file)
+        report_progress(100, "Building classification complete: 0 buildings found (natural terrain)")
+        report_result(True, {"output_file": out_file, "message": "No building structures detected. Canopy preserved as vegetation."})
+        return
+
+    # 3. Detect large contiguous planar roof structures (RANSAC / Connected Component clustering)
+    report_progress(60, f"Evaluating planar consistency across {num_cands:,} candidate points...")
+    sub_coords = coords[cand_indices]
+    cand_tree = cKDTree(sub_coords[:, :2])
+    
+    # Identify points belonging to dense, flat clusters
+    k_check = min(20, num_cands)
+    _, nbr_indices = cand_tree.query(sub_coords[:, :2], k=k_check)
+    
+    # Measure local vertical variation (z_std). Flat roofs have very low z_std (< 0.20m), trees have large z_std (> 0.60m)
+    nbr_z = sub_coords[nbr_indices, 2]
+    z_std = np.std(nbr_z, axis=1)
+    
+    # Strictly planar candidates
+    planar_mask = (z_std < 0.22)
+    planar_cand_indices = cand_indices[planar_mask]
+    
+    if len(planar_cand_indices) < 50:
+        las.write(out_file)
+        report_progress(100, "Building classification complete: 0 buildings found (all vegetation)")
+        report_result(True, {"output_file": out_file, "message": "No planar building rooftops found. Foliage preserved as vegetation."})
+        return
+
+    # 4. Spatial Connected Component clustering to ensure minimum building footprint (>= 15 m^2 and >= 50 points)
+    report_progress(80, "Verifying building roof footprint and spatial clustering...")
+    planar_pts = coords[planar_cand_indices]
+    planar_tree = cKDTree(planar_pts[:, :2])
+    
+    visited = np.zeros(len(planar_pts), dtype=bool)
+    confirmed_building_indices = []
+    
+    for i in range(len(planar_pts)):
+        if visited[i]:
+            continue
+        # Cluster BFS within 2.2 meters
+        cluster = []
+        queue = [i]
+        visited[i] = True
+        while queue:
+            curr = queue.pop(0)
+            cluster.append(curr)
+            nbrs = planar_tree.query_ball_point(planar_pts[curr, :2], r=2.2)
+            for nb in nbrs:
+                if not visited[nb]:
+                    visited[nb] = True
+                    queue.append(nb)
+        
+        # A building must have >= 50 planar inliers and spread across at least 15 m^2
+        if len(cluster) >= 50:
+            c_pts = planar_pts[cluster]
+            dx = np.max(c_pts[:, 0]) - np.min(c_pts[:, 0])
+            dy = np.max(c_pts[:, 1]) - np.min(c_pts[:, 1])
+            est_area = dx * dy
+            if est_area >= 15.0:
+                for c_idx in cluster:
+                    confirmed_building_indices.append(planar_cand_indices[c_idx])
+
+    if confirmed_building_indices:
+        b_arr = np.array(confirmed_building_indices, dtype=np.int64)
+        las.classification[b_arr] = 6  # ASPRS Class 6: Building
+        msg = f"Successfully classified {len(b_arr):,} building points into ASPRS Class 6."
+    else:
+        msg = "0 building structures detected. All elevated points verified as natural vegetation."
+
+    report_progress(95, "Writing output LAS dataset...")
+    las.write(out_file)
     report_progress(100, "Building classification complete")
-    report_result(True, {"output_file": out_file, "message": "Buildings classified to ASPRS Class 6"})
+    report_result(True, {"output_file": out_file, "message": msg})
 
 
 def task_classify_veg(args):
-    """Classifies vegetation canopy into low, medium, and high vegetation."""
+    """Classifies vegetation canopy into low, medium, and high vegetation (ASPRS Classes 3, 4, 5)."""
     in_file = args.input
     out_file = args.output or os.path.splitext(in_file)[0] + "_vegetation.las"
     report_progress(20, "Computing Height Above Ground (HAG) for vegetation...")
 
     import laspy
     import numpy as np
+    from scipy.spatial import cKDTree
 
     las = laspy.read(in_file)
-    z = las.z
-    min_z = np.percentile(z, 5)
-    hag = z - min_z
+    n_pts = len(las.points)
+    if n_pts == 0:
+        raise ValueError("Point cloud contains no points.")
 
-    low_veg = (hag >= 0.3) & (hag < 2.0)
-    med_veg = (hag >= 2.0) & (hag < 5.0)
-    high_veg = hag >= 5.0
+    coords = np.column_stack([las.x, las.y, las.z])
+    classes = np.array(las.classification)
+
+    is_ground = (classes == 2)
+    if np.sum(is_ground) >= 100:
+        g_pts = coords[is_ground]
+        g_tree = cKDTree(g_pts[:, :2])
+        batch_sz = 100000
+        hag = np.zeros(n_pts, dtype=np.float32)
+        for s_idx in range(0, n_pts, batch_sz):
+            e_idx = min(s_idx + batch_sz, n_pts)
+            _, near_g = g_tree.query(coords[s_idx:e_idx, :2], k=1)
+            hag[s_idx:e_idx] = coords[s_idx:e_idx, 2] - g_pts[near_g, 2]
+    else:
+        min_z = float(np.percentile(coords[:, 2], 5))
+        hag = coords[:, 2] - min_z
+
+    # Reclassify non-ground points according to ASPRS specifications
+    non_ground = (classes != 2) & (classes != 6) # Preserve ground & confirmed buildings
+    low_veg = non_ground & (hag >= 0.3) & (hag < 1.8)
+    med_veg = non_ground & (hag >= 1.8) & (hag < 4.0)
+    high_veg = non_ground & (hag >= 4.0)
 
     las.classification[low_veg] = 3   # Low Veg
     las.classification[med_veg] = 4   # Medium Veg

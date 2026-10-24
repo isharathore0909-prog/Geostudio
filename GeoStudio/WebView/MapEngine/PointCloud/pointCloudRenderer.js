@@ -50,17 +50,19 @@ function renderPointCloud() {
   const pts = pointCloudData;
 
   const master = window.initialLidarBatch || batch || {};
-  const rBytes = hasBatch ? (batch.r || master.r) : null;
-  const gBytes = hasBatch ? (batch.g || master.g) : null;
-  const bBytes = hasBatch ? (batch.b || master.b) : null;
-  const cBytes = hasBatch ? (batch.c || master.c) : null;
-  const iBytes = hasBatch ? (batch.i || master.i) : null;
-  const rnBytes = hasBatch ? (batch.rn || master.rn) : null;
-  const nrBytes = hasBatch ? (batch.nr || master.nr) : null;
-  const saBytes = hasBatch ? (batch.sa || master.sa) : null;
-  const psRaw = hasBatch ? (batch.ps || master.ps) : null;
-  const flBytes = hasBatch ? (batch.fl || master.fl) : null;
-  const nirBytes = hasBatch ? (batch.nir || master.nir) : null;
+  const isMasterSameLength = master && master.count === count;
+  const rBytes = hasBatch ? (batch.r || (isMasterSameLength ? master.r : null)) : null;
+  const gBytes = hasBatch ? (batch.g || (isMasterSameLength ? master.g : null)) : null;
+  const bBytes = hasBatch ? (batch.b || (isMasterSameLength ? master.b : null)) : null;
+  const cBytes = hasBatch ? (batch.c || (isMasterSameLength ? master.c : null)) : null;
+  const iBytes = hasBatch ? (batch.i || (isMasterSameLength ? master.i : null)) : null;
+  const rnBytes = hasBatch ? (batch.rn || (isMasterSameLength ? master.rn : null)) : null;
+  const nrBytes = hasBatch ? (batch.nr || (isMasterSameLength ? master.nr : null)) : null;
+  const saBytes = hasBatch ? (batch.sa || (isMasterSameLength ? master.sa : null)) : null;
+  const psRaw = hasBatch ? (batch.ps || (isMasterSameLength ? master.ps : null)) : null;
+  const flBytes = hasBatch ? (batch.fl || (isMasterSameLength ? master.fl : null)) : null;
+  const nirBytes = hasBatch ? (batch.nir || (isMasterSameLength ? master.nir : null)) : null;
+  const tBytes = hasBatch ? (batch.t || (isMasterSameLength ? master.t : null)) : null;
 
   const fileHasRgb = hasBatch ? (batch.hasRgb === true || (rBytes !== null && rBytes.length > 0)) : (pts[0] && pts[0].r !== undefined);
 
@@ -207,7 +209,7 @@ function renderPointCloud() {
         break;
       case 'point_index':
         {
-          const normIdx = Math.min(255, Math.max(0, Math.round((i / Math.max(1, count - 1)) * 255)));
+          const normIdx = (tBytes && i < tBytes.length) ? tBytes[i] : Math.min(255, Math.max(0, Math.round((i / Math.max(1, count - 1)) * 255)));
           color = plasmaPalette[normIdx];
         }
         break;

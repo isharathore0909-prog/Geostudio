@@ -93,7 +93,8 @@ namespace GeoStudio
                         palette = layer.Palette,
                         minElev = meta.MinElevation,
                         maxElev = meta.MaxElevation,
-                        isElevation = meta.IsElevation
+                        isElevation = meta.IsElevation,
+                        opacity = layer.Opacity
                     });
 
                     if (string.IsNullOrEmpty(meta.PreviewUrl))

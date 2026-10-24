@@ -1,0 +1,36 @@
+<UserControl x:Class="GeoStudio.UI.Components.LayerPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignWidth="500">
+    <StackPanel Margin="0,0,0,14">
+        <!-- Label & Optional Badge Row -->
+        <Grid Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="TxtLabel" Text="Select Layer:" Style="{StaticResource DialogParamLabel}" Margin="0"/>
+            <Border x:Name="BadgeBorder" Grid.Column="1" Background="#EFF6FF" CornerRadius="4" Padding="6,2" Visibility="Collapsed">
+                <TextBlock x:Name="TxtBadge" Text="Status" FontSize="10" FontWeight="SemiBold" Foreground="#2563EB"/>
+            </Border>
+        </Grid>
+
+        <!-- Dropdown & Actions Row -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ComboBox x:Name="ComboLayers" Height="32" VerticalContentAlignment="Center" Background="#F8FAFC" BorderBrush="#CBD5E1" SelectionChanged="ComboLayers_SelectionChanged"/>
+
+            <Button x:Name="BtnBrowse" Grid.Column="1" Content="Browse..." Height="32" Padding="12,0" Margin="8,0,0,0" Style="{StaticResource DialogSecondaryButton}" Click="BtnBrowse_Click"/>
+
+            <Button x:Name="BtnExtra" Grid.Column="2" Content="Extra Action" Height="32" Padding="12,0" Margin="8,0,0,0" Style="{StaticResource DialogSecondaryButton}" Visibility="Collapsed" Click="BtnExtra_Click"/>
+        </Grid>
+    </StackPanel>
+</UserControl>

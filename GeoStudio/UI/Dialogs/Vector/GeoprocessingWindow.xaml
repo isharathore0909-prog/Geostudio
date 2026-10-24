@@ -1,0 +1,137 @@
+<Window x:Class="GeoStudio.UI.Dialogs.GeoprocessingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:GeoStudio.UI.Components"
+        Title="Vector Geoprocessing Analysis"
+        Height="520" Width="660" MinHeight="460" MinWidth="600"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC" Foreground="#0F172A"
+        FontFamily="Segoe UI" ResizeMode="NoResize">
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Component -->
+        <components:DialogHeader x:Name="Header" Grid.Row="0"
+            Icon="🌐" IconBrush="#2563EB" IconBg="#EFF6FF"
+            Title="Geodesic Buffer Tool"
+            Description="Creates a geodesic / geometric buffer around vector features using Shapely."/>
+
+        <!-- 2. Tool Configuration Card -->
+        <Border Grid.Row="1" Style="{StaticResource DialogCard}">
+            <StackPanel>
+                <!-- Tool Switcher -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,0,8,0">
+                        <TextBlock Text="Operation Mode:" Style="{StaticResource DialogParamLabel}"/>
+                        <ComboBox x:Name="ComboOperation" Height="32" VerticalContentAlignment="Center" Background="#F8FAFC" BorderBrush="#CBD5E1" SelectionChanged="ComboOperation_SelectionChanged">
+                            <ComboBoxItem Content="Buffer" Tag="buffer"/>
+                            <ComboBoxItem Content="Convex Hull" Tag="convex_hull"/>
+                            <ComboBoxItem Content="Centroids" Tag="centroids"/>
+                            <ComboBoxItem Content="Dissolve" Tag="dissolve"/>
+                            <ComboBoxItem Content="Voronoi (Thiessen)" Tag="voronoi"/>
+                            <ComboBoxItem Content="Clip Vector" Tag="clip"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                        <TextBlock Text="Input Vector Layer:" Style="{StaticResource DialogParamLabel}"/>
+                        <ComboBox x:Name="ComboInputLayer" Height="32" VerticalContentAlignment="Center" Background="#F8FAFC" BorderBrush="#CBD5E1" SelectionChanged="ComboInputLayer_SelectionChanged"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Buffer Parameters -->
+                <StackPanel x:Name="PanelBufferParams" Visibility="Visible" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="Buffer Distance:" Style="{StaticResource DialogParamLabel}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="TxtBufferDistance" Text="100.0" Height="32" VerticalContentAlignment="Center" Background="#F8FAFC" BorderBrush="#CBD5E1" Padding="8,0"/>
+                                <TextBlock Grid.Column="1" Text="Meters" VerticalAlignment="Center" Margin="8,0,0,0" Foreground="#64748B" FontSize="11"/>
+                            </Grid>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                            <TextBlock Text="Segments:" Style="{StaticResource DialogParamLabel}"/>
+                            <ComboBox x:Name="ComboSegments" Height="32" VerticalContentAlignment="Center" Background="#F8FAFC" BorderBrush="#CBD5E1">
+                                <ComboBoxItem Content="8"/>
+                                <ComboBoxItem Content="16" IsSelected="True"/>
+                                <ComboBoxItem Content="32"/>
+                                <ComboBoxItem Content="64"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+                    <CheckBox x:Name="ChkBufferDissolve" Content="Dissolve overlapping result buffers" Margin="0,10,0,0" Foreground="#334155" FontSize="11"/>
+                </StackPanel>
+
+                <!-- Convex Hull Parameters -->
+                <StackPanel x:Name="PanelConvexHullParams" Visibility="Collapsed" Margin="0,0,0,10">
+                    <TextBlock Text="Hull Scope:" Style="{StaticResource DialogParamLabel}"/>
+                    <ComboBox x:Name="ComboHullScope" Height="32" VerticalContentAlignment="Center" Background="#F8FAFC" BorderBrush="#CBD5E1">
+                        <ComboBoxItem Content="Overall Enclosing Hull (All features combined)" Tag="all" IsSelected="True"/>
+                        <ComboBoxItem Content="Per-Feature Hull (Each feature independently)" Tag="per_feature"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Dissolve Parameters -->
+                <StackPanel x:Name="PanelDissolveParams" Visibility="Collapsed" Margin="0,0,0,10">
+                    <TextBlock Text="Dissolve Field (Group By):" Style="{StaticResource DialogParamLabel}"/>
+                    <ComboBox x:Name="ComboDissolveField" Height="32" VerticalContentAlignment="Center" Background="#F8FAFC" BorderBrush="#CBD5E1"/>
+                </StackPanel>
+
+                <!-- Clip Parameters -->
+                <StackPanel x:Name="PanelClipParams" Visibility="Collapsed" Margin="0,0,0,10">
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Overlay Mask Polygon (Layer or Custom):" Style="{StaticResource DialogParamLabel}"/>
+                        <Border x:Name="BadgeClipMaskStatus" Grid.Column="1" Background="#EFF6FF" CornerRadius="4" Padding="6,2" Visibility="Collapsed">
+                            <TextBlock x:Name="TxtClipMaskBadge" Text="✓ Custom Drawn on Canvas" FontSize="10" FontWeight="SemiBold" Foreground="#2563EB"/>
+                        </Border>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox x:Name="ComboClipMaskLayer" Height="32" VerticalContentAlignment="Center" Background="#F8FAFC" BorderBrush="#CBD5E1" SelectionChanged="ComboClipMaskLayer_SelectionChanged"/>
+                        <Button Grid.Column="1" Content="Browse..." Height="32" Padding="12,0" Margin="8,0,0,0" Style="{StaticResource DialogSecondaryButton}" Click="BtnBrowseClipMask_Click" ToolTip="Browse for polygon GeoJSON, Shapefile, or GeoPackage"/>
+                        <Button x:Name="BtnDrawClipPolygon" Grid.Column="2" Content="✏️ Draw Polygon" Height="32" Padding="12,0" Margin="8,0,0,0" Style="{StaticResource DialogSecondaryButton}" Click="BtnDrawClipPolygon_Click" ToolTip="Click points on the map canvas to draw custom clipping polygon (double-click to finish)"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Output Path Picker -->
+                <components:OutputPathPicker x:Name="PickerOutput"
+                    Label="Output GeoJSON File:"
+                    DialogTitle="Save Geoprocessing Output"
+                    FileFilter="GeoJSON (*.geojson)|*.geojson|All Files (*.*)|*.*"
+                    DefaultExtension=".geojson"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 3. Progress and Actions Footer Component -->
+        <components:ToolActionBar x:Name="ActionBar" Grid.Row="2"
+            ActionText="▶ Run Algorithm"
+            StatusText="Ready to execute algorithm."
+            RunClick="BtnRun_Click"
+            CancelClick="BtnCancel_Click"/>
+    </Grid>
+</Window>

@@ -72,7 +72,7 @@ namespace GeoStudio.DuckDB
                     if (srcSrs != null)
                     {
                         using var dstSrs = new SpatialReference("");
-                        dstSrs.ImportFromEPSG(3857);
+                        dstSrs.ImportFromEPSG(4326);
                         dstSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
 
                         if (srcSrs.IsSame(dstSrs, null) == 0)
@@ -137,6 +137,29 @@ namespace GeoStudio.DuckDB
                         }
                     }
 
+                    double minGps = double.MaxValue, maxGps = double.MinValue;
+                    int fmt = header.PointDataRecordFormat;
+                    int gpsOffset = fmt >= 6 ? 22 : ((fmt == 1 || fmt == 3 || fmt == 4 || fmt == 5) ? 20 : -1);
+                    if (gpsOffset > 0 && recordLen >= gpsOffset + 8)
+                    {
+                        byte[] gBuf = new byte[recordLen];
+                        int sampleStep = Math.Max(1, (int)(total / 500));
+                        for (int s = 0; s < 500; s++)
+                        {
+                            long sPos = (long)header.OffsetToPointData + ((long)s * sampleStep * recordLen);
+                            if (sPos + recordLen > fs.Length) break;
+                            fs.Seek(sPos, SeekOrigin.Begin);
+                            if (fs.Read(gBuf, 0, recordLen) < recordLen) break;
+                            double gVal = BitConverter.ToDouble(gBuf, gpsOffset);
+                            if (gVal > 0)
+                            {
+                                if (gVal < minGps) minGps = gVal;
+                                if (gVal > maxGps) maxGps = gVal;
+                            }
+                        }
+                    }
+                    double gpsRange = (maxGps > minGps && maxGps > 0) ? (maxGps - minGps) : 0;
+
                     using (var appender = conn.CreateAppender("pointcloud"))
                     {
                         double[] ptBuf = new double[3];
@@ -165,7 +188,7 @@ namespace GeoStudio.DuckDB
                                 for (int k = 0; k < recordsInChunk; k++)
                                 {
                                     int p = k * recordLen;
-                                    AppendRecord(appender, chunkBuf, p, header, hasRgb, rgbOffset, cMin, cRange, cMax, ct, ptBuf);
+                                    AppendRecord(appender, chunkBuf, p, header, hasRgb, rgbOffset, cMin, cRange, cMax, ct, ptBuf, pointsRead + (ulong)k, total, gpsOffset, minGps, gpsRange);
                                 }
 
                                 pointsRead += (ulong)recordsInChunk;
@@ -190,7 +213,7 @@ namespace GeoStudio.DuckDB
                                     {
                                         byte* p = basePtr + ((long)i * (long)recordLen);
                                         System.Runtime.InteropServices.Marshal.Copy((IntPtr)p, recordBuf, 0, recordLen);
-                                        AppendRecord(appender, recordBuf, 0, header, hasRgb, rgbOffset, cMin, cRange, cMax, ct, ptBuf);
+                                        AppendRecord(appender, recordBuf, 0, header, hasRgb, rgbOffset, cMin, cRange, cMax, ct, ptBuf, i, total, gpsOffset, minGps, gpsRange);
                                         countIngested++;
                                         if (countIngested % 50000 == 0 && targetCount > 0)
                                         {
@@ -214,13 +237,62 @@ namespace GeoStudio.DuckDB
             }
         }
 
-        private static void AppendRecord(DuckDBAppender appender, byte[] buf, int p, LasHeaderInfo header, bool hasRgb, int rgbOffset, float cMin, float cRange, float cMax, CoordinateTransformation? ct, double[] ptBuf)
+        private static void AppendRecord(DuckDBAppender appender, byte[] buf, int p, LasHeaderInfo header, bool hasRgb, int rgbOffset, float cMin, float cRange, float cMax, CoordinateTransformation? ct, double[] ptBuf, ulong pointIdx, ulong totalPoints, int gpsOffset, double minGps, double gpsRange)
         {
             int rawX = BitConverter.ToInt32(buf, p);
             int rawY = BitConverter.ToInt32(buf, p + 4);
             int rawZ = BitConverter.ToInt32(buf, p + 8);
             ushort intensity = BitConverter.ToUInt16(buf, p + 12);
-            byte classification = buf[p + 15];
+            byte retByte = buf[p + 14];
+
+            byte rn = 1, nr = 1, classification = 2, wth = 0, kp = 0, ovl = 0;
+            int saDeg = 0;
+            ushort psVal = 1;
+            byte nir = 0;
+
+            if (header.PointDataRecordFormat >= 6)
+            {
+                rn = (byte)(retByte & 0x0F);
+                nr = (byte)((retByte >> 4) & 0x0F);
+                byte flgByte = buf[p + 15];
+                wth = (byte)((flgByte >> 2) & 1);
+                kp = (byte)((flgByte >> 1) & 1);
+                ovl = (byte)((flgByte >> 3) & 1);
+                classification = buf[p + 16];
+                short saRaw = BitConverter.ToInt16(buf, p + 18);
+                saDeg = (int)Math.Round(saRaw * 0.006);
+                psVal = BitConverter.ToUInt16(buf, p + 20);
+                if (header.PointDataRecordFormat == 8 && p + 38 <= buf.Length)
+                {
+                    ushort rawNir = BitConverter.ToUInt16(buf, p + 36);
+                    nir = (byte)(rawNir > 255 ? (rawNir >> 8) : rawNir);
+                }
+            }
+            else
+            {
+                rn = (byte)(retByte & 0x07);
+                nr = (byte)((retByte >> 3) & 0x07);
+                byte clsByte = buf[p + 15];
+                classification = (byte)(clsByte & 0x1F);
+                wth = (byte)((clsByte >> 7) & 1);
+                kp = (byte)((clsByte >> 6) & 1);
+                ovl = (byte)(classification == 12 ? 1 : 0);
+                sbyte saRank = (sbyte)buf[p + 16];
+                saDeg = saRank;
+                psVal = BitConverter.ToUInt16(buf, p + 18);
+            }
+
+            double curGps = 0;
+            if (gpsOffset > 0 && p + gpsOffset + 8 <= buf.Length)
+            {
+                curGps = BitConverter.ToDouble(buf, p + gpsOffset);
+            }
+
+            byte flags = (byte)(wth | (kp << 1) | (ovl << 2));
+            byte scanAng = (byte)Math.Clamp(saDeg + 128, 0, 255);
+            byte t = (byte)((gpsRange > 0 && curGps >= minGps)
+                ? Math.Clamp((int)(((curGps - minGps) / gpsRange) * 255.0), 0, 255)
+                : Math.Clamp((int)(((double)pointIdx / Math.Max(1UL, totalPoints - 1UL)) * 255.0), 0, 255));
 
             byte r = 180, g = 180, b = 180;
             if (hasRgb && p + rgbOffset + 6 <= buf.Length)
@@ -266,6 +338,13 @@ namespace GeoStudio.DuckDB
             row.AppendValue(r);
             row.AppendValue(g);
             row.AppendValue(b);
+            row.AppendValue(rn > 0 ? rn : (byte)1);
+            row.AppendValue(nr > 0 ? nr : (byte)1);
+            row.AppendValue(scanAng);
+            row.AppendValue(psVal);
+            row.AppendValue(flags);
+            row.AppendValue(nir);
+            row.AppendValue(t);
             row.EndRow();
         }
     }

@@ -1,0 +1,90 @@
+<Window x:Class="GeoStudio.UI.Dialogs.SelectByAttributesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:GeoStudio.UI.Components"
+        Title="Select By Attributes"
+        Height="520" Width="520" MinHeight="480" MinWidth="480"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC" Foreground="#0F172A"
+        FontFamily="Segoe UI" ResizeMode="CanResizeWithGrip">
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Component -->
+        <components:DialogHeader Grid.Row="0"
+            Icon="🏷️" IconBrush="#0284C7" IconBg="#E0F2FE"
+            Title="Select Features By Attributes"
+            Description="Query and highlight features meeting specified attribute criteria."/>
+
+        <!-- 2. Parameter Card -->
+        <Border Grid.Row="1" Style="{StaticResource DialogCard}" Margin="0,0,0,14">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Vertical">
+                    <!-- Layer Selection -->
+                    <TextBlock Text="Target Vector Layer:" Style="{StaticResource DialogParamLabel}"/>
+                    <ComboBox x:Name="CmbLayers" Height="32" Margin="0,0,0,12" VerticalContentAlignment="Center" Background="#FFFFFF" BorderBrush="#CBD5E1" SelectionChanged="CmbLayers_SelectionChanged"/>
+
+                    <!-- Attribute Field & Operator -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Attribute Field Name:" Style="{StaticResource DialogParamLabel}"/>
+                            <ComboBox x:Name="CmbField" IsEditable="True" Height="32" VerticalContentAlignment="Center" Background="#FFFFFF" BorderBrush="#CBD5E1" SelectionChanged="CmbField_SelectionChanged" TextBoxBase.TextChanged="UpdatePreview_TextChanged"/>
+                            <TextBlock x:Name="TxtFieldHint" Text="Pick or type attribute (e.g. MATERIAL, NAME, TYPE)" FontSize="9.5" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Operator:" Style="{StaticResource DialogParamLabel}"/>
+                            <ComboBox x:Name="CmbOperator" Height="32" VerticalContentAlignment="Center" Background="#FFFFFF" BorderBrush="#CBD5E1" SelectionChanged="CmbOperator_SelectionChanged">
+                                <ComboBoxItem Content="=" Tag="=" IsSelected="True"/>
+                                <ComboBoxItem Content="!=" Tag="!="/>
+                                <ComboBoxItem Content="&gt;" Tag="&gt;"/>
+                                <ComboBoxItem Content="&gt;=" Tag="&gt;="/>
+                                <ComboBoxItem Content="&lt;" Tag="&lt;"/>
+                                <ComboBoxItem Content="&lt;=" Tag="&lt;="/>
+                                <ComboBoxItem Content="Contains" Tag="contains"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Query Value -->
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Value to Match:" Style="{StaticResource DialogParamLabel}" Margin="0"/>
+                        <TextBlock Grid.Column="1" x:Name="TxtValueCountHint" Text="" FontSize="10" Foreground="#0284C7"/>
+                    </Grid>
+                    <ComboBox x:Name="CmbValue" IsEditable="True" Height="32" VerticalContentAlignment="Center" Background="#FFFFFF" BorderBrush="#CBD5E1" Margin="0,0,0,14" SelectionChanged="CmbValue_SelectionChanged" TextBoxBase.TextChanged="UpdatePreview_TextChanged"/>
+
+                    <!-- Preview Expression Box -->
+                    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12,10" MinHeight="52">
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="SQL Query Expression Preview:" FontSize="10" Foreground="#64748B"/>
+                            <TextBlock x:Name="TxtExpressionPreview" Text="WHERE ELEV = 1000" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- 3. Footer -->
+        <Grid Grid.Row="2">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel" Width="90" Height="34" Style="{StaticResource DialogSecondaryButton}" Margin="0,0,8,0" Click="BtnCancel_Click"/>
+                <Button Content="🔍 Select Matching Features" Height="34" Style="{StaticResource DialogActionButton}" Background="#0284C7" Click="BtnSelect_Click"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

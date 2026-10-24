@@ -42,8 +42,44 @@ namespace GeoStudio.DuckDB
         {
             if (_connection == null) return;
             using var clearCmd = _connection.CreateCommand();
-            clearCmd.CommandText = "DROP TABLE IF EXISTS pointcloud; CREATE TABLE pointcloud (x DOUBLE, y DOUBLE, z FLOAT, intensity USMALLINT, classification UTINYINT, r UTINYINT, g UTINYINT, b UTINYINT);";
+            clearCmd.CommandText = "DROP TABLE IF EXISTS pointcloud; CREATE TABLE pointcloud (x DOUBLE, y DOUBLE, z FLOAT, intensity USMALLINT, classification UTINYINT, r UTINYINT, g UTINYINT, b UTINYINT, rn UTINYINT, nr UTINYINT, sa UTINYINT, ps USMALLINT, fl UTINYINT, nir UTINYINT, t UTINYINT);";
             clearCmd.ExecuteNonQuery();
+        }
+
+        public static void UpdateClassification(byte[] newCls)
+        {
+            if (_connection == null || newCls == null || newCls.Length == 0) return;
+            lock (_dbLock)
+            {
+                try
+                {
+                    // Update in-memory DuckDB classification if rowid matches
+                    using var cmd = _connection.CreateCommand();
+                    cmd.CommandText = "SELECT count(*) FROM pointcloud;";
+                    long count = Convert.ToInt64(cmd.ExecuteScalar());
+                    if (count == newCls.Length)
+                    {
+                        using var trans = _connection.BeginTransaction();
+                        using var updateCmd = _connection.CreateCommand();
+                        updateCmd.CommandText = "UPDATE pointcloud SET classification = $1 WHERE rowid = $2;";
+                        var pCls = updateCmd.CreateParameter();
+                        var pRow = updateCmd.CreateParameter();
+                        updateCmd.Parameters.Add(pCls);
+                        updateCmd.Parameters.Add(pRow);
+                        for (int i = 0; i < newCls.Length; i++)
+                        {
+                            pCls.Value = newCls[i];
+                            pRow.Value = i;
+                            updateCmd.ExecuteNonQuery();
+                        }
+                        trans.Commit();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"DuckDB classification update note: {ex.Message}");
+                }
+            }
         }
 
         public static void BuildSpatialIndex()

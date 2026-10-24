@@ -10,10 +10,10 @@
   </style>
   <!-- Local OpenLayers Styles and Modular CSS (100% Offline-Safe) -->
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="ol.css">
+  <link rel="stylesheet" href="Vendor/ol.css">
   <link rel="stylesheet" href="map.css">
-  <link rel="stylesheet" href="Styles/widgets.css">
-  <script src="ol.js"></script>
+  <link rel="stylesheet" href="Styles/Widgets/widgets.css">
+  <script src="Vendor/ol.js"></script>
 </head>
 
 <body style="background-color: #ffffff;">
@@ -76,25 +76,25 @@
   <!-- 1. Point Cloud Modules -->
   <script src="PointCloud/pointCloudPalettes.js"></script>
   <script src="PointCloud/pointCloudLegend.js"></script>
-  <script src="pointCloudCanvas.js"></script>
+  <script src="PointCloud/pointCloudCanvas.js"></script>
   <script src="PointCloud/pointCloudRenderer.js"></script>
 
   <!-- 2. Core Map & Source Modules -->
   <script src="Core/mapSources.js"></script>
-  <script src="mapEngine.js"></script>
+  <script src="Core/mapEngine.js"></script>
   <script src="Core/mapInteractions.js"></script>
   <script src="Core/mapSwipe.js"></script>
-  <script src="mapTelemetry.js"></script>
+  <script src="Core/mapTelemetry.js"></script>
 
   <!-- 3. Raster Modules -->
   <script src="Raster/shaderScaleWidget.js"></script>
-  <script src="rasterLayerManager.js"></script>
+  <script src="Raster/rasterLayerManager.js"></script>
 
   <!-- 4. Bridge Modules -->
   <script src="Bridge/mapRasterBridge.js"></script>
   <script src="Bridge/mapVectorBridge.js"></script>
   <script src="Bridge/mapLayerBridge.js"></script>
-  <script src="mapHostBridge.js"></script>
+  <script src="Bridge/mapHostBridge.js"></script>
 </body>
 
 </html>

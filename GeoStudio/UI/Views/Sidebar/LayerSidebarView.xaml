@@ -62,10 +62,14 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="28"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Opacity:" FontSize="9" Foreground="#94A3B8" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                            <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Opacity}" 
-                                    ValueChanged="LayerOpacity_ValueChanged" Tag="{Binding Id}" SmallChange="0.05" Height="14"/>
+                            <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Opacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    ValueChanged="LayerOpacity_ValueChanged" Tag="{Binding Id}" SmallChange="0.05" LargeChange="0.1" Height="14"
+                                    ToolTip="{Binding Opacity, StringFormat={}{0:P0}}"/>
+                            <TextBlock Grid.Column="2" Text="{Binding Opacity, StringFormat={}{0:P0}}" FontSize="8.5" Foreground="#64748B" 
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="2,0,0,0"/>
                         </Grid>
 
                         <!-- Load & Canvas Render Duration Pill -->

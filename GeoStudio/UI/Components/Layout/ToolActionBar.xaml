@@ -1,0 +1,25 @@
+<UserControl x:Class="GeoStudio.UI.Components.ToolActionBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignWidth="500">
+    <StackPanel Margin="0,14,0,0">
+        <!-- Progress Bar and Status Message -->
+        <ProgressBar x:Name="ProgressBar" Height="6" Value="0" Maximum="100" Visibility="Collapsed" Foreground="#2563EB" Background="#E2E8F0" BorderThickness="0"/>
+        <TextBlock x:Name="TxtStatus" Text="Ready." FontSize="11" Foreground="#64748B" Margin="0,6,0,12" TextTrimming="CharacterEllipsis"/>
+
+        <!-- Action Buttons Row -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Button x:Name="BtnCancel" Grid.Column="1" Content="Cancel" Width="90" Height="34" Margin="0,0,8,0" Style="{StaticResource DialogSecondaryButton}" Click="BtnCancel_Click"/>
+            <Button x:Name="BtnRun" Grid.Column="2" Content="Run" MinWidth="110" Height="34" Style="{StaticResource DialogActionButton}" Click="BtnRun_Click"/>
+        </Grid>
+    </StackPanel>
+</UserControl>

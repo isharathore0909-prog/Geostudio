@@ -94,6 +94,7 @@ namespace GeoStudio.PointCloud
                 var scanAng = new byte[count];
                 var ptSrc = new byte[count * 2];
                 var flags = new byte[count];
+                var gpsTimes = new double[count];
                 var r16 = new ushort[hasRgbFmt ? count : 0];
                 var g16 = new ushort[hasRgbFmt ? count : 0];
                 var b16 = new ushort[hasRgbFmt ? count : 0];
@@ -114,6 +115,7 @@ namespace GeoStudio.PointCloud
                     byte rn, nr, clsVal, wth, kp, ovl;
                     int saDeg;
                     ushort psVal;
+                    double curGps = 0;
 
                     if (fmt >= 6)
                     {
@@ -127,6 +129,10 @@ namespace GeoStudio.PointCloud
                         short saRaw = *(short*)(p + 18);
                         saDeg = (int)Math.Round(saRaw * 0.006);
                         psVal = *(ushort*)(p + 20);
+                        if (recLen >= 30)
+                        {
+                            curGps = *(double*)(p + 22);
+                        }
                         if (nirBytes != null)
                         {
                             ushort rawNir = *(ushort*)(p + 36);
@@ -145,8 +151,13 @@ namespace GeoStudio.PointCloud
                         sbyte saRank = *(sbyte*)(p + 16);
                         saDeg = saRank;
                         psVal = *(ushort*)(p + 18);
+                        if ((fmt == 1 || fmt == 3 || fmt == 4 || fmt == 5) && recLen >= 28)
+                        {
+                            curGps = *(double*)(p + 20);
+                        }
                     }
 
+                    gpsTimes[i] = curGps;
                     retNum[i] = rn > 0 ? rn : (byte)1;
                     numRet[i] = nr > 0 ? nr : (byte)1;
                     flags[i] = (byte)(wth | (kp << 1) | (ovl << 2));
@@ -227,6 +238,33 @@ namespace GeoStudio.PointCloud
                         }
                     }
                 }
+                byte[] t = new byte[count];
+                double minGps = double.MaxValue, maxGps = double.MinValue;
+                for (int i = 0; i < count; i++)
+                {
+                    if (gpsTimes[i] != 0)
+                    {
+                        if (gpsTimes[i] < minGps) minGps = gpsTimes[i];
+                        if (gpsTimes[i] > maxGps) maxGps = gpsTimes[i];
+                    }
+                }
+                if (maxGps > minGps && (maxGps - minGps) > 1e-4)
+                {
+                    double gpsSpan = maxGps - minGps;
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (gpsTimes[i] != 0)
+                            t[i] = (byte)Math.Clamp((int)(((gpsTimes[i] - minGps) / gpsSpan) * 255.0), 0, 255);
+                        else
+                            t[i] = (byte)Math.Clamp((int)(((double)i / Math.Max(1, count - 1)) * 255.0), 0, 255);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < count; i++)
+                        t[i] = (byte)Math.Clamp((int)(((double)i / Math.Max(1, count - 1)) * 255.0), 0, 255);
+                }
+
                 int unassigned = 0;
                 int checkMax = Math.Min(count, 2000);
                 for (int i = 0; i < checkMax; i++) if (cls[i] <= 1) unassigned++;
@@ -254,6 +292,7 @@ namespace GeoStudio.PointCloud
                         ps = ptSrc,
                         fl = flags,
                         nir = nirBytes,
+                        t = t,
                         hasRgb = hasRgb
                     },
                     TotalPoints = (long)total,

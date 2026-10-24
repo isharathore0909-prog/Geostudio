@@ -1,0 +1,76 @@
+<Window x:Class="GeoStudio.UI.ElevationProfileWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:GeoStudio.UI.Components"
+        Title="Elevation Profile &amp; Terrain Cross-Section Transect"
+        Height="580" Width="980" MinHeight="460" MinWidth="750"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC" Foreground="#0F172A"
+        FontFamily="Segoe UI">
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Header & Controls -->
+        <Border Grid.Row="0" Margin="0,0,0,14" Padding="0,0,0,12" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="📈" FontSize="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <StackPanel>
+                        <TextBlock x:Name="TxtTitle" Text="Elevation Profile Transect" FontSize="16" FontWeight="Bold" Foreground="#0F172A"/>
+                        <TextBlock x:Name="TxtSubtitle" Text="Sampling terrain elevations..." FontSize="12" Foreground="#64748B"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="⇄ Invert Transect" Style="{StaticResource DialogSecondaryButton}" Margin="0,0,8,0" Click="BtnInvert_Click"/>
+                    <Button Content="📊 Export CSV" Style="{StaticResource DialogSecondaryButton}" Margin="0,0,8,0" Click="BtnExportCsv_Click"/>
+                    <Button Content="Close" Style="{StaticResource DialogSecondaryButton}" Click="BtnClose_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Metric Stat Cards Component Row -->
+        <Grid Grid.Row="1" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <components:MetricTile x:Name="TxtLength" Grid.Column="0" Label="TRANSECT LENGTH" Value="0.0 m" ValueBrush="#0284C7"/>
+            <components:MetricTile x:Name="TxtMinElev" Grid.Column="1" Label="MIN ELEVATION" Value="0.0 m" ValueBrush="#10B981"/>
+            <components:MetricTile x:Name="TxtMaxElev" Grid.Column="2" Label="MAX ELEVATION" Value="0.0 m" ValueBrush="#D97706"/>
+            <components:MetricTile x:Name="TxtRelief" Grid.Column="3" Label="RELIEF (ΔZ)" Value="0.0 m" ValueBrush="#8B5CF6"/>
+            <components:MetricTile x:Name="TxtGainLoss" Grid.Column="4" Label="ELEV GAIN / LOSS" Value="+0.0m / -0.0m" ValueBrush="#EC4899"/>
+            <components:MetricTile x:Name="TxtSlope" Grid.Column="5" Label="AVG / MAX SLOPE" Value="0.0° / 0.0°" ValueBrush="#0F172A"/>
+        </Grid>
+
+        <!-- Profile Plot Canvas Border -->
+        <Border Grid.Row="2" Style="{StaticResource DialogCard}" Padding="0" ClipToBounds="True">
+            <Grid x:Name="PlotContainer" SizeChanged="PlotContainer_SizeChanged" MouseMove="PlotContainer_MouseMove" MouseLeave="PlotContainer_MouseLeave">
+                <Canvas x:Name="PlotCanvas"/>
+                <!-- Hover Info Tooltip Popup -->
+                <Border x:Name="HoverCard" Background="#0F172A" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="10,6" HorizontalAlignment="Left" VerticalAlignment="Top" Visibility="Collapsed" IsHitTestVisible="False">
+                    <TextBlock x:Name="TxtHover" Text="" FontSize="11" Foreground="#F8FAFC" FontFamily="Consolas"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Footer Coordinates / Info -->
+        <TextBlock Grid.Row="3" Margin="0,10,0,0" Text="Hover over the profile transect curve to inspect point-by-point station distance, elevation, and terrain gradient." FontSize="11.5" Foreground="#64748B" HorizontalAlignment="Center"/>
+    </Grid>
+</Window>

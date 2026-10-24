@@ -8,6 +8,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/UI/Styles/CoreStyles.xaml"/>
                 <ResourceDictionary Source="/UI/Styles/RibbonStyles.xaml"/>
+                <ResourceDictionary Source="/UI/Styles/DialogStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
