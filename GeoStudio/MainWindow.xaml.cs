@@ -17,6 +17,7 @@ namespace GeoStudio
         private bool _isInitialized = false;
         private System.Threading.CancellationTokenSource? _rasterCts = null;
         private string? _activeRasterFilePath = null;
+        public string? ActiveRasterFilePath => _activeRasterFilePath;
         private string? _activeRasterLayerId = null;
         private string? _activeRasterShaderMode = null;
         private string? _activeRasterPalette = null;

@@ -19,7 +19,10 @@ from osgeo import gdal
 
 from .sink_filling import fill_sinks_array
 from .flow_routing import flow_direction_array, flow_accumulation_array
-from .watershed_delineation import stream_network_array, delineate_watersheds_array
+from .watershed_delineation import (
+    stream_network_array, delineate_watersheds_array,
+    extract_stream_reaches, chaikin_smooth
+)
 
 
 class HydrologyEngine:
@@ -30,6 +33,7 @@ class HydrologyEngine:
     flow_direction_array = staticmethod(flow_direction_array)
     flow_accumulation_array = staticmethod(flow_accumulation_array)
     stream_network_array = staticmethod(stream_network_array)
+    extract_stream_reaches = staticmethod(extract_stream_reaches)
     delineate_watersheds_array = staticmethod(delineate_watersheds_array)
 
     @classmethod
@@ -168,10 +172,110 @@ class HydrologyEngine:
             thresh = params.get("threshold", 0)
             if thresh <= 0:
                 thresh = 2000
-            log(f"Delineating Catchment Basins (Stream Threshold: <b>{thresh} cells</b>)...")
+            min_stream_len = float(params.get("min_stream_len", 30.0))
+            progress(70.0, "Extracting drainage stream channels & Strahler orders...")
+            reaches, link_ids = extract_stream_reaches(
+                flowdir, accum, flat_targets,
+                threshold=thresh,
+                min_stream_len_m=min_stream_len,
+                cell_x=cellsize_x, cell_y=cellsize_y,
+                nodata_mask=nodata_mask
+            )
 
-            progress(75.0, "Delineating catchment basins...")
-            basins = delineate_watersheds_array(flowdir, accum, flat_targets, threshold=thresh, nodata_mask=nodata_mask)
+            streams_geojson = params.get("streams_geojson_path")
+            smooth_streams = params.get("smooth_streams", True)
+            if streams_geojson and len(reaches) > 0:
+                try:
+                    from osgeo import ogr, osr
+                    if os.path.exists(streams_geojson):
+                        try:
+                            os.remove(streams_geojson)
+                        except Exception:
+                            pass
+
+                    srs_in = osr.SpatialReference(projection) if projection else None
+                    target_srs = osr.SpatialReference()
+                    target_srs.ImportFromEPSG(4326)
+                    target_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+                    transform = None
+                    if srs_in and not srs_in.IsSame(target_srs):
+                        try:
+                            srs_in_clone = srs_in.Clone()
+                            srs_in_clone.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+                            transform = osr.CoordinateTransformation(srs_in_clone, target_srs)
+                        except Exception:
+                            pass
+
+                    drv = ogr.GetDriverByName("GeoJSON")
+                    s_ds = drv.CreateDataSource(streams_geojson)
+                    s_lyr = s_ds.CreateLayer("drainage_network", target_srs, ogr.wkbLineString)
+                    s_lyr.CreateField(ogr.FieldDefn("StreamId", ogr.OFTInteger))
+                    s_lyr.CreateField(ogr.FieldDefn("Order", ogr.OFTInteger))
+                    s_lyr.CreateField(ogr.FieldDefn("Length_m", ogr.OFTReal))
+                    s_lyr.CreateField(ogr.FieldDefn("color", ogr.OFTString))
+                    s_lyr.CreateField(ogr.FieldDefn("strokeColor", ogr.OFTString))
+                    s_lyr.CreateField(ogr.FieldDefn("strokeWidth", ogr.OFTReal))
+
+                    order_colors = {
+                        1: "#0055ff",
+                        2: "#0033cc",
+                        3: "#001a99",
+                        4: "#000066",
+                        5: "#000033"
+                    }
+
+                    for r in reaches:
+                        order = r.get("order", 1)
+                        stroke_w = round(2.5 + min(3.5, (order - 1) * 1.0), 1)
+                        st_color = order_colors.get(order, "#0033cc")
+
+                        coords = []
+                        for p in r["path"]:
+                            pr = p // raster_w
+                            pc = p % raster_w
+                            x = geotransform[0] + (pc + 0.5) * geotransform[1] + (pr + 0.5) * geotransform[2]
+                            y = geotransform[3] + (pc + 0.5) * geotransform[4] + (pr + 0.5) * geotransform[5]
+                            coords.append([x, y])
+
+                        if smooth_streams and len(coords) >= 3:
+                            coords = chaikin_smooth(coords, iterations=1)
+
+                        line_geom = ogr.Geometry(ogr.wkbLineString)
+                        for pt in coords:
+                            line_geom.AddPoint(pt[0], pt[1])
+
+                        if transform:
+                            try:
+                                line_geom.Transform(transform)
+                            except Exception:
+                                pass
+
+                        feat = ogr.Feature(s_lyr.GetLayerDefn())
+                        feat.SetGeometry(line_geom)
+                        feat.SetField("StreamId", int(r["id"]))
+                        feat.SetField("Order", int(order))
+                        feat.SetField("Length_m", round(float(r["length_m"]), 1))
+                        feat.SetField("color", st_color)
+                        feat.SetField("strokeColor", st_color)
+                        feat.SetField("strokeWidth", stroke_w)
+                        s_lyr.CreateFeature(feat)
+
+                    s_ds.FlushCache()
+                    s_ds = None
+                    log(f"Exported <b>{len(reaches)}</b> drainage stream channels to vector line network.")
+                except Exception as e:
+                    log(f"Stream lines vector export warning: {e}")
+
+            progress(78.0, "Delineating catchment basins draining to streams...")
+            basins = delineate_watersheds_array(
+                flowdir, accum, flat_targets,
+                threshold=thresh,
+                min_stream_len_m=min_stream_len,
+                cell_x=cellsize_x, cell_y=cellsize_y,
+                nodata_mask=nodata_mask,
+                precomputed_link_ids=link_ids
+            )
             num_basins = int(np.max(basins))
             log(f"Successfully delineated <b>{num_basins}</b> distinct hydrological drainage catchments.")
 

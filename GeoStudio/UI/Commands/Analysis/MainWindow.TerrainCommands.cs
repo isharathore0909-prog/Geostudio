@@ -10,6 +10,7 @@ using GeoStudio.DuckDB;
 using GeoStudio.Raster;
 using GeoStudio.Models;
 using GeoStudio.UI;
+using GeoStudio.UI.Dialogs;
 
 namespace GeoStudio
 {
@@ -196,8 +197,19 @@ namespace GeoStudio
             win.ShowDialog();
         }
 
-        internal void MenuWatershed_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Watershed Drainage Basin Analysis: Computes flow direction, flow accumulation, and hydrologic pour points.", "Watershed Analysis", MessageBoxButton.OK, MessageBoxImage.Information);
+        internal void MenuWatershed_Click(object sender, RoutedEventArgs e)
+        {
+            var rasterLayers = Layers.Where(l => (l.Type == LayerType.Raster || l.Type == LayerType.Elevation) && !string.IsNullOrEmpty(l.FilePath) && File.Exists(l.FilePath)).ToList();
+            if (rasterLayers.Count == 0)
+            {
+                MessageBox.Show("Please load a DEM / Elevation raster layer first before running Watershed Delineation.", "Watershed Analysis", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var win = new WatershedWindow(this);
+            win.Owner = this;
+            win.ShowDialog();
+        }
 
         internal void Btn3dMesh_Click(object sender, RoutedEventArgs e)
         {

@@ -162,7 +162,7 @@ function handleSetLayerOpacity(msg) {
       pcCanvas.style.opacity = String(clampedOpacity);
     }
   } else {
-    if (msg.id === 'vector_active' || msg.type === 'Vector') {
+    if (msg.id === 'vector_active' || (!msg.id && msg.type === 'Vector')) {
       if (typeof vectorLayer !== 'undefined' && vectorLayer) vectorLayer.setOpacity(clampedOpacity);
     }
     map.getLayers().getArray().forEach(l => {
@@ -172,7 +172,7 @@ function handleSetLayerOpacity(msg) {
           lid === 'raster_img_' + msg.id ||
           lid === 'vector_' + msg.id ||
           (isRaster && (lid === 'hires_viewport_layer' || lid === 'raster_hires_layer' || lid.startsWith('raster_img_'))) ||
-          (msg.type && lType === msg.type)) {
+          (!msg.id && msg.type && lType === msg.type)) {
         l.setOpacity(clampedOpacity);
       }
     });

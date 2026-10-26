@@ -20,6 +20,25 @@ function handleAddVectorLayer(msg) {
   const indexBaseStyle = new ol.style.Style({ stroke: indexStroke });
   const intermediateStyle = new ol.style.Style({ stroke: intermediateStroke });
 
+  function toRgbaString(colorStr, alpha) {
+    if (!colorStr) return `rgba(16, 185, 129, ${alpha})`;
+    if (colorStr.startsWith('rgba')) return colorStr;
+    if (colorStr.startsWith('rgb(')) return colorStr.replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);
+    if (colorStr.startsWith('#')) {
+      let c = colorStr.substring(1);
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      if (c.length >= 6) {
+        const r = parseInt(c.substring(0, 2), 16) || 0;
+        const g = parseInt(c.substring(2, 4), 16) || 0;
+        const b = parseInt(c.substring(4, 6), 16) || 0;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+    }
+    return colorStr;
+  }
+
+  const featureStyleCache = new Map();
+
   const genericPointStyle = new ol.style.Style({
     image: new ol.style.Circle({ radius: 5, fill: new ol.style.Fill({ color: baseColor }), stroke: new ol.style.Stroke({ color: '#ffffff', width: 1.5 }) })
   });
@@ -27,8 +46,8 @@ function handleAddVectorLayer(msg) {
     stroke: new ol.style.Stroke({ color: baseColor, width: 2.0, lineJoin: 'round', lineCap: 'round' })
   });
   const genericPolyStyle = new ol.style.Style({
-    stroke: new ol.style.Stroke({ color: baseColor, width: 2.0, lineJoin: 'round', lineCap: 'round' }),
-    fill: new ol.style.Fill({ color: 'rgba(16, 185, 129, 0.25)' })
+    stroke: new ol.style.Stroke({ color: baseColor, width: 1.6, lineJoin: 'round', lineCap: 'round' }),
+    fill: new ol.style.Fill({ color: toRgbaString(baseColor, 0.28) })
   });
 
   const labelCache = new Map();
@@ -77,9 +96,64 @@ function handleAddVectorLayer(msg) {
       return isIndex ? indexBaseStyle : intermediateStyle;
     }
 
-    if (geomType.includes('Point')) return genericPointStyle;
-    if (geomType.includes('Line')) return genericLineStyle;
-    return genericPolyStyle;
+    if (geomType.includes('Point')) {
+      const featColor = feature.get('color') || baseColor;
+      let s = featureStyleCache.get('pt_' + featColor);
+      if (!s) {
+        s = new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 5,
+            fill: new ol.style.Fill({ color: featColor }),
+            stroke: new ol.style.Stroke({ color: '#ffffff', width: 1.5 })
+          })
+        });
+        featureStyleCache.set('pt_' + featColor, s);
+      }
+      return s;
+    }
+
+    if (geomType.includes('Line')) {
+      const strokeColor = feature.get('strokeColor') || feature.get('color') || baseColor || '#1d4ed8';
+      const strokeWidth = Math.max(2.4, parseFloat(feature.get('strokeWidth')) || 2.4);
+      const lineKey = 'ln_' + strokeColor + '_' + strokeWidth;
+      let s = featureStyleCache.get(lineKey);
+      if (!s) {
+        s = new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: strokeColor,
+            width: strokeWidth,
+            lineJoin: 'round',
+            lineCap: 'round'
+          }),
+          zIndex: 25
+        });
+        featureStyleCache.set(lineKey, s);
+      }
+      return s;
+    }
+
+    // Polygon / MultiPolygon (Catchments, boundaries - 100% Solid Opaque Colors)
+    const featColor = feature.get('fillColor') || feature.get('color') || baseColor;
+    const strokeColor = feature.get('strokeColor') || '#0f172a';
+    const strokeWidth = parseFloat(feature.get('strokeWidth')) || 1.2;
+    const polyKey = 'poly_' + featColor + '_' + strokeColor + '_' + strokeWidth;
+    let s = featureStyleCache.get(polyKey);
+    if (!s) {
+      s = new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: strokeColor,
+          width: strokeWidth,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }),
+        fill: new ol.style.Fill({
+          color: featColor // 100% Solid Color (no transparency)
+        }),
+        zIndex: 12
+      });
+      featureStyleCache.set(polyKey, s);
+    }
+    return s;
   };
 
   // WebGL Shader Vector Layer for direct GPU rasterization
@@ -114,6 +188,12 @@ function handleAddVectorLayer(msg) {
   const useWebGl = msg.renderMode === 'webgl';
   const useGpu = (msg.useGpu !== undefined) ? !!msg.useGpu : (isHeavy || true);
 
+  const isStreamLayer = !!(
+    (msg.name && (msg.name.toLowerCase().includes('stream') || msg.name.toLowerCase().includes('drain') || msg.name.toLowerCase().includes('network'))) ||
+    msg.isStream === true
+  );
+  const layerZIndex = msg.zIndex !== undefined ? msg.zIndex : (isStreamLayer ? 25 : 12);
+
   let vLayer;
   if (useWebGl) {
     vLayer = new WebGLVectorLayer({
@@ -127,7 +207,7 @@ function handleAddVectorLayer(msg) {
         'circle-stroke-color': '#ffffff',
         'circle-stroke-width': 1.5
       },
-      zIndex: 14
+      zIndex: layerZIndex
     });
     vLayer.set('gpuAccelerated', true);
     vLayer.set('renderMode', 'webgl');
@@ -139,7 +219,7 @@ function handleAddVectorLayer(msg) {
       style: styleFn,
       imageRatio: 1.5,
       declutter: !isHeavy,
-      zIndex: 14
+      zIndex: layerZIndex
     });
     vLayer.set('gpuAccelerated', true);
     vLayer.set('renderMode', 'gpu');
@@ -148,7 +228,7 @@ function handleAddVectorLayer(msg) {
       source: vSource,
       style: styleFn,
       declutter: true,
-      zIndex: 14
+      zIndex: layerZIndex
     });
     vLayer.set('gpuAccelerated', false);
     vLayer.set('renderMode', 'canvas');
@@ -237,7 +317,7 @@ function handleAddVectorLayer(msg) {
           style: styleFn,
           imageRatio: 1.5,
           declutter: false,
-          zIndex: 14
+          zIndex: layerZIndex
         });
         vLayer.set('id', layerId);
         vLayer.set('name', layerName);

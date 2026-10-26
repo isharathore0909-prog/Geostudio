@@ -77,7 +77,7 @@ namespace GeoStudio
                 {
                     if (isGeoJson)
                     {
-                        if (!File.Exists(cacheFilePath))
+                        if (!File.Exists(cacheFilePath) || new FileInfo(cacheFilePath).Length != fileInfo.Length)
                         {
                             File.Copy(filePath, cacheFilePath, true);
                         }
@@ -249,6 +249,12 @@ namespace GeoStudio
 
             bool isHeavy = fileInfo.Length > 1024 * 1024 || featureCount > 300;
 
+            bool isDrainageStream = !isContourDetected && (
+                layerName.Contains("stream", StringComparison.OrdinalIgnoreCase) ||
+                layerName.Contains("drainage", StringComparison.OrdinalIgnoreCase) ||
+                filePath.Contains("stream", StringComparison.OrdinalIgnoreCase) ||
+                filePath.Contains("drainage", StringComparison.OrdinalIgnoreCase));
+
             if (File.Exists(cacheFilePath))
             {
                 if (TxtBenchmarkStatus != null) TxtBenchmarkStatus.Text = "Rendering vector onto GPU map canvas...";
@@ -262,6 +268,8 @@ namespace GeoStudio
                     url = $"http://cache.geostudio.local/{cacheFileName}",
                     bounds = bounds,
                     isContour = isContourDetected,
+                    isStream = isDrainageStream,
+                    zIndex = isDrainageStream ? 25 : 12,
                     interval = contourInterval ?? 10.0,
                     color = colorHex,
                     fileSizeBytes = fileInfo.Length,

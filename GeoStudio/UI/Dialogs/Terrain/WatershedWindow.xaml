@@ -1,0 +1,155 @@
+<Window x:Class="GeoStudio.UI.Dialogs.WatershedWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:GeoStudio.UI.Components"
+        Title="Watershed &amp; Catchment Delineation"
+        Height="580" Width="720" MinHeight="460" MinWidth="620"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC" Foreground="#0F172A"
+        FontFamily="Segoe UI" ResizeMode="CanResizeWithGrip">
+
+    <Grid Margin="16,14,16,14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Component -->
+        <components:DialogHeader Grid.Row="0" Margin="0,0,0,10"
+            Icon="💧" IconBrush="#0284C7" IconBg="#E0F2FE"
+            Title="Watershed &amp; Catchment Delineation"
+            Description="Delineates hydrological drainage basins, flow routing (D8), and catchment divides from elevation surfaces (DEM/DSM) using Barnes Priority-Flood and topological flow routing."/>
+
+        <!-- 2. Scrollable Body (Configuration Parameters & Metric Cards) -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,10" Padding="0,0,4,0">
+            <StackPanel>
+                <!-- Parameters Card -->
+                <Border Style="{StaticResource DialogCard}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <!-- Input Elevation Surface Picker -->
+                        <components:LayerPicker x:Name="PickerRaster"
+                            Label="Input Elevation Surface (DEM / DSM):"
+                            BrowseTitle="Select Input Elevation Dataset"
+                            BrowseFilter="Elevation Rasters (*.tif;*.tiff;*.dem;*.vrt)|*.tif;*.tiff;*.dem;*.vrt|All Files (*.*)|*.*"
+                            SelectionChanged="PickerRaster_SelectionChanged"/>
+
+                        <!-- Threshold & Mode Selection Grid -->
+                        <Grid Margin="0,4,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="130"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Stream Accumulation Preset -->
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,6">
+                                <TextBlock Text="Stream Accumulation Threshold:" Style="{StaticResource DialogParamLabel}"/>
+                                <ComboBox x:Name="ComboThresholdPreset" Height="34" Background="#FFFFFF" BorderBrush="#CBD5E1" VerticalContentAlignment="Center" SelectionChanged="ComboThresholdPreset_SelectionChanged">
+                                    <ComboBoxItem Content="Standard (Medium rivers &amp; tributaries - 2,000 cells)" IsSelected="True" Tag="2000"/>
+                                    <ComboBoxItem Content="Detailed (Minor streams &amp; gullies - 500 cells)" Tag="500"/>
+                                    <ComboBoxItem Content="Major Catchments (Principal river basins - 10,000 cells)" Tag="10000"/>
+                                    <ComboBoxItem Content="Custom Cell Threshold..." Tag="custom"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <!-- Custom Threshold Input -->
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="8,0,0,6">
+                                <TextBlock Text="Cells:" Style="{StaticResource DialogParamLabel}"/>
+                                <TextBox x:Name="TxtThreshold" Text="2000" Height="34" VerticalContentAlignment="Center" Background="#F1F5F9" BorderBrush="#CBD5E1" Padding="8,0" IsEnabled="False" TextChanged="TxtThreshold_TextChanged"/>
+                            </StackPanel>
+
+                            <!-- Analysis Operation Mode -->
+                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                <TextBlock Text="Delineation Mode &amp; Output Format:" Style="{StaticResource DialogParamLabel}"/>
+                                <ComboBox x:Name="ComboMode" Height="34" Background="#FFFFFF" BorderBrush="#CBD5E1" VerticalContentAlignment="Center" SelectionChanged="ComboMode_SelectionChanged">
+                                    <ComboBoxItem Content="Both (Vector Catchment Polygons &amp; Raster GeoTIFF)" IsSelected="True" Tag="watershed_both"/>
+                                    <ComboBoxItem Content="Catchment Basins - Vector Polygons (GeoJSON)" Tag="watershed_vector"/>
+                                    <ComboBoxItem Content="Catchment Basins - Raster Grid (GeoTIFF)" Tag="watershed_raster"/>
+                                    <ComboBoxItem Content="Stream Channel Network (Strahler Orders)" Tag="stream_network"/>
+                                    <ComboBoxItem Content="D8 Flow Direction (ESRI Direction Codes)" Tag="flowdir"/>
+                                    <ComboBoxItem Content="Topological Flow Accumulation Grid" Tag="flowaccum"/>
+                                    <ComboBoxItem Content="Sink-Filled Surface (Barnes Priority-Flood)" Tag="fillsinks"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Stream Filtering & Drainage Network Options (Matching Global Mapper) -->
+                        <Grid Margin="0,4,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="140"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <CheckBox x:Name="ChkCreateCatchments" Content="Create watershed areas showing drainage to streams" IsChecked="True" FontSize="11.5" Foreground="#334155" Margin="0,2"/>
+                                <CheckBox x:Name="ChkGenerateStreams" Content="Generate drainage stream network (vector lines)" IsChecked="True" FontSize="11.5" Foreground="#334155" Margin="0,2"/>
+                                <CheckBox x:Name="ChkSmoothStreams" Content="Smooth streams to improve appearance" IsChecked="True" FontSize="11.5" Foreground="#334155" Margin="0,2"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                <TextBlock Text="Min Stream Length (m):" Style="{StaticResource DialogParamLabel}"/>
+                                <TextBox x:Name="TxtMinStreamLength" Text="30" Height="30" VerticalContentAlignment="Center" Background="#FFFFFF" BorderBrush="#CBD5E1" Padding="6,0"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Pre-Processing & Display Options -->
+                        <Grid Margin="0,4,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <CheckBox x:Name="ChkAutoFill" Content="Fill depressions &amp; sinks (Barnes Priority-Flood)" IsChecked="True" FontSize="11.5" Foreground="#334155" Margin="0,3"/>
+                                <CheckBox x:Name="ChkSmoothDsm" Content="Apply Gaussian filter to eliminate DSM noise" IsChecked="False" FontSize="11.5" Foreground="#334155" Margin="0,3"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <CheckBox x:Name="ChkLoadToMap" Content="Add resulting layer to map canvas" IsChecked="True" FontSize="11.5" Foreground="#334155" Margin="0,3"/>
+                                <CheckBox x:Name="ChkZoomTo" Content="Zoom to delineated watershed extent" IsChecked="True" FontSize="11.5" Foreground="#334155" Margin="0,3"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Output Path Picker -->
+                        <components:OutputPathPicker x:Name="PickerOutput" Margin="0,2,0,0"
+                            Label="Output Dataset Path:"
+                            DialogTitle="Save Watershed Output Dataset"
+                            HelperText="Each delineated catchment is indexed with discrete IDs, geometric area in ha/m², perimeter, and distinct boundary coloring."/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Metric Summary Grid -->
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Basins Count -->
+                    <components:MetricTile x:Name="TileBasins" Grid.Column="0" Margin="0,0,4,0"
+                        Label="DELINEATED BASINS" Value="--" Subtext="Unique catchment divides"
+                        LabelBrush="#0284C7" ValueBrush="#0369A1" TileBackground="#F0F9FF" TileBorderBrush="#BAE6FD"/>
+
+                    <!-- Total Area -->
+                    <components:MetricTile x:Name="TileArea" Grid.Column="1" Margin="2,0,2,0"
+                        Label="TOTAL DRAINAGE AREA" Value="--" Subtext="Surveyed watershed extent"
+                        LabelBrush="#16A34A" ValueBrush="#15803D" TileBackground="#F0FDF4" TileBorderBrush="#BBF7D0"/>
+
+                    <!-- Current Threshold -->
+                    <components:MetricTile x:Name="TileThreshold" Grid.Column="2" Margin="4,0,0,0"
+                        Label="STREAM THRESHOLD" Value="2,000 cells" Subtext="Min upslope accumulation"
+                        LabelBrush="#D97706" ValueBrush="#B45309" TileBackground="#FFFBEB" TileBorderBrush="#FDE68A"/>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 3. Progress and Actions Footer Component (Pinned at bottom, always visible) -->
+        <components:ToolActionBar x:Name="ActionBar" Grid.Row="2"
+            ActionText="💧 Delineate Watershed"
+            ActionBackground="#0284C7"
+            StatusText="Ready to delineate watershed catchments."
+            RunClick="BtnRun_Click"
+            CancelClick="BtnCancel_Click"/>
+    </Grid>
+</Window>
