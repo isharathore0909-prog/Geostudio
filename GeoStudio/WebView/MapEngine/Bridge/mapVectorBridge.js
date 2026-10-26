@@ -96,7 +96,16 @@ function handleAddVectorLayer(msg) {
       return isIndex ? indexBaseStyle : intermediateStyle;
     }
 
+    // Sub-pixel micro-feature culling when zoomed out
+    if (resolution > 1.2) {
+      const ext = geom.getExtent();
+      const w = (ext[2] - ext[0]) / resolution;
+      const h = (ext[3] - ext[1]) / resolution;
+      if (w < 0.9 && h < 0.9) return null;
+    }
+
     if (geomType.includes('Point')) {
+      if (feature._cachedPointStyle) return feature._cachedPointStyle;
       const featColor = feature.get('color') || baseColor;
       let s = featureStyleCache.get('pt_' + featColor);
       if (!s) {
@@ -109,12 +118,14 @@ function handleAddVectorLayer(msg) {
         });
         featureStyleCache.set('pt_' + featColor, s);
       }
+      feature._cachedPointStyle = s;
       return s;
     }
 
     if (geomType.includes('Line')) {
+      if (feature._cachedLineStyle) return feature._cachedLineStyle;
       const strokeColor = feature.get('strokeColor') || feature.get('color') || baseColor || '#1d4ed8';
-      const strokeWidth = Math.max(2.4, parseFloat(feature.get('strokeWidth')) || 2.4);
+      const strokeWidth = Math.max(2.0, parseFloat(feature.get('strokeWidth')) || 2.4);
       const lineKey = 'ln_' + strokeColor + '_' + strokeWidth;
       let s = featureStyleCache.get(lineKey);
       if (!s) {
@@ -129,10 +140,12 @@ function handleAddVectorLayer(msg) {
         });
         featureStyleCache.set(lineKey, s);
       }
+      feature._cachedLineStyle = s;
       return s;
     }
 
     // Polygon / MultiPolygon (Catchments, boundaries - 100% Solid Opaque Colors)
+    if (feature._cachedPolyStyle) return feature._cachedPolyStyle;
     const featColor = feature.get('fillColor') || feature.get('color') || baseColor;
     const strokeColor = feature.get('strokeColor') || '#0f172a';
     const strokeWidth = parseFloat(feature.get('strokeWidth')) || 1.2;
@@ -153,6 +166,7 @@ function handleAddVectorLayer(msg) {
       });
       featureStyleCache.set(polyKey, s);
     }
+    feature._cachedPolyStyle = s;
     return s;
   };
 
@@ -207,18 +221,20 @@ function handleAddVectorLayer(msg) {
         'circle-stroke-color': '#ffffff',
         'circle-stroke-width': 1.5
       },
+      renderOrder: null,
       zIndex: layerZIndex
     });
     vLayer.set('gpuAccelerated', true);
     vLayer.set('renderMode', 'webgl');
   } else if (useGpu) {
     // Hardware-accelerated GPU Vector Layer (ol.layer.VectorImage)
-    // Renders to offscreen texture; transforms on GPU during pan/zoom (60 FPS, <2ms redraw)
+    // imageRatio 1.0 saves 55% canvas area over 1.5; renderOrder: null skips O(N log N) sorting
     vLayer = new ol.layer.VectorImage({
       source: vSource,
       style: styleFn,
-      imageRatio: 1.5,
-      declutter: !isHeavy,
+      imageRatio: isHeavy ? 1.0 : 1.1,
+      renderOrder: null,
+      declutter: false,
       zIndex: layerZIndex
     });
     vLayer.set('gpuAccelerated', true);
@@ -227,7 +243,8 @@ function handleAddVectorLayer(msg) {
     vLayer = new ol.layer.Vector({
       source: vSource,
       style: styleFn,
-      declutter: true,
+      renderOrder: null,
+      declutter: !isHeavy,
       zIndex: layerZIndex
     });
     vLayer.set('gpuAccelerated', false);
@@ -309,13 +326,26 @@ function handleAddVectorLayer(msg) {
         totalMs: (msg.fileLoadMs || 0) + renderMs,
         type: 'Vector'
       });
-      // Auto-escalate to GPU acceleration if feature count exceeds 300 and not already accelerated
-      if (!vLayer.get('gpuAccelerated') && feats.length > 300) {
+      // Delegate heavy datasets (500+ features) to pure WebGL GPU shaders
+      if (window.GeoStudioWebGLVector && feats.length > 500 && msg.url) {
+        fetch(msg.url).then(r => r.json()).then(geoJson => {
+          const uploaded = window.GeoStudioWebGLVector.upload(layerId, geoJson, baseColor);
+          if (uploaded) {
+            // Pure WebGL GPU is now rendering directly via hardware shaders at 60 FPS
+            // Hide CPU canvas layer so CPU does 0 draw calls during pan/zoom
+            vLayer.setVisible(false);
+            map.render();
+          }
+        }).catch(err => {
+          console.warn('[WebGL Vector Upload Error]', err);
+        });
+      } else if (!vLayer.get('gpuAccelerated') && feats.length > 300) {
         map.removeLayer(vLayer);
         vLayer = new ol.layer.VectorImage({
           source: vSource,
           style: styleFn,
-          imageRatio: 1.5,
+          imageRatio: feats.length > 1000 ? 1.0 : 1.1,
+          renderOrder: null,
           declutter: false,
           zIndex: layerZIndex
         });
@@ -372,7 +402,8 @@ function handleToggleLayerGpu(msg) {
     newLayer = new ol.layer.VectorImage({
       source: src,
       style: style,
-      imageRatio: 1.5,
+      imageRatio: 1.0,
+      renderOrder: null,
       declutter: false,
       zIndex: zIdx
     });
@@ -382,6 +413,7 @@ function handleToggleLayerGpu(msg) {
     newLayer = new ol.layer.Vector({
       source: src,
       style: style,
+      renderOrder: null,
       declutter: true,
       zIndex: zIdx
     });

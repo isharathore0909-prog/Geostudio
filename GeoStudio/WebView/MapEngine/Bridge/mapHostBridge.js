@@ -9,12 +9,18 @@ function handleHostMessage(msg) {
     case 'setTool':
       setTool(msg.tool);
       break;
-    case 'zoomIn':
-      mapView.animate({ zoom: mapView.getZoom() + 1, duration: 250 });
+    case 'zoomIn': {
+      const targetZoom = Math.round(mapView.getZoom()) + 1;
+      const isHeavy = typeof hasHeavyVectorLayers === 'function' && hasHeavyVectorLayers();
+      mapView.animate({ zoom: targetZoom, duration: isHeavy ? 0 : 200 });
       break;
-    case 'zoomOut':
-      mapView.animate({ zoom: mapView.getZoom() - 1, duration: 250 });
+    }
+    case 'zoomOut': {
+      const targetZoom = Math.round(mapView.getZoom()) - 1;
+      const isHeavy = typeof hasHeavyVectorLayers === 'function' && hasHeavyVectorLayers();
+      mapView.animate({ zoom: targetZoom, duration: isHeavy ? 0 : 200 });
       break;
+    }
     case 'undo':
     case 'previousExtent':
       if (typeof undoMapAction === 'function') undoMapAction();

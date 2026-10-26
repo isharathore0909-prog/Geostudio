@@ -86,7 +86,7 @@ function handleRemoveLayer(msg) {
     vectorSource.clear();
     map.getLayers().getArray().filter(l => l.get('id') === msg.id || l.get('id') === 'vector_' + msg.id).forEach(l => map.removeLayer(l));
   }
-  if (msg.id === 'osm_basemap' || msg.type === 'Basemap') { cartoLayer.setVisible(false); satelliteLayer.setVisible(false); }
+  if (window.GeoStudioWebGLVector) window.GeoStudioWebGLVector.removeLayer(msg.id);
   map.getLayers().getArray().filter(l => l.get('id') === msg.id).forEach(l => map.removeLayer(l));
   map.render();
 }
@@ -111,7 +111,9 @@ function handleToggleLayer(msg) {
   } else if (msg.id === 'vector_active' || msg.type === 'Vector') {
     vectorLayer.setVisible(isVis);
     map.getLayers().getArray().filter(l => l.get('id') === msg.id || l.get('id') === 'vector_' + msg.id).forEach(l => l.setVisible(isVis));
+    if (window.GeoStudioWebGLVector) window.GeoStudioWebGLVector.setLayerVisibility(msg.id, isVis);
   } else {
+    if (window.GeoStudioWebGLVector) window.GeoStudioWebGLVector.setLayerVisibility(msg.id, isVis);
     // Raster / DEM / DSM layers
     if (activeRasterInfo && (msg.id === activeRasterInfo.id || msg.type === 'Raster')) {
       activeRasterInfo.visible = isVis;
@@ -165,6 +167,7 @@ function handleSetLayerOpacity(msg) {
     if (msg.id === 'vector_active' || (!msg.id && msg.type === 'Vector')) {
       if (typeof vectorLayer !== 'undefined' && vectorLayer) vectorLayer.setOpacity(clampedOpacity);
     }
+    if (window.GeoStudioWebGLVector && msg.id) window.GeoStudioWebGLVector.setLayerOpacity(msg.id, clampedOpacity);
     map.getLayers().getArray().forEach(l => {
       const lid = l.get('id') || '';
       const lType = l.get('type') || '';
@@ -174,6 +177,7 @@ function handleSetLayerOpacity(msg) {
           (isRaster && (lid === 'hires_viewport_layer' || lid === 'raster_hires_layer' || lid.startsWith('raster_img_'))) ||
           (!msg.id && msg.type && lType === msg.type)) {
         l.setOpacity(clampedOpacity);
+        if (typeof l.changed === 'function') l.changed();
       }
     });
   }

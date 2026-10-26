@@ -2,8 +2,20 @@
 const mapView = new ol.View({
   center: ol.proj.fromLonLat([76.515, 24.762]),
   zoom: 5,
-  maxZoom: 22
+  maxZoom: 22,
+  constrainResolution: true,
+  smoothResolutionConstraint: false
 });
+
+function hasHeavyVectorLayers() {
+  if (typeof map === 'undefined' || !map) return false;
+  return map.getLayers().getArray().some(l => {
+    if (!l || !l.get || l.get('type') !== 'Vector') return false;
+    const src = l.getSource && l.getSource();
+    const count = src && src.getFeatures ? src.getFeatures().length : 0;
+    return count > 500 || l.get('gpuAccelerated') === true;
+  });
+}
 
 const mapPopupElement = document.getElementById('mapPopup');
 const mapPopupContent = document.getElementById('mapPopupContent');
@@ -28,13 +40,27 @@ if (mapPopupElement) {
   }
 }
 
+let webGlVectorLayer = null;
+if (typeof window.GeoStudioWebGLVector !== 'undefined' && typeof window.GeoStudioWebGLVector.createLayer === 'function') {
+  webGlVectorLayer = window.GeoStudioWebGLVector.createLayer();
+}
+
 const map = new ol.Map({
   target: 'map',
-  layers: [satelliteLayer, cartoLayer, rasterLayer, vectorLayer, measureLayer, profileLayer, clipMaskLayer, selectionLayer, markerLayer],
+  layers: [satelliteLayer, cartoLayer, rasterLayer, vectorLayer, ...(webGlVectorLayer ? [webGlVectorLayer] : []), measureLayer, profileLayer, clipMaskLayer, selectionLayer, markerLayer],
   overlays: mapPopupOverlay ? [mapPopupOverlay] : [],
   view: mapView,
   controls: ol.control.defaults.defaults().extend([
     new ol.control.ScaleLine({ units: 'metric' })
+  ]),
+  interactions: ol.interaction.defaults.defaults({
+    mouseWheelZoom: false
+  }).extend([
+    new ol.interaction.MouseWheelZoom({
+      duration: 0,
+      constrainResolution: true,
+      timeout: 90
+    })
   ])
 });
 
@@ -52,7 +78,7 @@ let lastPointerMoveTime = 0;
 map.on('pointermove', function (evt) {
   if (evt.dragging) return;
   const now = performance.now();
-  if (now - lastPointerMoveTime < 40) return;
+  if (now - lastPointerMoveTime < 60) return;
   lastPointerMoveTime = now;
 
   const coord = ol.proj.toLonLat(evt.coordinate);
@@ -60,12 +86,19 @@ map.on('pointermove', function (evt) {
   const lat = coord[1];
   let elev = null;
 
+  // Ultra-fast filtered hit test: ONLY test contour layers for elevation.
+  // Never run hit-detection on 26,000+ heavy watershed/drainage polygons on pointer move!
   map.forEachFeatureAtPixel(evt.pixel, function (feature) {
     if (feature && feature.get('ELEV') !== undefined && feature.get('ELEV') !== null) {
       elev = Math.round(Number(feature.get('ELEV')));
       return true;
     }
-  }, { hitTolerance: 3 });
+  }, {
+    hitTolerance: 3,
+    layerFilter: function (layer) {
+      return layer && layer.get && layer.get('isContour') === true;
+    }
+  });
 
   if (elev === null) {
     elev = Math.round(Math.abs(Math.sin(lon * 0.05) * Math.cos(lat * 0.05)) * 1250 + 120);
