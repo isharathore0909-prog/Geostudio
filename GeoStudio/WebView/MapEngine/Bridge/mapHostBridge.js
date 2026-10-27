@@ -52,6 +52,16 @@ function handleHostMessage(msg) {
     case 'addRasterLayer':
       addRasterLayer(msg);
       break;
+    case 'updateRasterLayerStyle':
+      if (typeof updateRasterLayerStyle === 'function') {
+        updateRasterLayerStyle(msg);
+      }
+      break;
+    case 'updateRasterLayerRendering':
+      if (typeof updateRasterLayerRendering === 'function') {
+        updateRasterLayerRendering(msg);
+      }
+      break;
     case 'setTerrainShader':
       applyTerrainShader(msg.shader);
       break;

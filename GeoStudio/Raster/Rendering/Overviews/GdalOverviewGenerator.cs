@@ -35,15 +35,33 @@ namespace GeoStudio.Raster
                                (shaderMode.Contains("ndwi") || shaderMode.Contains("ndvi") || shaderMode.Contains("evi") ||
                                 shaderMode.Contains("ndbi") || shaderMode.Contains("nbr")));
 
-            string effectiveShader = isSpectral && (string.IsNullOrEmpty(shaderMode) || shaderMode == "atlas")
-                ? (meta.SpectralMode ?? spectralFromPath?.ToLowerInvariant() ?? "ndwi")
-                : shaderMode;
-            string effectivePalette = isSpectral && (string.IsNullOrEmpty(palette) || palette == "GLOBAL_MAPPER_ATLAS")
-                ? effectiveShader.ToUpperInvariant()
-                : palette;
+            ColorTable? ctInitial = null;
+            if (bands == 1)
+            {
+                try { ctInitial = ds.GetRasterBand(1)?.GetRasterColorTable(); } catch { }
+            }
+
+            bool isClassified = meta.IsClassified ||
+                                (ctInitial != null && ctInitial.GetCount() > 0) ||
+                                (!string.IsNullOrEmpty(shaderMode) && shaderMode.Contains("paletted", StringComparison.OrdinalIgnoreCase)) ||
+                                (!string.IsNullOrEmpty(palette) && palette.Contains("LULC", StringComparison.OrdinalIgnoreCase)) ||
+                                filePath.Contains("LULC", StringComparison.OrdinalIgnoreCase) ||
+                                filePath.Contains("LandCover", StringComparison.OrdinalIgnoreCase);
+
+            string effectiveShader = isClassified 
+                ? "paletted" 
+                : (isSpectral && (string.IsNullOrEmpty(shaderMode) || shaderMode == "atlas")
+                    ? (meta.SpectralMode ?? spectralFromPath?.ToLowerInvariant() ?? "ndwi")
+                    : shaderMode);
+
+            string effectivePalette = isClassified 
+                ? (!string.IsNullOrEmpty(palette) ? palette : "LULC")
+                : (isSpectral && (string.IsNullOrEmpty(palette) || palette == "GLOBAL_MAPPER_ATLAS")
+                    ? effectiveShader.ToUpperInvariant()
+                    : palette);
 
             string cacheDir = GdalCacheManager.GetCacheDirectory();
-            string cachePngName = GdalCacheManager.GetOverviewCacheFileName(filePath, meta.IsElevation || meta.IsThermal || isSpectral, effectiveShader, effectivePalette);
+            string cachePngName = GdalCacheManager.GetOverviewCacheFileName(filePath, meta.IsElevation || meta.IsThermal || isSpectral || isClassified, effectiveShader, effectivePalette);
             string outPngPath = Path.Combine(cacheDir, cachePngName);
 
             // Instant cache hit: If overview already generated with valid size, return in < 1ms
@@ -54,7 +72,7 @@ namespace GeoStudio.Raster
                 return meta;
             }
 
-            bool shouldRenderShader = meta.IsElevation || isSpectral || (!string.IsNullOrEmpty(effectiveShader) && effectiveShader != "none" && ds.RasterCount == 1);
+            bool shouldRenderShader = !isClassified && (meta.IsElevation || isSpectral || (!string.IsNullOrEmpty(effectiveShader) && effectiveShader != "none" && ds.RasterCount == 1));
 
             if (shouldRenderShader)
             {
@@ -226,6 +244,53 @@ namespace GeoStudio.Raster
                 }
 
                 byte[] bgra = new byte[pW * pH * 4];
+
+                ColorTable? ct = null;
+                try { ct = b1?.GetRasterColorTable(); } catch { }
+                isClassified = isClassified || meta.IsClassified || (ct != null && ct.GetCount() > 0) ||
+                                (!string.IsNullOrEmpty(shaderMode) && shaderMode.Contains("paletted", StringComparison.OrdinalIgnoreCase)) ||
+                                (!string.IsNullOrEmpty(palette) && palette.Contains("LULC", StringComparison.OrdinalIgnoreCase)) ||
+                                filePath.Contains("LULC", StringComparison.OrdinalIgnoreCase) ||
+                                filePath.Contains("LandCover", StringComparison.OrdinalIgnoreCase);
+
+                uint[] colorLut = new uint[256];
+                if (isClassified && bands == 1)
+                {
+                    if (GeoStudio.Raster.Services.RasterSymbologyService.LayerCustomLuts.TryGetValue(filePath, out var customLut) && customLut != null)
+                    {
+                        Array.Copy(customLut, colorLut, 256);
+                    }
+                    else if (ct != null && ct.GetCount() > 0)
+                    {
+                        int cnt = ct.GetCount();
+                        for (int i = 0; i < 256; i++)
+                        {
+                            if (i < cnt)
+                            {
+                                var entry = ct.GetColorEntry(i);
+                                byte cr = (byte)Math.Clamp((int)entry.c1, 0, 255);
+                                byte cg = (byte)Math.Clamp((int)entry.c2, 0, 255);
+                                byte cb = (byte)Math.Clamp((int)entry.c3, 0, 255);
+                                byte ca = (byte)Math.Clamp((int)entry.c4, 0, 255);
+                                if (i == 0) ca = 0;
+                                colorLut[i] = (uint)(cb | (cg << 8) | (cr << 16) | (ca << 24));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (var kvp in GeoStudio.Raster.Services.RasterSymbologyService.Lulc22Taxonomy)
+                        {
+                            if (kvp.Key >= 0 && kvp.Key < 256)
+                            {
+                                var (cr, cg, cb, ca) = GeoStudio.Raster.Services.RasterSymbologyService.ParseHexToRgba(kvp.Value.Hex);
+                                if (kvp.Key == 0) ca = 0;
+                                colorLut[kvp.Key] = (uint)(cb | (cg << 8) | (cr << 16) | (ca << 24));
+                            }
+                        }
+                    }
+                }
+
                 unsafe
                 {
                     fixed (byte* pBgra = bgra, pR = rData, pG = gData, pB = bData)
@@ -236,7 +301,20 @@ namespace GeoStudio.Raster
                         byte* pSrcG = pG;
                         byte* pSrcB = pB;
 
-                        if (aData != null)
+                        if (isClassified && bands == 1)
+                        {
+                            fixed (uint* pLut = colorLut)
+                            {
+                                uint* pDstU = (uint*)pBgra;
+                                byte* pSrc = pR;
+                                while (pDst < pEnd)
+                                {
+                                    *pDstU++ = pLut[*pSrc++];
+                                    pDst += 4;
+                                }
+                            }
+                        }
+                        else if (aData != null)
                         {
                             fixed (byte* pA = aData)
                             {

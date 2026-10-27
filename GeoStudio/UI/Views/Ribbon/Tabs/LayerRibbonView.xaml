@@ -33,6 +33,15 @@
         <StackPanel x:Name="PanelRibbonStyle" Orientation="Horizontal" Visibility="Collapsed">
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Layer&#x0a;Symbology" ToolTip="Configure Palettes, Classes &amp; Color Ramps (QGIS Style)" Click="BtnRibbonSymbology_Click"/>
+                </StackPanel>
+                <TextBlock Text="Classification" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+
+            <Border Width="1" Background="#E2E8F0" Margin="4,8"/>
+
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="3,0,6,0">
                         <TextBlock Text="Terrain Shader:" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
                         <ComboBox x:Name="ComboShader" Width="110" Style="{StaticResource RustGisComboBox}" SelectionChanged="ComboShader_SelectionChanged">

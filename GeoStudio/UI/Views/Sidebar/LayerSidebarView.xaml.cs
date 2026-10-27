@@ -12,6 +12,8 @@ namespace GeoStudio.UI.Views.Sidebar
 
         private MainWindow? Main => Application.Current.MainWindow as MainWindow;
 
+        private void BtnSymbology_Click(object s, RoutedEventArgs e) => Main?.BtnSymbology_Click(s, e);
+        private void MenuSymbology_Click(object s, RoutedEventArgs e) => Main?.BtnSymbology_Click(s, e);
         private void BtnZoomToLayer_Click(object s, RoutedEventArgs e) => Main?.BtnZoomToLayer_Click(s, e);
         private void BtnRemoveLayer_Click(object s, RoutedEventArgs e) => Main?.BtnRemoveLayer_Click(s, e);
         private void LayerCheckBox_Checked(object s, RoutedEventArgs e) => Main?.LayerCheckBox_Checked(s, e);

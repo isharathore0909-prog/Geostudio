@@ -24,16 +24,18 @@
             <Border BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="6,6" Margin="0,1" Background="#FFFFFF">
                 <Border.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="Zoom to Layer" Click="BtnZoomToLayer_Click" Tag="{Binding Id}"/>
+                        <MenuItem Header="🔍 Zoom to Layer" Click="BtnZoomToLayer_Click" Tag="{Binding Id}"/>
+                        <MenuItem Header="🎨 Symbology &amp; Colors..." Click="MenuSymbology_Click" Tag="{Binding Id}"/>
                         <MenuItem Header="⚡ GPU Acceleration" IsCheckable="True" IsChecked="{Binding UseGpuAcceleration}" Click="MenuToggleGpu_Click" Tag="{Binding Id}"/>
                         <Separator/>
-                        <MenuItem Header="Remove Layer" Click="BtnRemoveLayer_Click" Tag="{Binding Id}" Foreground="#EF4444"/>
+                        <MenuItem Header="✕ Remove Layer" Click="BtnRemoveLayer_Click" Tag="{Binding Id}" Foreground="#EF4444"/>
                     </ContextMenu>
                 </Border.ContextMenu>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
@@ -84,11 +86,14 @@
                         </Border>
                     </StackPanel>
 
-                    <!-- Zoom & Remove Actions -->
-                    <Button Grid.Column="2" Content="🔍" FontSize="11" Foreground="#0284C7" Background="Transparent" 
+                    <!-- Symbology, Zoom & Remove Actions -->
+                    <Button Grid.Column="2" Content="🎨" FontSize="11" Foreground="#8B5CF6" Background="Transparent" 
+                            BorderThickness="0" Cursor="Hand" Padding="2,2" VerticalAlignment="Top" Margin="2,0"
+                            ToolTip="Symbology, Classes &amp; Color Styling" Click="BtnSymbology_Click" Tag="{Binding Id}"/>
+                    <Button Grid.Column="3" Content="🔍" FontSize="11" Foreground="#0284C7" Background="Transparent" 
                             BorderThickness="0" Cursor="Hand" Padding="2,2" VerticalAlignment="Top" Margin="2,0"
                             ToolTip="Zoom to Layer" Click="BtnZoomToLayer_Click" Tag="{Binding Id}"/>
-                    <Button Grid.Column="3" Content="✕" FontSize="11" Foreground="#EF4444" Background="Transparent" 
+                    <Button Grid.Column="4" Content="✕" FontSize="11" Foreground="#EF4444" Background="Transparent" 
                             BorderThickness="0" Cursor="Hand" Padding="2,2" VerticalAlignment="Top"
                             ToolTip="Remove Layer" Click="BtnRemoveLayer_Click" Tag="{Binding Id}"/>
                 </Grid>

@@ -28,6 +28,7 @@ namespace GeoStudio.UI.Views.Ribbon
         private void BtnAddOsm_Click(object s, RoutedEventArgs e) => Main?.BtnAddOsm_Click(s, e);
         private void BtnDatabase_Click(object s, RoutedEventArgs e) => Main?.BtnDatabase_Click(s, e);
         private void MenuRemoveLayer_Click(object s, RoutedEventArgs e) => Main?.MenuRemoveLayer_Click(s, e);
+        private void BtnRibbonSymbology_Click(object s, RoutedEventArgs e) => Main?.BtnSymbology_Click(s, e);
         private void ComboShader_SelectionChanged(object s, SelectionChangedEventArgs e) => Main?.ComboShader_SelectionChanged(s, e);
         private void ComboAtlas_SelectionChanged(object s, SelectionChangedEventArgs e) => Main?.ComboAtlas_SelectionChanged(s, e);
         private void BtnToggleEdit_Click(object s, RoutedEventArgs e) => Main?.BtnToggleEdit_Click(s, e);

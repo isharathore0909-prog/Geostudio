@@ -148,5 +148,28 @@ namespace GeoStudio
                 TxtStatus.Text = $"Layer '{layer.Name}' GPU Acceleration: {(layer.UseGpuAcceleration ? "Enabled" : "Disabled")}";
             }
         }
+
+        internal void BtnSymbology_Click(object sender, RoutedEventArgs e)
+        {
+            string? layerId = (sender as FrameworkElement)?.Tag as string;
+            LayerItem? layer = null;
+            if (!string.IsNullOrEmpty(layerId))
+            {
+                layer = FindLayer(layerId);
+            }
+            else
+            {
+                layer = Layers.FirstOrDefault(l => l.Type == LayerType.Raster);
+            }
+
+            if (layer == null)
+            {
+                MessageBox.Show("Please select or load a raster layer to configure symbology.", "Layer Symbology", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var dlg = new UI.Dialogs.Raster.LayerSymbologyWindow(this, layer);
+            dlg.ShowDialog();
+        }
     }
 }

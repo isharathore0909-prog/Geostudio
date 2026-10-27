@@ -57,12 +57,23 @@ namespace GeoStudio
                     string? spectralType = meta.SpectralMode ?? ElevationShadedRelief.DetectSpectralIndex(selectedFile);
                     bool isSpectral = meta.IsSpectral || spectralType != null;
 
+                    bool isClassified = meta.IsClassified ||
+                                        selectedFile.Contains("LULC", StringComparison.OrdinalIgnoreCase) ||
+                                        selectedFile.Contains("LandCover", StringComparison.OrdinalIgnoreCase) ||
+                                        selectedFile.Contains("Classification", StringComparison.OrdinalIgnoreCase);
+
                     string details;
                     if (isThermal)
                     {
                         details = $"LST Thermal | {meta.Width:N0}x{meta.Height:N0} px | Temp: {meta.MinElevation:F1}°C - {meta.MaxElevation:F1}°C | {displaySize} | {meta.Projection}";
                         _activeRasterShaderMode = "thermal";
                         _activeRasterPalette = "INFERNO";
+                    }
+                    else if (isClassified)
+                    {
+                        details = $"LULC Classified | {meta.Width:N0}x{meta.Height:N0} px | Discrete 22 Classes | {displaySize} | {meta.Projection}";
+                        _activeRasterShaderMode = "paletted";
+                        _activeRasterPalette = "LULC";
                     }
                     else if (isSpectral)
                     {
@@ -94,7 +105,7 @@ namespace GeoStudio
                         FileSizeBytes = fileLen,
                         BoundingBox = meta.BoundingBox,
                         Details = details,
-                        ColorHex = isThermal ? "#F97316" : (isSpectral ? "#0284C7" : (meta.IsElevation ? "#10B981" : "#D97706")),
+                        ColorHex = isThermal ? "#F97316" : (isClassified ? "#10B981" : (isSpectral ? "#0284C7" : (meta.IsElevation ? "#10B981" : "#D97706"))),
                         IsElevation = meta.IsElevation && !isThermal,
                         MinElevation = meta.MinElevation,
                         MaxElevation = meta.MaxElevation,

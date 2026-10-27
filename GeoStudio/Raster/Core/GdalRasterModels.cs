@@ -15,6 +15,8 @@ namespace GeoStudio.Raster
         public bool IsElevation { get; set; }
         public bool IsThermal { get; set; }
         public bool IsSpectral { get; set; }
+        public bool IsClassified { get; set; }
+        public bool HasColorTable { get; set; }
         public string? SpectralMode { get; set; }
         public double MinElevation { get; set; }
         public double MaxElevation { get; set; }

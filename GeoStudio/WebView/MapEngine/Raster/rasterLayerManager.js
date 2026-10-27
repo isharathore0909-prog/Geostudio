@@ -167,46 +167,65 @@ function addRasterLayer(data) {
   });
 }
 
-function applyTerrainShader(shaderMode) {
-  const mode = (shaderMode || 'atlas').toLowerCase();
-  const rasterLayerEl = map.getLayers().getArray().find(l => (l.get('id') || '').startsWith('raster_img_'));
-  if (!rasterLayerEl) return;
+function updateRasterLayerStyle(data) {
+  if (!data || !data.id) return;
+  const targetId = 'raster_img_' + data.id;
+  const layer = map.getLayers().getArray().find(l => l.get('id') === targetId);
+  if (!layer) return;
 
-  const canvasEl = document.querySelector('.ol-layer canvas');
-  if (!canvasEl) return;
+  const newUrl = data.imageUrl || data.imageUri;
+  if (newUrl) {
+    const src = layer.getSource();
+    const extent = src.getImageExtent();
+    const newSource = new ol.source.ImageStatic({
+      url: newUrl + '?t=' + performance.now(),
+      imageExtent: extent,
+      projection: 'EPSG:3857',
+      interpolate: true
+    });
+    newSource.on('imageloadend', function () {
+      map.render();
+    });
+    layer.setSource(newSource);
+  }
 
-  if (mode === 'slope') {
-    canvasEl.style.filter = 'hue-rotate(90deg) saturate(220%) contrast(140%)';
-  } else if (mode === 'aspect') {
-    canvasEl.style.filter = 'invert(25%) hue-rotate(180deg) saturate(200%)';
-  } else if (mode === 'hypsometric') {
-    canvasEl.style.filter = 'saturate(250%) contrast(120%)';
-  } else {
-    canvasEl.style.filter = 'none';
+  if (data.blendMode || data.filter !== undefined) {
+    updateRasterLayerRendering(data);
+  }
+
+  if (activeRasterInfo && activeRasterInfo.id === data.id) {
+    activeRasterInfo.shaderMode = data.shaderMode;
+    activeRasterInfo.palette = data.palette;
+    if (hiresRasterLayer) {
+      requestHighResRasterWindow();
+    }
   }
 }
 
-// ── Layer Compositing & Blend Modes (ArcGIS Appearance → Layer Blend) ──
-let currentRasterBlendMode = 'source-over';
-
-function applyLayerBlendMode(modeName) {
-  const modeKey = (modeName || 'Normal').toLowerCase().replace(/\s+/g, '');
-  const blendMap = {
-    'normal': 'source-over',
-    'multiply': 'multiply',
-    'screen': 'screen',
-    'overlay': 'overlay',
-    'darken': 'darken',
-    'lighten': 'lighten',
-    'colordodge': 'color-dodge',
-    'colorburn': 'color-burn',
-    'hardlight': 'hard-light',
-    'softlight': 'soft-light',
-    'difference': 'difference',
-    'exclusion': 'exclusion'
+function applyTerrainShader(shaderMode) {
+  const mode = (shaderMode || 'atlas').toLowerCase();
+  const filters = {
+    'slope': 'hue-rotate(90deg) saturate(220%) contrast(140%)',
+    'aspect': 'invert(25%) hue-rotate(180deg) saturate(200%)',
+    'hypsometric': 'saturate(250%) contrast(120%)'
   };
-  const compositeOp = blendMap[modeKey] || 'source-over';
-  currentRasterBlendMode = compositeOp;
+  updateRasterLayerRendering({ filter: filters[mode] || '' });
+}
+
+// ── Layer Compositing, Filters & Blend Modes (QGIS Layer Rendering) ──
+let currentRasterBlendMode = 'source-over';
+let currentRasterFilter = '';
+
+function updateRasterLayerRendering(data) {
+  if (!data) return;
+  if (data.blendMode) {
+    const k = data.blendMode.toLowerCase().replace(/\s+/g, '');
+    const m = { normal: 'source-over', multiply: 'multiply', screen: 'screen', overlay: 'overlay', darken: 'darken', lighten: 'lighten', colordodge: 'color-dodge', colorburn: 'color-burn', hardlight: 'hard-light', softlight: 'soft-light', difference: 'difference', exclusion: 'exclusion' };
+    currentRasterBlendMode = m[k] || 'source-over';
+  }
+  if (data.filter !== undefined) {
+    currentRasterFilter = (data.filter && data.filter !== 'none') ? data.filter : '';
+  }
 
   const rasterLayers = map.getLayers().getArray().filter(l => {
     const id = l.get('id') || '';
@@ -214,35 +233,41 @@ function applyLayerBlendMode(modeName) {
   });
 
   rasterLayers.forEach(l => {
-    l.un('prerender', blendPreRender);
-    l.un('postrender', blendPostRender);
+    l.un('prerender', rasterPreRender);
+    l.un('postrender', rasterPostRender);
+    if (currentRasterBlendMode !== 'source-over' || currentRasterFilter) {
+      l.on('prerender', rasterPreRender);
+      l.on('postrender', rasterPostRender);
+    }
   });
 
-  if (compositeOp !== 'source-over') {
-    rasterLayers.forEach(l => {
-      l.on('prerender', blendPreRender);
-      l.on('postrender', blendPostRender);
-    });
-  }
-
-  // Also apply mixBlendMode to ol-layer canvas
-  const canvasElements = document.querySelectorAll('.ol-layer canvas');
-  canvasElements.forEach(c => {
-    c.style.mixBlendMode = (compositeOp !== 'source-over') ? compositeOp : 'normal';
+  const canvases = document.querySelectorAll('.ol-layer canvas');
+  canvases.forEach((c, idx) => {
+    if (canvases.length === 1 || idx > 0) {
+      c.style.mixBlendMode = currentRasterBlendMode !== 'source-over' ? currentRasterBlendMode : 'normal';
+      c.style.filter = currentRasterFilter;
+    }
   });
 
   map.render();
 }
 
-function blendPreRender(event) {
-  const ctx = event.context;
-  if (!ctx || currentRasterBlendMode === 'source-over') return;
-  ctx.save();
-  ctx.globalCompositeOperation = currentRasterBlendMode;
+function applyLayerBlendMode(modeName) {
+  updateRasterLayerRendering({ blendMode: modeName });
 }
 
-function blendPostRender(event) {
+function rasterPreRender(event) {
   const ctx = event.context;
-  if (!ctx || currentRasterBlendMode === 'source-over') return;
+  if (!ctx) return;
+  ctx.save();
+  if (currentRasterBlendMode !== 'source-over') ctx.globalCompositeOperation = currentRasterBlendMode;
+  if (currentRasterFilter) {
+    try { ctx.filter = currentRasterFilter; } catch (e) {}
+  }
+}
+
+function rasterPostRender(event) {
+  const ctx = event.context;
+  if (!ctx) return;
   ctx.restore();
 }

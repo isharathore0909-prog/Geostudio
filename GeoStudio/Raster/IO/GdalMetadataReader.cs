@@ -29,14 +29,27 @@ namespace GeoStudio.Raster
                 BandCount = bands
             };
 
+            string? spectralIndex = ElevationShadedRelief.DetectSpectralIndex(filePath);
             bool isThermal = filePath.Contains("LST", StringComparison.OrdinalIgnoreCase) ||
                              filePath.Contains("Thermal", StringComparison.OrdinalIgnoreCase) ||
                              filePath.Contains("SplitWindow", StringComparison.OrdinalIgnoreCase) ||
                              filePath.Contains("Temperature", StringComparison.OrdinalIgnoreCase);
 
-            string? spectralIndex = ElevationShadedRelief.DetectSpectralIndex(filePath);
+            var b1 = ds.GetRasterBand(1);
+            ColorTable? rasterCt = null;
+            try { rasterCt = b1.GetRasterColorTable(); } catch { }
+            bool hasColorTable = rasterCt != null && rasterCt.GetCount() > 0;
+            bool isLulc = filePath.Contains("LULC", StringComparison.OrdinalIgnoreCase) ||
+                         filePath.Contains("LandCover", StringComparison.OrdinalIgnoreCase) ||
+                         filePath.Contains("Classification", StringComparison.OrdinalIgnoreCase);
 
-            if (isThermal && bands == 1)
+            if ((hasColorTable || isLulc) && bands == 1)
+            {
+                meta.IsClassified = true;
+                meta.HasColorTable = hasColorTable;
+                meta.IsElevation = false;
+            }
+            else if (isThermal && bands == 1)
             {
                 meta.IsThermal = true;
                 meta.IsElevation = false;
@@ -86,11 +99,11 @@ namespace GeoStudio.Raster
 
                     if (srcSrs.IsSame(dstSrs, null) == 0 && srcSrs.IsProjected() == 1)
                     {
-                        using var ct = new CoordinateTransformation(srcSrs, dstSrs);
+                        using var coordTrans = new CoordinateTransformation(srcSrs, dstSrs);
                         double[] pMin = new double[] { minX, minY, 0 };
                         double[] pMax = new double[] { maxX, maxY, 0 };
-                        ct.TransformPoint(pMin);
-                        ct.TransformPoint(pMax);
+                        coordTrans.TransformPoint(pMin);
+                        coordTrans.TransformPoint(pMax);
 
                         meta.BoundingBox = new double[]
                         {
@@ -129,11 +142,11 @@ namespace GeoStudio.Raster
             }
 
             // Check if preview already exists in AppData cache (instant return in < 1ms)
-            string shaderMode = isThermal ? "thermal" : (spectralIndex != null ? spectralIndex.ToLowerInvariant() : (meta.IsElevation ? "atlas" : "none"));
-            string palette = isThermal ? "INFERNO" : (spectralIndex != null ? spectralIndex.ToUpperInvariant() : (meta.IsElevation ? "GLOBAL_MAPPER_ATLAS" : "none"));
+            string shaderMode = meta.IsClassified ? "paletted" : (isThermal ? "thermal" : (spectralIndex != null ? spectralIndex.ToLowerInvariant() : (meta.IsElevation ? "atlas" : "none")));
+            string palette = meta.IsClassified ? "LULC" : (isThermal ? "INFERNO" : (spectralIndex != null ? spectralIndex.ToUpperInvariant() : (meta.IsElevation ? "GLOBAL_MAPPER_ATLAS" : "none")));
 
             string cacheDir = GdalCacheManager.GetCacheDirectory();
-            string cachePngName = GdalCacheManager.GetOverviewCacheFileName(filePath, meta.IsElevation || isThermal || meta.IsSpectral, shaderMode, palette);
+            string cachePngName = GdalCacheManager.GetOverviewCacheFileName(filePath, meta.IsElevation || isThermal || meta.IsSpectral || meta.IsClassified, shaderMode, palette);
             string outPngPath = Path.Combine(cacheDir, cachePngName);
 
             if (File.Exists(outPngPath) && new FileInfo(outPngPath).Length > 1000)
