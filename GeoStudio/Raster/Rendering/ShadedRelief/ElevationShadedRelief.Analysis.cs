@@ -17,8 +17,22 @@ namespace GeoStudio.Raster
         private static readonly string[] ImageryKeywords = new[]
         {
             "ortho", "orthomosaic", "mosaic", "aerial", "satellite", "imagery",
-            "photo", "rgb", "rgba", "truecolor", "uav", "drone"
+            "photo", "rgb", "rgba", "truecolor", "uav", "drone",
+            "lst", "thermal", "temperature", "splitwindow",
+            "ndvi", "ndwi", "evi", "ndbi", "nbr"
         };
+
+        public static string? DetectSpectralIndex(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath)) return null;
+            string name = Path.GetFileName(filePath).ToUpperInvariant();
+            if (name.Contains("NDWI") || name.Contains("WATER_INDEX")) return "NDWI";
+            if (name.Contains("NDVI") || name.Contains("VEG_INDEX")) return "NDVI";
+            if (name.Contains("EVI")) return "EVI";
+            if (name.Contains("NDBI") || name.Contains("BUILTUP")) return "NDBI";
+            if (name.Contains("NBR") || name.Contains("BURNT")) return "NBR";
+            return null;
+        }
 
         public static bool IsElevationRaster(Dataset ds, string filePath)
         {

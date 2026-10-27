@@ -102,7 +102,14 @@ namespace GeoStudio.Raster
                 }
 
                 byte[] bgra;
+                string? spectralFromPath = ElevationShadedRelief.DetectSpectralIndex(filePath);
+                bool isSpectral = spectralFromPath != null ||
+                                  (!string.IsNullOrEmpty(shaderMode) &&
+                                   (shaderMode.Contains("ndwi") || shaderMode.Contains("ndvi") || shaderMode.Contains("evi") ||
+                                    shaderMode.Contains("ndbi") || shaderMode.Contains("nbr")));
+
                 bool isElevation = ElevationShadedRelief.IsElevationRaster(ds, filePath) ||
+                                   isSpectral ||
                                    (!string.IsNullOrEmpty(shaderMode) && shaderMode != "none" && ds.RasterCount == 1);
 
                 if (isElevation)
@@ -117,6 +124,12 @@ namespace GeoStudio.Raster
                         b1.GetNoDataValue(out double noDataVal, out int hasNoData);
 
                         var (minElev, maxElev) = ElevationShadedRelief.GetElevationStats(ds);
+                        if (isSpectral && (minElev >= maxElev || minElev < -100 || maxElev > 100))
+                        {
+                            minElev = -1.0;
+                            maxElev = 1.0;
+                        }
+
                         double cellX = Math.Abs(gt[1]) * ((double)winW / targetW);
                         double cellY = Math.Abs(gt[5]) * ((double)winH / targetH);
                         if (ctTo4326 == null && Math.Abs(gt[1]) < 0.005)
@@ -127,8 +140,12 @@ namespace GeoStudio.Raster
                             cellY *= 111320.0;
                         }
 
-                        string effectiveShader = string.IsNullOrEmpty(shaderMode) ? "atlas" : shaderMode;
-                        string effectivePalette = string.IsNullOrEmpty(palette) ? "GLOBAL_MAPPER_ATLAS" : palette;
+                        string effectiveShader = isSpectral && (string.IsNullOrEmpty(shaderMode) || shaderMode == "atlas")
+                            ? (spectralFromPath?.ToLowerInvariant() ?? "ndwi")
+                            : (string.IsNullOrEmpty(shaderMode) ? "atlas" : shaderMode);
+                        string effectivePalette = isSpectral && (string.IsNullOrEmpty(palette) || palette == "GLOBAL_MAPPER_ATLAS")
+                            ? effectiveShader.ToUpperInvariant()
+                            : (string.IsNullOrEmpty(palette) ? "GLOBAL_MAPPER_ATLAS" : palette);
 
                         bgra = ElevationShadedRelief.Render3DShadedReliefBgra(
                             floatBuf, targetW, targetH,
@@ -252,6 +269,7 @@ namespace GeoStudio.Raster
                             }
                             else
                             {
+                                bool isSingleBand = bands == 1;
                                 while (pDst < pEnd)
                                 {
                                     byte b = *pSrcB++;
@@ -260,7 +278,7 @@ namespace GeoStudio.Raster
                                     *pDst++ = b;
                                     *pDst++ = g;
                                     *pDst++ = r;
-                                    *pDst++ = (byte)((r == 0 && g == 0 && b == 0) ? 0 : 255);
+                                    *pDst++ = (byte)(isSingleBand ? 255 : ((r == 0 && g == 0 && b == 0) ? 0 : 255));
                                 }
                             }
                         }

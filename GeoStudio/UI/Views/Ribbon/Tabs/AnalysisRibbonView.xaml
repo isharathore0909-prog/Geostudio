@@ -22,8 +22,9 @@
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Contours" Tag="/Resources/Icons/elevation.png" ToolTip="Generate Vector Contours" Click="MenuContour_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Cut / Fill" Tag="/Resources/Icons/cut_fill.png" ToolTip="Cut &amp; Fill Volumetrics" Click="MenuCutFill_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Watershed" Tag="/Resources/Icons/watershed.png" ToolTip="Hydrological Watershed Delineation" Click="MenuWatershed_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="LULC Map" Tag="/Resources/Icons/classify_veg.png" ToolTip="Land Use &amp; Land Cover (LULC) Intelligence" Click="MenuLulc_Click"/>
                 </StackPanel>
-                <TextBlock Text="Terrain Operations" Style="{StaticResource RustGisGroupLabel}"/>
+                <TextBlock Text="Terrain &amp; Land Cover" Style="{StaticResource RustGisGroupLabel}"/>
             </StackPanel>
         </StackPanel>
 

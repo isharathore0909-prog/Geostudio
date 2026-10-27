@@ -1,0 +1,123 @@
+<Window x:Class="GeoStudio.UI.Dialogs.Raster.LulcIntelligenceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:GeoStudio.UI.Components"
+        Title="Land Use &amp; Land Cover (LULC) Intelligence"
+        Height="620" Width="740" MinHeight="520" MinWidth="660"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC" Foreground="#0F172A"
+        FontFamily="Segoe UI" ResizeMode="CanResizeWithGrip">
+
+    <Grid Margin="16,14,16,14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Component -->
+        <components:DialogHeader Grid.Row="0" Margin="0,0,0,10"
+            Icon="🌍" IconBrush="#059669" IconBg="#ECFDF5"
+            Title="Land Use &amp; Land Cover (LULC) Intelligence"
+            Description="Multi-sensor LULC classification integrating Copernicus Sentinel-2 MSI, Google Dynamic World priors, SRTM DEM slope, and GEDI canopy structure into a 22-class refined raster."/>
+
+        <!-- 2. Scrollable Parameters & Metric Cards -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,10" Padding="0,0,4,0">
+            <StackPanel>
+                <!-- Parameters Card -->
+                <Border Style="{StaticResource DialogCard}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <!-- Primary Satellite Image Picker -->
+                        <components:LayerPicker x:Name="PickerRaster"
+                            Label="Input Sentinel-2 / Multispectral Surface:"
+                            BrowseTitle="Select Satellite Raster Dataset"
+                            BrowseFilter="Multispectral Imagery (*.tif;*.tiff;*.dem;*.vrt)|*.tif;*.tiff;*.dem;*.vrt|All Files (*.*)|*.*"
+                            SelectionChanged="PickerRaster_SelectionChanged"/>
+
+                        <!-- Auxiliary Input Surfaces -->
+                        <Grid Margin="0,4,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Optional DEM -->
+                            <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                <components:LayerPicker x:Name="PickerDem"
+                                    Label="Optional Elevation DEM (for Slope):"
+                                    BrowseTitle="Select Elevation Surface"
+                                    BrowseFilter="Elevation Rasters (*.tif;*.tiff;*.dem;*.vrt)|*.tif;*.tiff;*.dem;*.vrt|All Files (*.*)|*.*"/>
+                            </StackPanel>
+
+                            <!-- Optional Dynamic World / Baseline -->
+                            <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                                <components:LayerPicker x:Name="PickerDw"
+                                    Label="Optional Dynamic World Baseline:"
+                                    BrowseTitle="Select Dynamic World Dataset"
+                                    BrowseFilter="Dynamic World / LULC (*.tif;*.tiff)|*.tif;*.tiff|All Files (*.*)|*.*"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Intelligence & Refinement Options -->
+                        <Border Background="#F1F5F9" CornerRadius="6" Padding="10,8" Margin="0,2,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <CheckBox x:Name="ChkMultiSensor" Content="Physics-based spectral &amp; terrain refinement" IsChecked="True" FontSize="11.5" Foreground="#334155" Margin="0,2"/>
+                                    <CheckBox x:Name="ChkMajorityFilter" Content="Apply 3x3 modal majority filter (speckle removal)" IsChecked="True" FontSize="11.5" Foreground="#334155" Margin="0,2"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <CheckBox x:Name="ChkExportVisual" Content="Generate 3-band RGB GeoTIFF alongside refined raster" IsChecked="True" FontSize="11.5" Foreground="#334155" Margin="0,2"/>
+                                    <CheckBox x:Name="ChkLoadToMap" Content="Add resulting classified layer to map canvas" IsChecked="True" FontSize="11.5" Foreground="#334155" Margin="0,2"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Output Dataset Picker -->
+                        <components:OutputPathPicker x:Name="PickerOutput" Margin="0,2,0,0"
+                            Label="Output Classified GeoTIFF Destination:"
+                            DialogTitle="Save LULC Output Raster"
+                            HelperText="Generates uint8 GeoTIFF with embedded GDAL ColorTable and detailed area statistics."/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Metric Summary Grid -->
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <components:MetricTile x:Name="TileTotal" Grid.Column="0" Margin="0,0,3,0"
+                        Label="TOTAL EXTENT" Value="--" Subtext="Survey area (ha)"
+                        LabelBrush="#059669" ValueBrush="#047857" TileBackground="#ECFDF5" TileBorderBrush="#A7F3D0"/>
+
+                    <components:MetricTile x:Name="TileForest" Grid.Column="1" Margin="2,0,2,0"
+                        Label="FOREST COVER" Value="--" Subtext="Dense, sparse, degraded"
+                        LabelBrush="#16A34A" ValueBrush="#15803D" TileBackground="#F0FDF4" TileBorderBrush="#BBF7D0"/>
+
+                    <components:MetricTile x:Name="TileAgri" Grid.Column="2" Margin="2,0,2,0"
+                        Label="AGRICULTURE" Value="--" Subtext="Irrigated &amp; fallow crops"
+                        LabelBrush="#D97706" ValueBrush="#B45309" TileBackground="#FFFBEB" TileBorderBrush="#FDE68A"/>
+
+                    <components:MetricTile x:Name="TileWater" Grid.Column="3" Margin="3,0,0,0"
+                        Label="WATER / WETLAND" Value="--" Subtext="Permanent &amp; seasonal"
+                        LabelBrush="#0284C7" ValueBrush="#0369A1" TileBackground="#F0F9FF" TileBorderBrush="#BAE6FD"/>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 3. Progress and Actions Footer Component -->
+        <components:ToolActionBar x:Name="ActionBar" Grid.Row="2"
+            ActionText="🌍 Classify LULC"
+            ActionBackground="#059669"
+            StatusText="Ready to classify Land Use &amp; Land Cover."
+            RunClick="BtnRun_Click"
+            CancelClick="BtnCancel_Click"/>
+    </Grid>
+</Window>

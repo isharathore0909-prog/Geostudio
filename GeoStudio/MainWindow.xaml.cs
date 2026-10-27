@@ -149,6 +149,7 @@ namespace GeoStudio
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             InitializeTelemetry();
+            try { new GeoStudio.UI.Services.DynamicRibbonManager(this).InitializeRibbonState(); } catch { }
             Environment.SetEnvironmentVariable("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0xFFFFFFFF");
             try
             {

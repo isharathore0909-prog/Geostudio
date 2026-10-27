@@ -89,6 +89,16 @@
                 </StackPanel>
                 <TextBlock Text="Snapping" Style="{StaticResource RustGisGroupLabel}"/>
             </StackPanel>
+
+            <StackPanel x:Name="GroupRibbonNetworks" Orientation="Horizontal" Visibility="Collapsed">
+                <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+                <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                        <Button Style="{StaticResource RustGisLargeBtn}" Content="Routing" Tag="/Resources/Icons/select_radius.png" ToolTip="Road Network Shortest/Fastest Path Routing (.NET 8)" Click="MenuRoadRouting_Click"/>
+                    </StackPanel>
+                    <TextBlock Text="Networks" Style="{StaticResource RustGisGroupLabel}"/>
+                </StackPanel>
+            </StackPanel>
         </StackPanel>
 
         <!-- 10. RASTER TAB PANEL -->
@@ -112,8 +122,10 @@
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="NDBI" Tag="/Resources/Icons/ndbi.png" ToolTip="Normalized Difference Built-up Index (Urban Extent)" Click="MenuNdbi_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="NBR" Tag="/Resources/Icons/nbr.png" ToolTip="Normalized Burn Ratio (Wildfire &amp; Burn Severity)" Click="MenuNbr_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="False Color" Tag="/Resources/Icons/false_color.png" ToolTip="Standard Infrared False-Color Composite (NIR / Red / Green)" Click="MenuFalseColor_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="LULC Map" Tag="/Resources/Icons/classify_veg.png" ToolTip="Land Use &amp; Land Cover (LULC) Intelligence &amp; Multi-Sensor Refinement" Click="MenuLulcIntelligence_Click"/>
+                    <Button x:Name="BtnRibbonLandsatLst" Visibility="Collapsed" Style="{StaticResource RustGisLargeBtn}" Content="Landsat LST" Tag="/Resources/Icons/elevation.png" ToolTip="Landsat Calibration &amp; Split-Window Thermal LST" Click="MenuLandsatLst_Click"/>
                 </StackPanel>
-                <TextBlock Text="Spectral Indices" Style="{StaticResource RustGisGroupLabel}"/>
+                <TextBlock Text="Spectral &amp; Land Cover" Style="{StaticResource RustGisGroupLabel}"/>
             </StackPanel>
         </StackPanel>
 
@@ -126,6 +138,17 @@
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Engine" Tag="/Resources/Icons/configure.png" ToolTip="Python Engine Status" Click="MenuPythonStatus_Click"/>
                 </StackPanel>
                 <TextBlock Text="Workflows" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+
+            <StackPanel x:Name="GroupRibbonWaterResources" Orientation="Horizontal" Visibility="Collapsed">
+                <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+                <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                        <Button Style="{StaticResource RustGisLargeBtn}" Content="Recharge BOQ" Tag="/Resources/Icons/identify.png" ToolTip="CGWB Artificial Recharge &amp; Rajasthan BSR BOQ" Click="MenuRechargeBoq_Click"/>
+                        <Button Style="{StaticResource RustGisLargeBtn}" Content="Crop Planner" Tag="/Resources/Icons/classify_veg.png" ToolTip="Water-Budget Crop &amp; Horticulture Planning" Click="MenuCropPlanner_Click"/>
+                    </StackPanel>
+                    <TextBlock Text="Water Resources" Style="{StaticResource RustGisGroupLabel}"/>
+                </StackPanel>
             </StackPanel>
         </StackPanel>
 
@@ -144,9 +167,22 @@
         <StackPanel x:Name="PanelRibbonPlugins" Orientation="Horizontal" Visibility="Collapsed">
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Plugins" Tag="/Resources/Icons/configure.png" ToolTip="Manage Plugins &amp; Extensions" Click="MenuPythonStatus_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Plugin Hub" Tag="/Resources/Icons/configure.png" ToolTip="Open Full Extension &amp; Plugin Manager" Click="BtnOpenPlugins_Click"/>
                 </StackPanel>
-                <TextBlock Text="Extensions" Style="{StaticResource RustGisGroupLabel}"/>
+                <TextBlock Text="Extension Hub" Style="{StaticResource RustGisGroupLabel}"/>
+            </StackPanel>
+
+            <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
+
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Hydrology" Tag="/Resources/Icons/classify_veg.png" ToolTip="💧 Hydrology, Recharge Siting &amp; BOQ Costing" Click="BtnPluginHydrology_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Landsat" Tag="/Resources/Icons/elevation.png" ToolTip="🌈 Hyperspectral, Landsat &amp; Thermal LST" Click="BtnPluginLandsat_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Routing" Tag="/Resources/Icons/select_radius.png" ToolTip="🛣️ Road Routing &amp; Network Analysis" Click="BtnPluginRouting_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="3D View" Tag="/Resources/Icons/view_3d.png" ToolTip="🌐 3D Mapping &amp; Terrain Viewport" Click="BtnPlugin3D_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Satellite" Tag="/Resources/Icons/false_color.png" ToolTip="🛰️ Satellite View &amp; Offline Basemaps" Click="BtnPluginSatellite_Click"/>
+                </StackPanel>
+                <TextBlock Text="Extension Cards (Install / Uninstall)" Style="{StaticResource RustGisGroupLabel}"/>
             </StackPanel>
         </StackPanel>
 

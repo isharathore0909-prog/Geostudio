@@ -47,6 +47,11 @@ namespace GeoStudio.Raster
             else if (sMode.Contains("aspect")) stops = AspectStops;
             else if (sMode.Contains("twi")) stops = TwiStops;
             else if (sMode.Contains("curvature")) stops = CurvatureStops;
+            else if (pMode.Contains("inferno") || sMode.Contains("thermal") || sMode.Contains("lst")) stops = InfernoStops;
+            else if (sMode.Contains("ndwi") || pMode.Contains("ndwi")) stops = NdwiStops;
+            else if (sMode.Contains("ndvi") || sMode.Contains("evi") || pMode.Contains("ndvi") || pMode.Contains("evi")) stops = NdviStops;
+            else if (sMode.Contains("ndbi") || pMode.Contains("ndbi")) stops = NdbiStops;
+            else if (sMode.Contains("nbr") || pMode.Contains("nbr")) stops = NbrStops;
             else if (pMode.Contains("terrain") || sMode.Contains("terrain")) stops = TerrainStops;
             else if (pMode.Contains("viridis") || sMode.Contains("viridis")) stops = ViridisStops;
             else if (pMode.Contains("magma") || sMode.Contains("magma")) stops = MagmaStops;
@@ -213,6 +218,17 @@ namespace GeoStudio.Raster
                     float normElev = (float)Math.Clamp((val - minElev) / dz, 0.0, 1.0);
                     byte baseR, baseG, baseB;
                     InterpolateColor(stops, normElev, out baseR, out baseG, out baseB);
+
+                    if (sMode.Contains("thermal") || sMode.Contains("lst") || pMode.Contains("inferno") ||
+                        sMode.Contains("ndwi") || sMode.Contains("ndvi") || sMode.Contains("evi") ||
+                        sMode.Contains("ndbi") || sMode.Contains("nbr"))
+                    {
+                        bgra[dstIdx] = baseB;
+                        bgra[dstIdx + 1] = baseG;
+                        bgra[dstIdx + 2] = baseR;
+                        bgra[dstIdx + 3] = 255;
+                        continue;
+                    }
 
                     double normShade = Math.Clamp((shaded - 0.7071) * 1.5 + 0.5, 0.0, 1.0);
                     double factor = (normShade - 0.5) * 1.5;

@@ -62,5 +62,63 @@ namespace GeoStudio.UI.Views.Ribbon
         private void MenuClearCache_Click(object s, RoutedEventArgs e) => Main?.MenuClearCache_Click(s, e);
         private void MenuDocs_Click(object s, RoutedEventArgs e) => Main?.MenuDocs_Click(s, e);
         private void MenuAbout_Click(object s, RoutedEventArgs e) => Main?.MenuAbout_Click(s, e);
+        private void BtnOpenPlugins_Click(object s, RoutedEventArgs e)
+        {
+            var win = new GeoStudio.UI.Dialogs.Plugins.PluginManagerWindow { Owner = Application.Current.MainWindow };
+            win.ShowDialog();
+        }
+
+        private void MenuRoadRouting_Click(object s, RoutedEventArgs e)
+        {
+            var win = new GeoStudio.UI.Dialogs.Routing.RoutingWindow { Owner = Application.Current.MainWindow };
+            win.ShowDialog();
+        }
+
+        private void MenuLulcIntelligence_Click(object s, RoutedEventArgs e)
+        {
+            var win = new GeoStudio.UI.Dialogs.Raster.LulcIntelligenceWindow { Owner = Application.Current.MainWindow };
+            win.ShowDialog();
+        }
+
+        private void MenuLandsatLst_Click(object s, RoutedEventArgs e)
+        {
+            var win = new GeoStudio.UI.Dialogs.Raster.LandsatLstWindow { Owner = Application.Current.MainWindow };
+            win.ShowDialog();
+        }
+
+        private void MenuRechargeBoq_Click(object s, RoutedEventArgs e)
+        {
+            var win = new GeoStudio.UI.Dialogs.Hydrology.RechargeBoqWindow { Owner = Application.Current.MainWindow };
+            win.ShowDialog();
+        }
+
+        private void MenuCropPlanner_Click(object s, RoutedEventArgs e)
+        {
+            var win = new GeoStudio.UI.Dialogs.Hydrology.CropWaterPlannerWindow { Owner = Application.Current.MainWindow };
+            win.ShowDialog();
+        }
+
+        private void OpenPluginDialog(string pluginId)
+        {
+            var plugin = System.Linq.Enumerable.FirstOrDefault(
+                GeoStudio.UI.Services.PluginManagerService.Instance.AvailablePlugins,
+                p => p.Id.Equals(pluginId, System.StringComparison.OrdinalIgnoreCase));
+            if (plugin != null)
+            {
+                var win = new GeoStudio.UI.Dialogs.Plugins.PluginInstallDialog(plugin) { Owner = Application.Current.MainWindow };
+                win.ShowDialog();
+            }
+            else
+            {
+                var hub = new GeoStudio.UI.Dialogs.Plugins.PluginManagerWindow { Owner = Application.Current.MainWindow };
+                hub.ShowDialog();
+            }
+        }
+
+        private void BtnPluginHydrology_Click(object s, RoutedEventArgs e) => OpenPluginDialog("geostudio.hydrology_recharge");
+        private void BtnPluginLandsat_Click(object s, RoutedEventArgs e) => OpenPluginDialog("geostudio.landsat_lst");
+        private void BtnPluginRouting_Click(object s, RoutedEventArgs e) => OpenPluginDialog("geostudio.routing_network");
+        private void BtnPlugin3D_Click(object s, RoutedEventArgs e) => OpenPluginDialog("geostudio.mapping3d");
+        private void BtnPluginSatellite_Click(object s, RoutedEventArgs e) => OpenPluginDialog("geostudio.satellite_offline");
     }
 }

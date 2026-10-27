@@ -1,8 +1,14 @@
 @echo off
-set "PATH=%LOCALAPPDATA%\Microsoft\dotnet;%PATH%"
-set "DOTNET_ROOT=%LOCALAPPDATA%\Microsoft\dotnet"
+set "PATH=%LOCALAPPDATA%\Microsoft\dotnet;%ProgramFiles%\dotnet;%PATH%"
 taskkill /F /IM GeoStudio.exe >nul 2>&1
-ping 127.0.0.1 -n 2 >nul
-echo Launching GeoStudio v1.0.0 — Standalone GIS...
+echo Building and Launching GeoStudio...
 cd /d "%~dp0GeoStudio"
-dotnet run
+dotnet build -c Debug
+if %ERRORLEVEL% equ 0 (
+    echo Starting GeoStudio...
+    start "" "bin\Debug\net8.0-windows\GeoStudio.exe"
+    timeout /t 2 /nobreak >nul
+) else (
+    echo [ERROR] Build failed! Check compiler output above.
+    pause
+)

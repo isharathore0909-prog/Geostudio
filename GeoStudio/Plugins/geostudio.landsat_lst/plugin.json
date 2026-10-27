@@ -1,0 +1,17 @@
+{
+  "id": "geostudio.landsat_lst",
+  "name": "Hyperspectral, Landsat & Thermal LST Studio",
+  "version": "1.5.0",
+  "category": "Remote Sensing & Thermal",
+  "iconEmoji": "\ud83c\udf08",
+  "description": "USGS Landsat Collection 2 Level 1 radiometric scaling, TOA radiance/reflectance, solar zenith correction, and Sobrino/Du split-window LST.",
+  "downloadSizeMb": 48.0,
+  "engineType": "Python",
+  "dependencies": [
+    "rasterio",
+    "spectral"
+  ],
+  "associatedRibbonPanels": [
+    "BtnRibbonLandsatLst"
+  ]
+}

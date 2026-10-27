@@ -1,0 +1,14 @@
+{
+  "id": "geostudio.routing_network",
+  "name": "Road Routing & CSR Network Engine",
+  "version": "3.0.0",
+  "category": "Network & Transportation",
+  "iconEmoji": "\ud83d\udee3\ufe0f",
+  "description": "Ultra-fast C# .NET 8 CSR road graph A* routing with turn-by-turn pathfinding, haversine heuristics, and GeoJSON route generation.",
+  "downloadSizeMb": 28.0,
+  "engineType": "C# Native",
+  "dependencies": [],
+  "associatedRibbonPanels": [
+    "GroupRibbonNetworks"
+  ]
+}

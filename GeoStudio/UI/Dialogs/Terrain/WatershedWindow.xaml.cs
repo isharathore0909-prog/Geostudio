@@ -244,8 +244,10 @@ namespace GeoStudio.UI.Dialogs
                         }
                     }
 
-                    await Task.Delay(400);
-                    Close();
+                    ActionBar.IsBusy = false;
+                    ActionBar.ActionText = "⚡ Recalculate";
+                    ActionBar.CancelText = "Close";
+                    Activate();
                 }
                 else
                 {

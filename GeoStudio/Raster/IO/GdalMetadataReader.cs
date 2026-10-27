@@ -29,7 +29,36 @@ namespace GeoStudio.Raster
                 BandCount = bands
             };
 
-            if (ElevationShadedRelief.IsElevationRaster(ds, filePath))
+            bool isThermal = filePath.Contains("LST", StringComparison.OrdinalIgnoreCase) ||
+                             filePath.Contains("Thermal", StringComparison.OrdinalIgnoreCase) ||
+                             filePath.Contains("SplitWindow", StringComparison.OrdinalIgnoreCase) ||
+                             filePath.Contains("Temperature", StringComparison.OrdinalIgnoreCase);
+
+            string? spectralIndex = ElevationShadedRelief.DetectSpectralIndex(filePath);
+
+            if (isThermal && bands == 1)
+            {
+                meta.IsThermal = true;
+                meta.IsElevation = false;
+                var (minTemp, maxTemp) = ElevationShadedRelief.GetElevationStats(ds);
+                meta.MinElevation = minTemp;
+                meta.MaxElevation = maxTemp;
+            }
+            else if (spectralIndex != null && bands == 1)
+            {
+                meta.IsSpectral = true;
+                meta.IsElevation = false;
+                meta.SpectralMode = spectralIndex.ToLowerInvariant();
+                var (minIndex, maxIndex) = ElevationShadedRelief.GetElevationStats(ds);
+                if (minIndex >= maxIndex || minIndex < -100 || maxIndex > 100)
+                {
+                    minIndex = -1.0;
+                    maxIndex = 1.0;
+                }
+                meta.MinElevation = minIndex;
+                meta.MaxElevation = maxIndex;
+            }
+            else if (ElevationShadedRelief.IsElevationRaster(ds, filePath))
             {
                 meta.IsElevation = true;
                 var (minElev, maxElev) = ElevationShadedRelief.GetElevationStats(ds);
@@ -100,8 +129,11 @@ namespace GeoStudio.Raster
             }
 
             // Check if preview already exists in AppData cache (instant return in < 1ms)
+            string shaderMode = isThermal ? "thermal" : (spectralIndex != null ? spectralIndex.ToLowerInvariant() : (meta.IsElevation ? "atlas" : "none"));
+            string palette = isThermal ? "INFERNO" : (spectralIndex != null ? spectralIndex.ToUpperInvariant() : (meta.IsElevation ? "GLOBAL_MAPPER_ATLAS" : "none"));
+
             string cacheDir = GdalCacheManager.GetCacheDirectory();
-            string cachePngName = GdalCacheManager.GetOverviewCacheFileName(filePath, meta.IsElevation);
+            string cachePngName = GdalCacheManager.GetOverviewCacheFileName(filePath, meta.IsElevation || isThermal || meta.IsSpectral, shaderMode, palette);
             string outPngPath = Path.Combine(cacheDir, cachePngName);
 
             if (File.Exists(outPngPath) && new FileInfo(outPngPath).Length > 1000)
@@ -112,7 +144,7 @@ namespace GeoStudio.Raster
             else
             {
                 // Viewport-First Ingestion: Return metadata in < 15ms and generate overview in background
-                GdalOverviewGenerator.QueueOverviewGeneration(filePath);
+                GdalOverviewGenerator.QueueOverviewGeneration(filePath, shaderMode, palette);
             }
 
             return meta;

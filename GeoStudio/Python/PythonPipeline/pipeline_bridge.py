@@ -6,6 +6,15 @@ Communicates progress and JSON results back to the .NET host process.
 """
 
 import os
+
+for qgis_bin in [r"C:\Program Files\QGIS 3.40.14\bin", r"C:\Program Files\QGIS 3.40.14\apps\qgis-ltr\bin"]:
+    if os.path.exists(qgis_bin):
+        try:
+            os.add_dll_directory(qgis_bin)
+        except Exception:
+            pass
+        os.environ["PATH"] = qgis_bin + os.pathsep + os.environ.get("PATH", "")
+
 # Ensure QGIS PROJ definitions take priority over any system or PostgreSQL installations
 for proj_dir in [
     r"C:\Program Files\QGIS 3.40.14\share\proj",
@@ -36,6 +45,8 @@ from tasks import (
     task_satellite_index,
     task_clip_raster,
     task_raster_stats,
+    task_landsat_lst,
+    task_lulc_intelligence,
     task_transpose_fields,
     task_vector_geoprocessing,
 )
@@ -61,6 +72,10 @@ TASK_REGISTRY = {
     "satellite": task_satellite_index,
     "clip_raster": task_clip_raster,
     "raster_stats": task_raster_stats,
+    "landsat_lst": task_landsat_lst,
+    "split_window_lst": task_landsat_lst,
+    "lulc": task_lulc_intelligence,
+    "lulc_intelligence": task_lulc_intelligence,
 
     # Vector & Attribute Geoprocessing Tasks
     "transpose_fields": task_transpose_fields,

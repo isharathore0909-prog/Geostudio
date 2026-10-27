@@ -1,13 +1,13 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using GeoStudio.Models;
 using GeoStudio.Python;
 using GeoStudio.Raster;
+using GeoStudio.Raster.Services;
 
 namespace GeoStudio.UI.Dialogs
 {
@@ -16,19 +16,23 @@ namespace GeoStudio.UI.Dialogs
         private readonly MainWindow _main;
         private string _activeMode = "NDVI";
         private bool _isUpdatingPreset = false;
+        private bool _isLoaded = false;
 
         public SpectralIndicesWindow(MainWindow main, string defaultMode = "NDVI")
         {
             InitializeComponent();
             _main = main;
             Owner = main;
+            ShowInTaskbar = false;
             _main.ActiveSpectralIndicesWindow = this;
             Closed += (s, e) =>
             {
-                if (_main.ActiveSpectralIndicesWindow == this)
-                    _main.ActiveSpectralIndicesWindow = null;
+                if (_main.ActiveSpectralIndicesWindow == this) _main.ActiveSpectralIndicesWindow = null;
+                if (_main.WindowState == WindowState.Minimized) _main.WindowState = WindowState.Normal;
+                _main.Activate();
             };
 
+            _isLoaded = true;
             PopulateLayers();
             SetMode(defaultMode);
         }
@@ -53,7 +57,7 @@ namespace GeoStudio.UI.Dialogs
 
         private void PopulateLayers()
         {
-            if (PickerRaster == null) return;
+            if (PickerRaster == null || _main == null) return;
             PickerRaster.Populate(_main.Layers, l => l.Type == LayerType.Raster || l.Type == LayerType.Elevation);
 
             InspectCurrentRaster();
@@ -72,31 +76,47 @@ namespace GeoStudio.UI.Dialogs
             try
             {
                 var meta = GdalRasterService.InspectMetadata(rasterPath);
+                string sensorPreset = SpectralIndexDefinitions.DetectSensorPreset(rasterPath, meta.BandCount);
+                SelectPresetTag(sensorPreset);
+
                 if (meta.BandCount > 1)
                 {
                     PickerRaster?.SetBadge($"✓ {meta.BandCount} Bands Detected (Multispectral)");
-
-                    // Auto-adjust preset if 4 bands
-                    if (meta.BandCount == 4 && ComboSensorPreset != null)
-                    {
-                        foreach (ComboBoxItem item in ComboSensorPreset.Items)
-                        {
-                            if (item.Tag is string tag && tag == "planetscope")
-                            {
-                                ComboSensorPreset.SelectedItem = item;
-                                break;
-                            }
-                        }
-                    }
                 }
                 else
                 {
-                    PickerRaster?.SetBadge("Single Band (Needs multi-band)");
+                    int.TryParse(TxtBandNir?.Text.Trim() ?? "8", out int nir);
+                    int.TryParse(TxtBandRed?.Text.Trim() ?? "4", out int red);
+                    string? nirFile = SpectralIndexDefinitions.FindSiblingBandFile(rasterPath, $"B{nir}", $"B0{nir}", $"{nir}");
+                    string? redFile = SpectralIndexDefinitions.FindSiblingBandFile(rasterPath, $"B{red}", $"B0{red}", $"{red}");
+
+                    if (nirFile != null && redFile != null)
+                    {
+                        string sName = sensorPreset.Contains("landsat") ? "Landsat" : "Sentinel";
+                        PickerRaster?.SetBadge($"✓ {sName} Scene (Bands B{red} & B{nir} Auto-Linked)");
+                    }
+                    else
+                    {
+                        PickerRaster?.SetBadge($"Single Band (B{red} / B{nir} sibling files required)");
+                    }
                 }
             }
             catch
             {
                 PickerRaster?.ClearBadge();
+            }
+        }
+
+        private void SelectPresetTag(string tag)
+        {
+            if (ComboSensorPreset == null) return;
+            foreach (ComboBoxItem item in ComboSensorPreset.Items)
+            {
+                if (item.Tag is string itemTag && itemTag.Equals(tag, StringComparison.OrdinalIgnoreCase))
+                {
+                    ComboSensorPreset.SelectedItem = item;
+                    break;
+                }
             }
         }
 
@@ -108,105 +128,46 @@ namespace GeoStudio.UI.Dialogs
 
         private void UpdateModeUI()
         {
-            if (TxtFormula == null || TxtModeDesc == null) return;
+            if (!_isLoaded || TxtFormula == null || TxtModeDesc == null || TxtBandNir == null) return;
 
-            // Highlight color
+            if (!SpectralIndexDefinitions.Modes.TryGetValue(_activeMode, out var info))
+                info = SpectralIndexDefinitions.Modes["NDVI"];
+
             var activeBorder = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#059669"));
             var activeBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#ECFDF5"));
             var normalBorder = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
             var normalBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
 
-            void StyleBox(TextBox tb, bool needed)
+            void StyleBox(TextBox? tb, bool needed)
             {
+                if (tb == null) return;
                 tb.BorderBrush = needed ? activeBorder : normalBorder;
                 tb.Background = needed ? activeBg : normalBg;
                 tb.Opacity = needed ? 1.0 : 0.45;
             }
 
-            switch (_activeMode)
-            {
-                case "NDVI":
-                    TxtFormula.Text = "(NIR - Red) / (NIR + Red)";
-                    TxtFormula.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#059669"));
-                    TxtModeDesc.Text = "Normalized Difference Vegetation Index: Evaluates photosynthetic canopy density, vegetation greenness, and crop vigor (-1.0 to +1.0).";
-                    StyleBox(TxtBandNir, true);
-                    StyleBox(TxtBandRed, true);
-                    StyleBox(TxtBandGreen, false);
-                    StyleBox(TxtBandBlue, false);
-                    StyleBox(TxtBandSwir1, false);
-                    StyleBox(TxtBandSwir2, false);
-                    break;
+            TxtFormula.Text = info.Formula;
+            TxtFormula.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(info.ColorHex));
+            TxtModeDesc.Text = info.Description;
 
-                case "NDWI":
-                    TxtFormula.Text = "(Green - NIR) / (Green + NIR)";
-                    TxtFormula.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
-                    TxtModeDesc.Text = "Normalized Difference Water Index (McFeeters): Delineates open water bodies, rivers, reservoirs, and surface moisture levels (-1.0 to +1.0).";
-                    StyleBox(TxtBandNir, true);
-                    StyleBox(TxtBandRed, false);
-                    StyleBox(TxtBandGreen, true);
-                    StyleBox(TxtBandBlue, false);
-                    StyleBox(TxtBandSwir1, false);
-                    StyleBox(TxtBandSwir2, false);
-                    break;
-
-                case "EVI":
-                    TxtFormula.Text = "2.5 * (NIR - Red) / (NIR + 6*Red - 7.5*Blue + 1)";
-                    TxtFormula.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
-                    TxtModeDesc.Text = "Enhanced Vegetation Index: Atmospheric- and soil-corrected vegetation index ideal for high-biomass regions and dense forest canopies.";
-                    StyleBox(TxtBandNir, true);
-                    StyleBox(TxtBandRed, true);
-                    StyleBox(TxtBandGreen, false);
-                    StyleBox(TxtBandBlue, true);
-                    StyleBox(TxtBandSwir1, false);
-                    StyleBox(TxtBandSwir2, false);
-                    break;
-
-                case "NDBI":
-                    TxtFormula.Text = "(SWIR1 - NIR) / (SWIR1 + NIR)";
-                    TxtFormula.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E11D48"));
-                    TxtModeDesc.Text = "Normalized Difference Built-up Index: Identifies urban structures, residential areas, asphalt highways, and impervious surfaces (-1.0 to +1.0).";
-                    StyleBox(TxtBandNir, true);
-                    StyleBox(TxtBandRed, false);
-                    StyleBox(TxtBandGreen, false);
-                    StyleBox(TxtBandBlue, false);
-                    StyleBox(TxtBandSwir1, true);
-                    StyleBox(TxtBandSwir2, false);
-                    break;
-
-                case "NBR":
-                    TxtFormula.Text = "(NIR - SWIR2) / (NIR + SWIR2)";
-                    TxtFormula.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D97706"));
-                    TxtModeDesc.Text = "Normalized Burn Ratio: Highlights burned fire scars and estimates burn severity across forest and shrub ecosystems (-1.0 to +1.0).";
-                    StyleBox(TxtBandNir, true);
-                    StyleBox(TxtBandRed, false);
-                    StyleBox(TxtBandGreen, false);
-                    StyleBox(TxtBandBlue, false);
-                    StyleBox(TxtBandSwir1, false);
-                    StyleBox(TxtBandSwir2, true);
-                    break;
-
-                case "FALSE_COLOR":
-                    TxtFormula.Text = "R = NIR, G = Red, B = Green (Standard Color Infrared)";
-                    TxtFormula.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#9333EA"));
-                    TxtModeDesc.Text = "Infrared Color Composite: Maps NIR to Red channel so dense chlorophyll vegetation appears vivid crimson red, water deep dark, and urban gray-cyan.";
-                    StyleBox(TxtBandNir, true);
-                    StyleBox(TxtBandRed, true);
-                    StyleBox(TxtBandGreen, true);
-                    StyleBox(TxtBandBlue, false);
-                    StyleBox(TxtBandSwir1, false);
-                    StyleBox(TxtBandSwir2, false);
-                    break;
-            }
+            StyleBox(TxtBandNir, info.NeedsNir);
+            StyleBox(TxtBandRed, info.NeedsRed);
+            StyleBox(TxtBandGreen, info.NeedsGreen);
+            StyleBox(TxtBandBlue, info.NeedsBlue);
+            StyleBox(TxtBandSwir1, info.NeedsSwir1);
+            StyleBox(TxtBandSwir2, info.NeedsSwir2);
         }
 
         private void PickerRaster_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (!_isLoaded) return;
             InspectCurrentRaster();
             UpdateDefaultOutputPath();
         }
 
         private void ComboIndexMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (!_isLoaded) return;
             if (ComboIndexMode.SelectedItem is ComboBoxItem item && item.Tag is string tag)
             {
                 _activeMode = tag;
@@ -217,59 +178,26 @@ namespace GeoStudio.UI.Dialogs
 
         private void ComboSensorPreset_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (!_isLoaded || TxtBandNir == null || ComboSensorPreset == null) return;
             if (ComboSensorPreset.SelectedItem is not ComboBoxItem item || item.Tag is not string preset)
                 return;
 
+            if (preset == "custom") return;
+
             _isUpdatingPreset = true;
-
-            switch (preset)
-            {
-                case "sentinel2":
-                    TxtBandNir.Text = "8";
-                    TxtBandRed.Text = "4";
-                    TxtBandGreen.Text = "3";
-                    TxtBandBlue.Text = "2";
-                    TxtBandSwir1.Text = "11";
-                    TxtBandSwir2.Text = "12";
-                    break;
-
-                case "landsat8":
-                    TxtBandNir.Text = "5";
-                    TxtBandRed.Text = "4";
-                    TxtBandGreen.Text = "3";
-                    TxtBandBlue.Text = "2";
-                    TxtBandSwir1.Text = "6";
-                    TxtBandSwir2.Text = "7";
-                    break;
-
-                case "landsat7":
-                    TxtBandNir.Text = "4";
-                    TxtBandRed.Text = "3";
-                    TxtBandGreen.Text = "2";
-                    TxtBandBlue.Text = "1";
-                    TxtBandSwir1.Text = "5";
-                    TxtBandSwir2.Text = "7";
-                    break;
-
-                case "planetscope":
-                    TxtBandNir.Text = "4";
-                    TxtBandRed.Text = "1";
-                    TxtBandGreen.Text = "2";
-                    TxtBandBlue.Text = "3";
-                    TxtBandSwir1.Text = "4";
-                    TxtBandSwir2.Text = "4";
-                    break;
-
-                case "custom":
-                    break;
-            }
-
+            var bands = SpectralIndexDefinitions.GetPresetBands(preset);
+            if (TxtBandNir != null) TxtBandNir.Text = bands.nir;
+            if (TxtBandRed != null) TxtBandRed.Text = bands.red;
+            if (TxtBandGreen != null) TxtBandGreen.Text = bands.green;
+            if (TxtBandBlue != null) TxtBandBlue.Text = bands.blue;
+            if (TxtBandSwir1 != null) TxtBandSwir1.Text = bands.swir1;
+            if (TxtBandSwir2 != null) TxtBandSwir2.Text = bands.swir2;
             _isUpdatingPreset = false;
         }
 
         private void BandInput_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (_isUpdatingPreset || ComboSensorPreset == null) return;
+            if (!_isLoaded || _isUpdatingPreset || ComboSensorPreset == null) return;
 
             foreach (ComboBoxItem item in ComboSensorPreset.Items)
             {
@@ -297,25 +225,14 @@ namespace GeoStudio.UI.Dialogs
                 return;
             }
 
-            int.TryParse(TxtBandNir.Text.Trim(), out int nir);
-            int.TryParse(TxtBandRed.Text.Trim(), out int red);
-            int.TryParse(TxtBandGreen.Text.Trim(), out int green);
-            int.TryParse(TxtBandBlue.Text.Trim(), out int blue);
-            int.TryParse(TxtBandSwir1.Text.Trim(), out int swir1);
-            int.TryParse(TxtBandSwir2.Text.Trim(), out int swir2);
+            int.TryParse(TxtBandNir?.Text.Trim() ?? "8", out int nir);
+            int.TryParse(TxtBandRed?.Text.Trim() ?? "4", out int red);
+            int.TryParse(TxtBandGreen?.Text.Trim() ?? "3", out int green);
+            int.TryParse(TxtBandBlue?.Text.Trim() ?? "2", out int blue);
+            int.TryParse(TxtBandSwir1?.Text.Trim() ?? "11", out int swir1);
+            int.TryParse(TxtBandSwir2?.Text.Trim() ?? "12", out int swir2);
 
-            var bandMap = new
-            {
-                nir = Math.Max(1, nir),
-                red = Math.Max(1, red),
-                green = Math.Max(1, green),
-                blue = Math.Max(1, blue),
-                swir1 = Math.Max(1, swir1),
-                swir2 = Math.Max(1, swir2),
-                r_composite = Math.Max(1, nir),
-                g_composite = Math.Max(1, red),
-                b_composite = Math.Max(1, green)
-            };
+            var bandMap = SpectralIndexDefinitions.BuildBandMap(nir, red, green, blue, swir1, swir2, rasterPath);
             string bandJson = JsonSerializer.Serialize(bandMap);
 
             ActionBar.IsBusy = true;
@@ -343,9 +260,12 @@ namespace GeoStudio.UI.Dialogs
                 if (result.Success && !string.IsNullOrEmpty(result.OutputFilePath) && File.Exists(result.OutputFilePath))
                 {
                     ActionBar.Progress = 100;
-                    ActionBar.StatusText = $"{_activeMode} completed! Adding dataset to map canvas...";
+                    ActionBar.IsBusy = false;
+                    ActionBar.StatusText = $"✓ {_activeMode} completed successfully! Added layer to map canvas.";
+                    ActionBar.ActionText = "⚡ Recalculate";
+                    ActionBar.CancelText = "Close";
                     await _main.LoadRasterFile(result.OutputFilePath);
-                    Close();
+                    Activate();
                 }
                 else
                 {
@@ -362,9 +282,6 @@ namespace GeoStudio.UI.Dialogs
             }
         }
 
-        private void BtnCancel_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
+        private void BtnCancel_Click(object sender, RoutedEventArgs e) => Close();
     }
 }

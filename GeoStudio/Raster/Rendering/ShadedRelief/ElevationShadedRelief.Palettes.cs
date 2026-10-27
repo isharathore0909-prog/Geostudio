@@ -51,6 +51,20 @@ namespace GeoStudio.Raster
             (1.00f, (byte)252, (byte)253, (byte)191)
         };
 
+        // Scientific Inferno: Exact Matplotlib Inferno colormap for thermal / Land Surface Temperature (LST)
+        public static readonly (float frac, byte r, byte g, byte b)[] InfernoStops = new[]
+        {
+            (0.00f, (byte)0,   (byte)0,   (byte)4),    // Black
+            (0.12f, (byte)40,  (byte)11,  (byte)84),   // Deep Indigo
+            (0.25f, (byte)101, (byte)21,  (byte)110),  // Purple
+            (0.38f, (byte)159, (byte)42,  (byte)99),   // Reddish Purple
+            (0.50f, (byte)212, (byte)72,  (byte)66),   // Crimson / Red-Orange
+            (0.65f, (byte)245, (byte)125, (byte)21),   // Vivid Orange
+            (0.80f, (byte)250, (byte)193, (byte)39),   // Warm Amber Yellow
+            (0.92f, (byte)252, (byte)238, (byte)120),  // Bright Yellow
+            (1.00f, (byte)255, (byte)255, (byte)204)   // White-Yellow High Heat
+        };
+
         // Slope gradient stops: 0° (flat green) to 45°+ (extreme cliff red)
         public static readonly (float frac, byte r, byte g, byte b)[] SlopeStops = new[]
         {
@@ -95,6 +109,52 @@ namespace GeoStudio.Raster
             (0.50f, (byte)240, (byte)240, (byte)240), // Planar / Flat (Light Gray)
             (0.75f, (byte)145, (byte)191, (byte)219), // Moderately concave (Cyan/Blue)
             (1.00f, (byte)69,  (byte)117, (byte)180)  // Concave / Valley (Deep Blue)
+        };
+
+        // McFeeters Normalized Difference Water Index (NDWI) stops
+        // Low: Dry soil/land -> Mid: Shoreline / saturated wetland -> High: Open water bodies
+        public static readonly (float frac, byte r, byte g, byte b)[] NdwiStops = new[]
+        {
+            (0.00f, (byte)214, (byte)197, (byte)168), // Dry soil / sand / barren land (#d6c5a8)
+            (0.35f, (byte)188, (byte)198, (byte)152), // Sparse vegetation / dry vegetation (#bcc698)
+            (0.48f, (byte)224, (byte)242, (byte)254), // Moist soil / shoreline / wetland edge (#e0f2fe)
+            (0.60f, (byte)56,  (byte)189, (byte)248), // Shallow / turbid water (#38bdf8)
+            (0.75f, (byte)2,   (byte)132, (byte)199), // Open water bodies / rivers (#0284c7)
+            (1.00f, (byte)12,  (byte)74,  (byte)110)  // Deep clear water / ocean / reservoirs (#0c4a6e)
+        };
+
+        // Normalized Difference Vegetation Index (NDVI / EVI) stops
+        // Low: Water / cloud / bare soil -> Mid: Grassland / crops -> High: Dense healthy canopy
+        public static readonly (float frac, byte r, byte g, byte b)[] NdviStops = new[]
+        {
+            (0.00f, (byte)148, (byte)163, (byte)184), // Water / clouds / shadow (#94a3b8)
+            (0.25f, (byte)217, (byte)119, (byte)6),   // Barren rock / sand / bare soil (#d97706)
+            (0.45f, (byte)234, (byte)179, (byte)8),   // Sparse vegetation / grassland (#eab308)
+            (0.65f, (byte)132, (byte)204, (byte)22),  // Moderate vegetation / agriculture (#84cc16)
+            (0.80f, (byte)22,  (byte)163, (byte)74),  // Dense canopy / shrubs (#16a34a)
+            (1.00f, (byte)5,   (byte)150, (byte)105)  // Dense forest / lush jungle (#059669)
+        };
+
+        // Normalized Difference Built-Up Index (NDBI) stops
+        // Low: Water / vegetation -> Mid: Soil -> High: Urban impervious built-up
+        public static readonly (float frac, byte r, byte g, byte b)[] NdbiStops = new[]
+        {
+            (0.00f, (byte)5,   (byte)150, (byte)105), // Vegetation / green areas (#059669)
+            (0.35f, (byte)148, (byte)163, (byte)184), // Water / open land (#94a3b8)
+            (0.55f, (byte)240, (byte)240, (byte)240), // Flat soil / suburban (#f0f0f0)
+            (0.75f, (byte)249, (byte)115, (byte)22),  // Suburban / buildings (#f97316)
+            (1.00f, (byte)225, (byte)29,  (byte)72)   // High-density urban / concrete (#e11d48)
+        };
+
+        // Normalized Burn Ratio (NBR) stops
+        // Low: High burn severity -> Mid: Low burn -> High: Unburned canopy
+        public static readonly (float frac, byte r, byte g, byte b)[] NbrStops = new[]
+        {
+            (0.00f, (byte)220, (byte)38,  (byte)38),  // High severity burn (#dc2626)
+            (0.30f, (byte)245, (byte)158, (byte)11),  // Moderate burn (#f59e0b)
+            (0.55f, (byte)234, (byte)179, (byte)8),   // Low burn / regrowth (#eab308)
+            (0.75f, (byte)132, (byte)204, (byte)22),  // Unburned / light vegetation (#84cc16)
+            (1.00f, (byte)5,   (byte)150, (byte)105)  // Healthy unburned forest (#059669)
         };
 
         private static void InterpolateColor((float frac, byte r, byte g, byte b)[] stops, float normVal, out byte outR, out byte outG, out byte outB)

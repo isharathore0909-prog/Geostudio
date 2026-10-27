@@ -1,5 +1,76 @@
 // Dynamic Shader / Elevation Scale Legend Widget
 const SHADER_SCALES = {
+  'thermal': {
+    title: 'Land Surface Temp',
+    unit: '°C',
+    icon: '🌡️',
+    gradient: 'linear-gradient(to right, rgb(0,0,4) 0%, rgb(40,11,84) 12%, rgb(101,21,110) 25%, rgb(159,42,99) 38%, rgb(212,72,66) 50%, rgb(245,125,21) 65%, rgb(250,193,39) 80%, rgb(252,238,120) 92%, rgb(255,255,204) 100%)',
+    subtext: 'USGS Landsat Split-Window LST (Inferno)',
+    isElevation: false
+  },
+  'inferno': {
+    title: 'Land Surface Temp',
+    unit: '°C',
+    icon: '🌡️',
+    gradient: 'linear-gradient(to right, rgb(0,0,4) 0%, rgb(40,11,84) 12%, rgb(101,21,110) 25%, rgb(159,42,99) 38%, rgb(212,72,66) 50%, rgb(245,125,21) 65%, rgb(250,193,39) 80%, rgb(252,238,120) 92%, rgb(255,255,204) 100%)',
+    subtext: 'Scientific Inferno Thermal Palette (°C)',
+    isElevation: false
+  },
+  'ndwi': {
+    title: 'Water Index (NDWI)',
+    unit: '',
+    icon: '💧',
+    gradient: 'linear-gradient(to right, rgb(214,197,168) 0%, rgb(188,198,152) 35%, rgb(224,242,254) 48%, rgb(56,189,248) 60%, rgb(2,132,199) 75%, rgb(12,74,110) 100%)',
+    minLabel: '-1.0 Dry Land',
+    midLabel: '0.0 Shoreline',
+    maxLabel: '+1.0 Water Body',
+    subtext: 'Normalized Difference Water Index (McFeeters)',
+    isElevation: false
+  },
+  'ndvi': {
+    title: 'Vegetation Index (NDVI)',
+    unit: '',
+    icon: '🌿',
+    gradient: 'linear-gradient(to right, rgb(148,163,184) 0%, rgb(217,119,6) 25%, rgb(234,179,8) 45%, rgb(132,204,22) 65%, rgb(22,163,74) 80%, rgb(5,150,105) 100%)',
+    minLabel: '-1.0 Barren',
+    midLabel: '0.3 Grassland',
+    maxLabel: '+1.0 Dense Canopy',
+    subtext: 'Normalized Difference Vegetation Index',
+    isElevation: false
+  },
+  'evi': {
+    title: 'Enhanced Veg Index (EVI)',
+    unit: '',
+    icon: '🌱',
+    gradient: 'linear-gradient(to right, rgb(148,163,184) 0%, rgb(234,179,8) 35%, rgb(132,204,22) 65%, rgb(5,150,105) 100%)',
+    minLabel: '-1.0 Low',
+    midLabel: '0.5 Med',
+    maxLabel: '+1.0 High Canopy',
+    subtext: 'Enhanced Vegetation Index (Atmospherically Corrected)',
+    isElevation: false
+  },
+  'ndbi': {
+    title: 'Built-Up Index (NDBI)',
+    unit: '',
+    icon: '🏙️',
+    gradient: 'linear-gradient(to right, rgb(5,150,105) 0%, rgb(148,163,184) 35%, rgb(240,240,240) 55%, rgb(249,115,22) 75%, rgb(225,29,72) 100%)',
+    minLabel: '-1.0 Veg/Water',
+    midLabel: '0.0 Soil',
+    maxLabel: '+1.0 Urban Built-Up',
+    subtext: 'Normalized Difference Built-Up Index',
+    isElevation: false
+  },
+  'nbr': {
+    title: 'Burn Ratio (NBR)',
+    unit: '',
+    icon: '🔥',
+    gradient: 'linear-gradient(to right, rgb(220,38,38) 0%, rgb(245,158,11) 30%, rgb(234,179,8) 55%, rgb(132,204,22) 75%, rgb(5,150,105) 100%)',
+    minLabel: '-1.0 Severe Burn',
+    midLabel: '0.1 Low Burn',
+    maxLabel: '+1.0 Unburned Canopy',
+    subtext: 'Normalized Burn Ratio / Fire Severity',
+    isElevation: false
+  },
   'atlas': {
     title: 'Elevation',
     unit: 'm',
@@ -128,6 +199,11 @@ function updateShaderScaleWidget(shaderMode, palette, minElev, maxElev) {
     if (palKey.includes('terrain')) cfg = SHADER_SCALES['terrain'];
     else if (palKey.includes('viridis')) cfg = SHADER_SCALES['viridis'];
     else if (palKey.includes('magma')) cfg = SHADER_SCALES['magma'];
+    else if (palKey.includes('ndwi')) cfg = SHADER_SCALES['ndwi'];
+    else if (palKey.includes('ndvi')) cfg = SHADER_SCALES['ndvi'];
+    else if (palKey.includes('evi')) cfg = SHADER_SCALES['evi'];
+    else if (palKey.includes('ndbi')) cfg = SHADER_SCALES['ndbi'];
+    else if (palKey.includes('nbr')) cfg = SHADER_SCALES['nbr'];
   }
   if (!cfg) cfg = SHADER_SCALES['atlas'];
 
@@ -144,19 +220,21 @@ function updateShaderScaleWidget(shaderMode, palette, minElev, maxElev) {
   if (barEl) barEl.style.background = cfg.gradient;
   if (subtextEl) subtextEl.textContent = cfg.subtext;
 
-  if (cfg.isElevation) {
+  const isContinuousVal = (cfg.isElevation || cfg.unit === '°C' || (minElev !== undefined && minElev !== null && maxElev !== undefined && maxElev !== null)) && !cfg.minLabel;
+  if (isContinuousVal) {
     const minVal = minElev !== undefined && minElev !== null ? minElev : (activeRasterInfo ? activeRasterInfo.minElev : null);
     const maxVal = maxElev !== undefined && maxElev !== null ? maxElev : (activeRasterInfo ? activeRasterInfo.maxElev : null);
 
     if (minVal !== null && maxVal !== null && !isNaN(minVal) && !isNaN(maxVal)) {
       const midVal = (minVal + maxVal) / 2.0;
-      if (minEl) minEl.textContent = `${minVal.toFixed(1)} ${cfg.unit}`;
-      if (midEl) midEl.textContent = `${midVal.toFixed(1)} ${cfg.unit}`;
-      if (maxEl) maxEl.textContent = `${maxVal.toFixed(1)} ${cfg.unit}`;
+      const u = cfg.unit ? ` ${cfg.unit}` : '';
+      if (minEl) minEl.textContent = `${minVal.toFixed(1)}${u}`;
+      if (midEl) midEl.textContent = `${midVal.toFixed(1)}${u}`;
+      if (maxEl) maxEl.textContent = `${maxVal.toFixed(1)}${u}`;
     } else {
-      if (minEl) minEl.textContent = `-- ${cfg.unit}`;
-      if (midEl) midEl.textContent = `-- ${cfg.unit}`;
-      if (maxEl) maxEl.textContent = `-- ${cfg.unit}`;
+      if (minEl) minEl.textContent = `-- ${cfg.unit || ''}`;
+      if (midEl) midEl.textContent = `-- ${cfg.unit || ''}`;
+      if (maxEl) maxEl.textContent = `-- ${cfg.unit || ''}`;
     }
   } else {
     if (minEl) minEl.textContent = cfg.minLabel || '';

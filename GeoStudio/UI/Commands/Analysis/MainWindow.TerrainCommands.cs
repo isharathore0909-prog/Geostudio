@@ -211,6 +211,13 @@ namespace GeoStudio
             win.ShowDialog();
         }
 
+        internal void MenuLulc_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new GeoStudio.UI.Dialogs.Raster.LulcIntelligenceWindow(this);
+            win.Owner = this;
+            win.ShowDialog();
+        }
+
         internal void Btn3dMesh_Click(object sender, RoutedEventArgs e)
         {
             TxtStatus.Text = "Launching interactive 3D Point Cloud / Terrain Workstation...";

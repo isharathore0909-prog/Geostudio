@@ -1,0 +1,108 @@
+<Window x:Class="GeoStudio.UI.Dialogs.Hydrology.CropWaterPlannerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Water-Budget Crop &amp; Horticulture Planning"
+        Height="480" Width="560"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F8FAFC">
+    <Window.Resources>
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="5,3"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,12">
+            <StackPanel>
+                <TextBlock Text="🌾 Crop &amp; Horticulture Water-Budget Planner" FontWeight="Bold" FontSize="13" Foreground="#166534"/>
+                <TextBlock Text="Protects farmer income while enforcing water sustainability guidelines based on rainfall and aquifer status." FontSize="11" Foreground="#475569" Margin="0,3,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Inputs -->
+        <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,8">
+                    <TextBlock Text="Annual Rainfall (mm):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox x:Name="TxtRainfall" Text="450"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,8,8">
+                    <TextBlock Text="Aquifer Type:" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <ComboBox x:Name="ComboAquifer" Height="28">
+                        <ComboBoxItem Content="Alluvium (Older/Younger)" IsSelected="True"/>
+                        <ComboBoxItem Content="Sandstone / Limestone"/>
+                        <ComboBoxItem Content="Hard Rock (Gneiss / Schist)"/>
+                        <ComboBoxItem Content="Basalt (Deccan Trap)"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Text="Groundwater Status:" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <ComboBox x:Name="ComboGwStatus" Height="28">
+                        <ComboBoxItem Content="Safe (&lt; 70% draft)"/>
+                        <ComboBoxItem Content="Semi-Critical (70-90%)" IsSelected="True"/>
+                        <ComboBoxItem Content="Critical (90-100%)"/>
+                        <ComboBoxItem Content="Over-Exploited (&gt; 100%)"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <Button Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Content="⚡ Generate Crop Plan" Height="28" FontWeight="Bold" FontSize="11" Background="#16A34A" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand" Margin="0,15,0,0" Click="BtnGeneratePlan_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Results Display -->
+        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="PanelResults">
+                    <TextBlock Text="Recommended Crop Prescriptions" FontWeight="Bold" FontSize="12" Foreground="#0F172A" Margin="0,0,0,8"/>
+
+                    <TextBlock Text="Kharif Season (Monsoon):" FontSize="11" FontWeight="SemiBold" Foreground="#334155" Margin="0,4,0,2"/>
+                    <TextBlock x:Name="TxtKharif" Text="• Bajra, Moong, Cluster Bean (Guar)" FontSize="11" Foreground="#475569" Margin="10,0,0,6"/>
+
+                    <TextBlock Text="Rabi Season (Winter):" FontSize="11" FontWeight="SemiBold" Foreground="#334155" Margin="0,4,0,2"/>
+                    <TextBlock x:Name="TxtRabi" Text="• Mustard (Low water), Gram (Chickpea)" FontSize="11" Foreground="#475569" Margin="10,0,0,6"/>
+
+                    <TextBlock Text="High-Value Horticulture / Fruit:" FontSize="11" FontWeight="SemiBold" Foreground="#334155" Margin="0,4,0,2"/>
+                    <TextBlock x:Name="TxtHorticulture" Text="• Pomegranate (Bhagwa), Ber, Aonla" FontSize="11" Foreground="#475569" Margin="10,0,0,6"/>
+
+                    <TextBlock Text="Commercial Vegetables (Micro-Drip):" FontSize="11" FontWeight="SemiBold" Foreground="#334155" Margin="0,4,0,2"/>
+                    <TextBlock x:Name="TxtVegetables" Text="• Garlic, Chilli, Coriander" FontSize="11" Foreground="#475569" Margin="10,0,0,6"/>
+
+                    <Border Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,8,0,0">
+                        <TextBlock Text="💡 Farmer Profit Protection: Expected net profit meets or exceeds conventional wheat-flood baseline while saving 35-45% groundwater." FontSize="10" Foreground="#92400E" TextWrapping="Wrap"/>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Footer -->
+        <Grid Grid.Row="3">
+            <Button Content="Close" HorizontalAlignment="Right" Height="30" Padding="16,0" Style="{StaticResource RustGisSmallBtn}" Click="BtnClose_Click"/>
+        </Grid>
+    </Grid>
+</Window>

@@ -18,11 +18,14 @@ namespace GeoStudio.UI.Dialogs
             InitializeComponent();
             _main = main;
             Owner = main;
+            ShowInTaskbar = false;
             _main.ActiveClipRasterWindow = this;
             Closed += (s, e) =>
             {
                 _main.ActiveClipRasterWindow = null;
                 _main.PostMessageToMap(new { action = "clearClipMask" });
+                if (_main.WindowState == WindowState.Minimized) _main.WindowState = WindowState.Normal;
+                _main.Activate();
             };
 
             PopulateLayers();
@@ -113,9 +116,12 @@ namespace GeoStudio.UI.Dialogs
                 if (result.Success && !string.IsNullOrEmpty(result.OutputFilePath) && File.Exists(result.OutputFilePath))
                 {
                     ActionBar.Progress = 100;
-                    ActionBar.StatusText = "Clip complete! Adding clipped raster to map...";
+                    ActionBar.IsBusy = false;
+                    ActionBar.StatusText = "✓ Clip complete! Added clipped raster to map canvas.";
+                    ActionBar.ActionText = "⚡ Re-clip";
+                    ActionBar.CancelText = "Close";
                     await _main.LoadRasterFile(result.OutputFilePath);
-                    Close();
+                    Activate();
                 }
                 else
                 {

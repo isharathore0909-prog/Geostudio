@@ -1,0 +1,18 @@
+{
+  "id": "geostudio.lulc_intelligence",
+  "name": "LULC Intelligence & Classification Studio",
+  "version": "1.0.0",
+  "category": "Remote Sensing & Land Cover",
+  "iconEmoji": "🌍",
+  "description": "Multi-sensor Land Use / Land Cover intelligence integrating Copernicus Sentinel-2 MSI (10m), Google Dynamic World priors, SRTM DEM slope, and GEDI canopy structure into a 22-class refined raster with GDAL color mapping.",
+  "downloadSizeMb": 32.0,
+  "engineType": "Python",
+  "dependencies": [
+    "gdal",
+    "scipy",
+    "numpy"
+  ],
+  "associatedRibbonPanels": [
+    "PanelRibbonSatellite"
+  ]
+}

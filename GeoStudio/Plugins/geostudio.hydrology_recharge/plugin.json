@@ -1,0 +1,17 @@
+{
+  "id": "geostudio.hydrology_recharge",
+  "name": "Hydrology, CGWB Recharge & BOQ Studio",
+  "version": "2.0.0",
+  "category": "Hydrology & Water Engineering",
+  "iconEmoji": "\ud83d\udca7",
+  "description": "Wang & Liu sink filling, D8 basin delineation, CGWB 2007 artificial recharge siting, Rajasthan WRD BSR cost estimation, and crop planning.",
+  "downloadSizeMb": 42.0,
+  "engineType": "Python",
+  "dependencies": [
+    "richdem",
+    "scipy"
+  ],
+  "associatedRibbonPanels": [
+    "GroupRibbonWaterResources"
+  ]
+}

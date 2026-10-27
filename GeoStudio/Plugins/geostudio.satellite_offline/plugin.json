@@ -1,0 +1,12 @@
+{
+  "id": "geostudio.satellite_offline",
+  "name": "Satellite View & Offline Basemaps Hub",
+  "version": "1.2.0",
+  "category": "Basemaps & Imagery",
+  "iconEmoji": "\ud83d\udef0\ufe0f",
+  "description": "High-resolution offline basemap tile storage, area download cacher, and multi-temporal swipe comparison tool.",
+  "downloadSizeMb": 22.0,
+  "engineType": "WebView2 Bridge",
+  "dependencies": [],
+  "associatedRibbonPanels": []
+}

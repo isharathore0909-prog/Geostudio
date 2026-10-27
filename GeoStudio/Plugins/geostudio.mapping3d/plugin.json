@@ -1,0 +1,16 @@
+{
+  "id": "geostudio.mapping3d",
+  "name": "3D Mapping & Terrain Viewport",
+  "version": "1.0.0",
+  "category": "3D & Volumetrics",
+  "iconEmoji": "\ud83c\udf10",
+  "description": "Offline WebGL 3D terrain mesh generation, camera orbit fly-through, building extrusions, and contour transects.",
+  "downloadSizeMb": 65.0,
+  "engineType": "WebGL / C#",
+  "dependencies": [
+    "earcut"
+  ],
+  "associatedRibbonPanels": [
+    "Tab3D"
+  ]
+}

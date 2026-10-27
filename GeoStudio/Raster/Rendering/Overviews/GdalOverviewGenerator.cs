@@ -28,8 +28,22 @@ namespace GeoStudio.Raster
 
             var meta = GdalMetadataReader.InspectMetadata(filePath);
 
+            string? spectralFromPath = ElevationShadedRelief.DetectSpectralIndex(filePath);
+            bool isSpectral = meta.IsSpectral ||
+                              spectralFromPath != null ||
+                              (!string.IsNullOrEmpty(shaderMode) &&
+                               (shaderMode.Contains("ndwi") || shaderMode.Contains("ndvi") || shaderMode.Contains("evi") ||
+                                shaderMode.Contains("ndbi") || shaderMode.Contains("nbr")));
+
+            string effectiveShader = isSpectral && (string.IsNullOrEmpty(shaderMode) || shaderMode == "atlas")
+                ? (meta.SpectralMode ?? spectralFromPath?.ToLowerInvariant() ?? "ndwi")
+                : shaderMode;
+            string effectivePalette = isSpectral && (string.IsNullOrEmpty(palette) || palette == "GLOBAL_MAPPER_ATLAS")
+                ? effectiveShader.ToUpperInvariant()
+                : palette;
+
             string cacheDir = GdalCacheManager.GetCacheDirectory();
-            string cachePngName = GdalCacheManager.GetOverviewCacheFileName(filePath, meta.IsElevation, shaderMode, palette);
+            string cachePngName = GdalCacheManager.GetOverviewCacheFileName(filePath, meta.IsElevation || meta.IsThermal || isSpectral, effectiveShader, effectivePalette);
             string outPngPath = Path.Combine(cacheDir, cachePngName);
 
             // Instant cache hit: If overview already generated with valid size, return in < 1ms
@@ -40,7 +54,7 @@ namespace GeoStudio.Raster
                 return meta;
             }
 
-            bool shouldRenderShader = meta.IsElevation || (!string.IsNullOrEmpty(shaderMode) && shaderMode != "none" && ds.RasterCount == 1);
+            bool shouldRenderShader = meta.IsElevation || isSpectral || (!string.IsNullOrEmpty(effectiveShader) && effectiveShader != "none" && ds.RasterCount == 1);
 
             if (shouldRenderShader)
             {
@@ -88,14 +102,19 @@ namespace GeoStudio.Raster
                         minElev = stats.minElev;
                         maxElev = stats.maxElev;
                     }
+                    if (isSpectral && (minElev >= maxElev || minElev < -100 || maxElev > 100))
+                    {
+                        minElev = -1.0;
+                        maxElev = 1.0;
+                    }
 
                     byte[] bgra = ElevationShadedRelief.Render3DShadedReliefBgra(
                         floatBuf, pW, pH,
                         minElev, maxElev,
                         cellX, cellY,
                         hasNoData != 0 ? noDataVal : null,
-                        palette,
-                        shaderMode);
+                        effectivePalette,
+                        effectiveShader);
 
                     int stride = pW * 4;
                     var bmpSource = BitmapSource.Create(pW, pH, 96, 96, PixelFormats.Bgra32, null, bgra, stride);
@@ -238,6 +257,7 @@ namespace GeoStudio.Raster
                         }
                         else
                         {
+                            bool isSingleBand = bands == 1;
                             while (pDst < pEnd)
                             {
                                 byte b = *pSrcB++;
@@ -246,7 +266,7 @@ namespace GeoStudio.Raster
                                 *pDst++ = b;
                                 *pDst++ = g;
                                 *pDst++ = r;
-                                *pDst++ = (byte)((r == 0 && g == 0 && b == 0) ? 0 : 255);
+                                *pDst++ = (byte)(isSingleBand ? 255 : ((r == 0 && g == 0 && b == 0) ? 0 : 255));
                             }
                         }
                     }

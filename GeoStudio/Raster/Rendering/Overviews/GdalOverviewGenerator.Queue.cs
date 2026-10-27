@@ -10,7 +10,7 @@ namespace GeoStudio.Raster
         public static event Action<string, string>? OverviewReady;
         private static readonly ConcurrentDictionary<string, bool> _overviewGeneratingPaths = new();
 
-        public static void QueueOverviewGeneration(string filePath)
+        public static void QueueOverviewGeneration(string filePath, string shaderMode = "atlas", string palette = "GLOBAL_MAPPER_ATLAS")
         {
             if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return;
             string normPath = Path.GetFullPath(filePath);
@@ -20,7 +20,7 @@ namespace GeoStudio.Raster
             {
                 try
                 {
-                    var meta = InspectAndGeneratePreview(normPath, previewWidth: 2048);
+                    var meta = InspectAndGeneratePreview(normPath, previewWidth: 2048, shaderMode: shaderMode, palette: palette);
                     if (!string.IsNullOrEmpty(meta.PreviewUrl))
                     {
                         OverviewReady?.Invoke(normPath, meta.PreviewUrl);

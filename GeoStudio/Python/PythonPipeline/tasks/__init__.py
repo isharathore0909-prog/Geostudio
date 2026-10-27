@@ -30,6 +30,15 @@ from .raster_tasks import (
     task_raster_stats,
 )
 
+from .landsat_tasks import (
+    task_landsat_lst,
+)
+
+from .lulc_tasks import (
+    task_lulc_intelligence,
+    LULC_CLASSES,
+)
+
 from .vector_tasks import (
     task_transpose_fields,
     task_vector_geoprocessing,
@@ -50,6 +59,9 @@ __all__ = [
     "task_satellite_index",
     "task_clip_raster",
     "task_raster_stats",
+    "task_landsat_lst",
+    "task_lulc_intelligence",
+    "LULC_CLASSES",
     "task_transpose_fields",
     "task_vector_geoprocessing",
 ]
