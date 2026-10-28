@@ -1,0 +1,154 @@
+<Window x:Class="GeoStudio.UI.Dialogs.Layers.LayerOptionsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Layer Properties" Height="620" Width="780" MinHeight="500" MinWidth="650"
+        WindowStartupLocation="CenterOwner" Background="#F0F0F0" Foreground="#1E293B"
+        FontFamily="Segoe UI" FontSize="11.5" ResizeMode="CanResizeWithGrip">
+
+    <Window.Resources>
+        <!-- Tab List Item Style -->
+        <Style x:Key="QgisTabItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Margin" Value="2,1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="border" Background="Transparent" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#CBD5E1"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="QgisStandardButton" TargetType="Button">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- Content Area -->
+            <RowDefinition Height="*"/>
+            <!-- Footer Bar -->
+            <RowDefinition Height="40"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <!-- Left Tabs Sidebar -->
+                <ColumnDefinition Width="180" MinWidth="140" MaxWidth="240"/>
+                <!-- Divider -->
+                <ColumnDefinition Width="1"/>
+                <!-- Active Tab Content -->
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 1. LEFT TABS SIDEBAR -->
+            <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="36"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Search Filter Box -->
+                    <Border Grid.Row="0" Margin="6,5,6,3" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="3" Padding="4,2">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="🔍" FontSize="10" Foreground="#94A3B8" Margin="2,0,4,0" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1" x:Name="TxtSearchTabs" BorderThickness="0" Background="Transparent" 
+                                     FontSize="11" VerticalAlignment="Center" TextChanged="TxtSearchTabs_TextChanged"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Tabs ListBox -->
+                    <ListBox Grid.Row="1" x:Name="LstTabs" BorderThickness="0" Background="Transparent" 
+                             SelectionChanged="LstTabs_SelectionChanged" ItemContainerStyle="{StaticResource QgisTabItemStyle}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBoxItem Tag="Information">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="ℹ️" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Information" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Tag="Source">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="🛠️" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Source" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Tag="Symbology">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="🎨" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Symbology" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Tag="Transparency">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="🏁" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Transparency" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Tag="Histogram">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="📊" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Histogram" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Tag="Rendering">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="🖌️" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Rendering" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <!-- Divider -->
+            <Border Grid.Column="1" Background="#CBD5E1"/>
+
+            <!-- 2. ACTIVE TAB HOST -->
+            <ContentControl Grid.Column="2" x:Name="TabContentPresenter" Background="#FFFFFF"/>
+        </Grid>
+
+        <!-- 3. BOTTOM FOOTER BAR -->
+        <Border Grid.Row="1" Background="#F0F0F0" BorderBrush="#CBD5E1" BorderThickness="0,1,0,0" Padding="10,0">
+            <Grid VerticalAlignment="Center">
+                <Button HorizontalAlignment="Left" Width="75" Height="25" Style="{StaticResource QgisStandardButton}" Click="BtnStyle_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Style" FontSize="11" Margin="0,0,4,0"/>
+                        <TextBlock Text="▾" FontSize="9"/>
+                    </StackPanel>
+                </Button>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="OK" Width="75" Height="25" Style="{StaticResource QgisStandardButton}" Margin="0,0,6,0" Click="BtnOk_Click"/>
+                    <Button Content="Cancel" Width="75" Height="25" Style="{StaticResource QgisStandardButton}" Margin="0,0,6,0" Click="BtnCancel_Click"/>
+                    <Button Content="Apply" Width="75" Height="25" Style="{StaticResource QgisStandardButton}" Margin="0,0,6,0" Click="BtnApply_Click"/>
+                    <Button Content="Help" Width="75" Height="25" Style="{StaticResource QgisStandardButton}" Click="BtnHelp_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

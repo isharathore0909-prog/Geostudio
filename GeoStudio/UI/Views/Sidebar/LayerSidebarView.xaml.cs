@@ -1,5 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using GeoStudio.Models;
 
 namespace GeoStudio.UI.Views.Sidebar
 {
@@ -11,6 +14,42 @@ namespace GeoStudio.UI.Views.Sidebar
         }
 
         private MainWindow? Main => Application.Current.MainWindow as MainWindow;
+
+        private void LayerItem_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2)
+            {
+                // Do not trigger options if the user was double-clicking directly on the checkbox
+                if (e.OriginalSource is DependencyObject dep && FindVisualParent<CheckBox>(dep) != null)
+                {
+                    return;
+                }
+
+                e.Handled = true;
+                if (sender is FrameworkElement fe && fe.DataContext is LayerItem layer)
+                {
+                    Main?.OpenLayerOptions(layer);
+                }
+            }
+        }
+
+        private void MenuLayerOptions_Click(object s, RoutedEventArgs e)
+        {
+            if (s is FrameworkElement fe && fe.DataContext is LayerItem layer)
+            {
+                Main?.OpenLayerOptions(layer);
+            }
+        }
+
+        private static T? FindVisualParent<T>(DependencyObject? child) where T : DependencyObject
+        {
+            while (child != null)
+            {
+                if (child is T parent) return parent;
+                child = VisualTreeHelper.GetParent(child);
+            }
+            return null;
+        }
 
         private void BtnSymbology_Click(object s, RoutedEventArgs e) => Main?.BtnSymbology_Click(s, e);
         private void MenuSymbology_Click(object s, RoutedEventArgs e) => Main?.BtnSymbology_Click(s, e);

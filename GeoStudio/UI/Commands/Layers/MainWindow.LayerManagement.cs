@@ -17,13 +17,65 @@ namespace GeoStudio
             TxtActiveLayer.Text = Layers.Count > 0 ? $"Layer: {Layers[Layers.Count - 1].Name}" : "Layer: None";
         }
 
-        private LayerItem? FindLayer(string id)
+        internal LayerItem? FindLayer(string id)
         {
             foreach (var item in Layers)
             {
                 if (item.Id == id) return item;
             }
             return null;
+        }
+
+        internal void OpenLayerOptions(LayerItem? layer)
+        {
+            if (layer == null) return;
+            var dlg = new UI.Dialogs.Layers.LayerOptionsWindow(this, layer);
+            dlg.ShowDialog();
+        }
+
+        internal void RemoveLayer(LayerItem layer)
+        {
+            if (layer == null) return;
+            string layerId = layer.Id;
+            Layers.Remove(layer);
+
+            if (LayersListControl.ItemsSource is ObservableCollection<LayerItem> currentSource && currentSource != Layers)
+            {
+                currentSource.Remove(layer);
+            }
+
+            if (_activeRasterLayerId == layerId)
+            {
+                _activeRasterLayerId = null;
+                _activeRasterFilePath = null;
+                _activeRasterShaderMode = null;
+                _activeRasterPalette = null;
+                _rasterCts?.Cancel();
+            }
+
+            UpdateLayerCount();
+            if (Layers.Count <= 1)
+            {
+                if (CardBenchmark != null) CardBenchmark.Visibility = Visibility.Collapsed;
+                GdalRasterService.ClearCache();
+                DuckDbPointCloudService.Clear();
+            }
+            PostMessageToMap(new { action = "removeLayer", id = layerId, type = layer.Type.ToString() });
+            TxtStatus.Text = $"Removed layer: {layer.Name}";
+        }
+
+        internal void ZoomToLayer(LayerItem layer)
+        {
+            if (layer == null) return;
+            if (layer.BoundingBox != null)
+            {
+                PostMessageToMap(new { action = "zoomToExtent", bounds = layer.BoundingBox });
+                TxtStatus.Text = $"Zoomed to layer: {layer.Name}";
+            }
+            else
+            {
+                PostMessageToMap(new { action = "zoomFull" });
+            }
         }
 
         internal void LayerCheckBox_Checked(object sender, RoutedEventArgs e)
@@ -65,31 +117,7 @@ namespace GeoStudio
             var layer = FindLayer(layerId);
             if (layer != null)
             {
-                Layers.Remove(layer);
-
-                if (LayersListControl.ItemsSource is ObservableCollection<LayerItem> currentSource && currentSource != Layers)
-                {
-                    currentSource.Remove(layer);
-                }
-
-                if (_activeRasterLayerId == layerId)
-                {
-                    _activeRasterLayerId = null;
-                    _activeRasterFilePath = null;
-                    _activeRasterShaderMode = null;
-                    _activeRasterPalette = null;
-                    _rasterCts?.Cancel();
-                }
-
-                UpdateLayerCount();
-                if (Layers.Count <= 1)
-                {
-                    if (CardBenchmark != null) CardBenchmark.Visibility = Visibility.Collapsed;
-                    GdalRasterService.ClearCache();
-                    DuckDbPointCloudService.Clear();
-                }
-                PostMessageToMap(new { action = "removeLayer", id = layerId, type = layer.Type.ToString() });
-                TxtStatus.Text = $"Removed layer: {layer.Name}";
+                RemoveLayer(layer);
             }
         }
 
@@ -119,16 +147,13 @@ namespace GeoStudio
             if (!string.IsNullOrEmpty(layerId))
             {
                 var layer = FindLayer(layerId);
-                if (layer != null && layer.BoundingBox != null)
+                if (layer != null)
                 {
-                    PostMessageToMap(new { action = "zoomToExtent", bounds = layer.BoundingBox });
-                    TxtStatus.Text = $"Zoomed to layer: {layer.Name}";
-                }
-                else
-                {
-                    PostMessageToMap(new { action = "zoomFull" });
+                    ZoomToLayer(layer);
+                    return;
                 }
             }
+            PostMessageToMap(new { action = "zoomFull" });
         }
 
         internal void MenuToggleGpu_Click(object sender, RoutedEventArgs e)

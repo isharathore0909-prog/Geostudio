@@ -1,0 +1,103 @@
+<UserControl x:Class="GeoStudio.UI.Dialogs.Layers.Tabs.LayerInfoTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#FFFFFF">
+    <UserControl.Resources>
+        <Style x:Key="QgisGreenHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Foreground" Value="#43A047"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+        <Style x:Key="QgisParamLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+        <Style x:Key="QgisParamValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#1E293B"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14,12">
+        <StackPanel>
+            <!-- General Section -->
+            <TextBlock Text="General" Style="{StaticResource QgisGreenHeader}"/>
+            <Border BorderBrush="#1E293B" BorderThickness="0,0,0,1" Margin="0,0,0,10"/>
+
+            <Grid Margin="10,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Name" Style="{StaticResource QgisParamLabel}" Margin="0,2,0,4"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtInfoName" Text="—" Style="{StaticResource QgisParamValue}" Margin="0,2,0,4"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Path" Style="{StaticResource QgisParamLabel}" Margin="0,2,0,4"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtInfoPath" Text="—" Foreground="#2563EB" TextDecorations="Underline" 
+                           Cursor="Hand" ToolTip="Click to open file location or copy path" MouseDown="TxtInfoPath_MouseDown" Margin="0,2,0,4"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Size" Style="{StaticResource QgisParamLabel}" Margin="0,2,0,4"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtInfoSize" Text="—" Style="{StaticResource QgisParamValue}" Margin="0,2,0,4"/>
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Last modified" Style="{StaticResource QgisParamLabel}" Margin="0,2,0,4"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtInfoLastModified" Text="—" Style="{StaticResource QgisParamValue}" Margin="0,2,0,4"/>
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Provider" Style="{StaticResource QgisParamLabel}" Margin="0,2,0,4"/>
+                <TextBlock Grid.Row="4" Grid.Column="1" x:Name="TxtInfoProvider" Text="gdal" Style="{StaticResource QgisParamValue}" Margin="0,2,0,4"/>
+            </Grid>
+
+            <!-- Information from Provider Section -->
+            <TextBlock Text="Information from provider" Style="{StaticResource QgisGreenHeader}"/>
+            <Border BorderBrush="#1E293B" BorderThickness="0,0,0,1" Margin="0,0,0,10"/>
+
+            <Grid Margin="10,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Extent" Style="{StaticResource QgisParamLabel}" Margin="0,3,0,4"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtInfoExtent" Text="—" Style="{StaticResource QgisParamValue}" Margin="0,3,0,4"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Width" Style="{StaticResource QgisParamLabel}" Margin="0,3,0,4"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtInfoWidth" Text="—" Style="{StaticResource QgisParamValue}" Margin="0,3,0,4"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Height" Style="{StaticResource QgisParamLabel}" Margin="0,3,0,4"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtInfoHeight" Text="—" Style="{StaticResource QgisParamValue}" Margin="0,3,0,4"/>
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Data type" Style="{StaticResource QgisParamLabel}" Margin="0,3,0,4"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtInfoDataType" Text="Byte - Eight bit unsigned integer" Style="{StaticResource QgisParamValue}" Margin="0,3,0,4"/>
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="GDAL Driver Description" Style="{StaticResource QgisParamLabel}" Margin="0,3,0,4"/>
+                <TextBlock Grid.Row="4" Grid.Column="1" x:Name="TxtInfoDriverShort" Text="GTiff" Style="{StaticResource QgisParamValue}" Margin="0,3,0,4"/>
+
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="GDAL Driver Metadata" Style="{StaticResource QgisParamLabel}" Margin="0,3,0,4"/>
+                <TextBlock Grid.Row="5" Grid.Column="1" x:Name="TxtInfoDriverLong" Text="GeoTIFF" Style="{StaticResource QgisParamValue}" Margin="0,3,0,4"/>
+
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="Dataset Description" Style="{StaticResource QgisParamLabel}" Margin="0,3,0,4"/>
+                <TextBlock Grid.Row="6" Grid.Column="1" x:Name="TxtInfoDatasetDesc" Text="—" Style="{StaticResource QgisParamValue}" Margin="0,3,0,4"/>
+
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="Compression" Style="{StaticResource QgisParamLabel}" Margin="0,3,0,4"/>
+                <TextBlock Grid.Row="7" Grid.Column="1" x:Name="TxtInfoCompression" Text="LZW" Style="{StaticResource QgisParamValue}" Margin="0,3,0,4"/>
+
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="Band 1" Style="{StaticResource QgisParamLabel}" Margin="0,3,0,4"/>
+                <TextBlock Grid.Row="8" Grid.Column="1" x:Name="TxtInfoBandStats" Text="• STATISTICS_APPROXIMATE=YES" Style="{StaticResource QgisParamValue}" Margin="0,3,0,4"/>
+
+                <TextBlock Grid.Row="9" Grid.Column="0" Text="Canvas Load Benchmark" Style="{StaticResource QgisParamLabel}" Margin="0,3,0,4"/>
+                <TextBlock Grid.Row="9" Grid.Column="1" x:Name="TxtInfoBenchmark" Text="⏱️ Ready" Foreground="#15803D" FontWeight="SemiBold" Style="{StaticResource QgisParamValue}" Margin="0,3,0,4"/>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
