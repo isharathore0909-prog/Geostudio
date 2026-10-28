@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using Microsoft.Win32;
-using OSGeo.GDAL;
 using GeoStudio.Models;
+using GeoStudio.UI.Services;
+using OSGeo.GDAL;
 
 namespace GeoStudio.UI
 {
@@ -164,16 +164,10 @@ namespace GeoStudio.UI
 
         private void BtnExport_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new SaveFileDialog
-            {
-                Title = "Save Cut & Fill Earthwork Report",
-                Filter = "CSV Files (*.csv)|*.csv",
-                FileName = "cut_fill_earthwork_summary.csv"
-            };
+            if (FileDialogHelper.PromptSave("CSV Files (*.csv)|*.csv", "cut_fill_earthwork_summary.csv", "Save Cut & Fill Earthwork Report") is not { } savePath)
+                return;
 
-            if (dlg.ShowDialog() == true)
-            {
-                using var sw = new StreamWriter(dlg.FileName);
+            using var sw = new StreamWriter(savePath);
                 sw.WriteLine("Metric,Value,Unit");
                 sw.WriteLine($"Base Surface,{ComboBaseSurface.SelectedItem},");
                 sw.WriteLine($"Comparison Surface,{ComboCompSurface.SelectedItem},");
@@ -187,7 +181,6 @@ namespace GeoStudio.UI
                 sw.WriteLine($"Mean Thickness (ΔZ),{_meanThick:F3},m");
 
                 MessageBox.Show("Cut & Fill earthwork report exported to CSV successfully.", "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)

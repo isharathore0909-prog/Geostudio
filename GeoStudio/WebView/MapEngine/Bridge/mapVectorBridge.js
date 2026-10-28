@@ -96,14 +96,6 @@ function handleAddVectorLayer(msg) {
       return isIndex ? indexBaseStyle : intermediateStyle;
     }
 
-    // Sub-pixel micro-feature culling when zoomed out
-    if (resolution > 1.2) {
-      const ext = geom.getExtent();
-      const w = (ext[2] - ext[0]) / resolution;
-      const h = (ext[3] - ext[1]) / resolution;
-      if (w < 0.9 && h < 0.9) return null;
-    }
-
     if (geomType.includes('Point')) {
       if (feature._cachedPointStyle) return feature._cachedPointStyle;
       const featColor = feature.get('color') || baseColor;
@@ -111,15 +103,24 @@ function handleAddVectorLayer(msg) {
       if (!s) {
         s = new ol.style.Style({
           image: new ol.style.Circle({
-            radius: 5,
+            radius: 6,
             fill: new ol.style.Fill({ color: featColor }),
-            stroke: new ol.style.Stroke({ color: '#ffffff', width: 1.5 })
-          })
+            stroke: new ol.style.Stroke({ color: '#ffffff', width: 2.0 })
+          }),
+          zIndex: 50
         });
         featureStyleCache.set('pt_' + featColor, s);
       }
       feature._cachedPointStyle = s;
       return s;
+    }
+
+    // Sub-pixel micro-feature culling when zoomed out (polygons & lines only - never cull points)
+    if (!geomType.includes('Point') && resolution > 1.2) {
+      const ext = geom.getExtent();
+      const w = (ext[2] - ext[0]) / resolution;
+      const h = (ext[3] - ext[1]) / resolution;
+      if (w < 0.9 && h < 0.9) return null;
     }
 
     if (geomType.includes('Line')) {
@@ -202,11 +203,15 @@ function handleAddVectorLayer(msg) {
   const useWebGl = msg.renderMode === 'webgl';
   const useGpu = (msg.useGpu !== undefined) ? !!msg.useGpu : (isHeavy || true);
 
+  const isPointLayer = !!(
+    (msg.name && (msg.name.toLowerCase().includes('centroid') || msg.name.toLowerCase().includes('point') || msg.name.toLowerCase().includes('node') || msg.name.toLowerCase().includes('vertex'))) ||
+    msg.isPoint === true
+  );
   const isStreamLayer = !!(
     (msg.name && (msg.name.toLowerCase().includes('stream') || msg.name.toLowerCase().includes('drain') || msg.name.toLowerCase().includes('network'))) ||
     msg.isStream === true
   );
-  const layerZIndex = msg.zIndex !== undefined ? msg.zIndex : (isStreamLayer ? 25 : 12);
+  const layerZIndex = msg.zIndex !== undefined ? msg.zIndex : (isPointLayer ? 30 : (isStreamLayer ? 25 : 12));
 
   let vLayer;
   if (useWebGl) {
@@ -301,6 +306,14 @@ function handleAddVectorLayer(msg) {
       applyBoundsFit();
       const renderMs = Math.max(1, Math.round(performance.now() - layerStart));
       const feats = vSource.getFeatures();
+      if (feats && feats.length > 0) {
+        const firstGeom = feats[0].getGeometry();
+        if (firstGeom && typeof firstGeom.getType === 'function' && firstGeom.getType().includes('Point')) {
+          if (vLayer.getZIndex() < 30) {
+            vLayer.setZIndex(30);
+          }
+        }
+      }
       const attrKeys = new Set();
       if (feats && feats.length > 0) {
         for (let i = 0; i < Math.min(feats.length, 50); i++) {
@@ -429,5 +442,302 @@ function handleToggleLayerGpu(msg) {
 
   map.addLayer(newLayer);
   map.render();
+}
+
+function handleUpdateVectorLayerStyle(msg) {
+  if (!msg.id) return;
+  const layer = map.getLayers().getArray().find(l => l && l.get && (l.get('id') === msg.id || l.get('id') === 'vector_' + msg.id));
+  if (!layer) return;
+
+  const mode = msg.mode || 'single';
+  layer.set('renderMode', mode);
+
+  if (mode === 'nosymbol') {
+    layer._styleFn = () => null;
+    layer.setStyle(() => null);
+    if (typeof map !== 'undefined' && map.render) map.render();
+    return;
+  }
+
+  const color = msg.color || layer.get('baseColor') || '#10B981';
+  const strokeColor = msg.strokeColor || color;
+  const fillColor = msg.fillColor || color;
+  const strokeWidth = typeof msg.strokeWidth === 'number' ? msg.strokeWidth : (parseFloat(msg.strokeWidth) || 2.0);
+  const fillOpacity = typeof msg.fillOpacity === 'number' ? msg.fillOpacity : (parseFloat(msg.fillOpacity) || 0.35);
+  const pointRadius = typeof msg.pointRadius === 'number' ? msg.pointRadius : (parseFloat(msg.pointRadius) || 6.0);
+  const dashPattern = msg.dashPattern || 'solid';
+
+  layer.set('baseColor', color);
+  layer.set('strokeColor', strokeColor);
+  layer.set('fillColor', fillColor);
+  layer.set('strokeWidth', strokeWidth);
+  layer.set('fillOpacity', fillOpacity);
+  layer.set('pointRadius', pointRadius);
+  layer.set('dashPattern', dashPattern);
+
+  function toRgba(colorStr, alpha) {
+    if (!colorStr) return `rgba(16, 185, 129, ${alpha})`;
+    if (colorStr.startsWith('rgba')) return colorStr;
+    if (colorStr.startsWith('rgb(')) return colorStr.replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);
+    if (colorStr.startsWith('#')) {
+      let c = colorStr.substring(1);
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      if (c.length >= 6) {
+        const r = parseInt(c.substring(0, 2), 16) || 0;
+        const g = parseInt(c.substring(2, 4), 16) || 0;
+        const b = parseInt(c.substring(4, 6), 16) || 0;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+    }
+    return colorStr;
+  }
+
+  let lineDash = undefined;
+  if (dashPattern === 'dashed' || dashPattern === 'dash') {
+    lineDash = [8, 6];
+  } else if (dashPattern === 'dotted' || dashPattern === 'dot') {
+    lineDash = [2, 5];
+  } else if (dashPattern === 'dashdot') {
+    lineDash = [8, 4, 2, 4];
+  }
+
+  let updatedStyleFn = null;
+
+  if (mode === 'categorized' && msg.attributeField && Array.isArray(msg.categories) && msg.categories.length > 0) {
+    const catMap = new Map();
+    msg.categories.forEach(c => {
+      if (c && c.value !== undefined) {
+        catMap.set(String(c.value).trim().toLowerCase(), {
+          color: c.color || '#10B981',
+          visible: c.visible !== false
+        });
+      }
+    });
+
+    const catStyleCache = new Map();
+    updatedStyleFn = function (feature) {
+      const val = feature.get(msg.attributeField);
+      const strVal = (val !== undefined && val !== null ? String(val) : '').trim().toLowerCase();
+      const match = catMap.get(strVal);
+      if (!match || match.visible === false) return null;
+      const featColor = match.color;
+
+      const geom = feature.getGeometry();
+      if (!geom) return null;
+      const geomType = geom.getType();
+
+      const cacheKey = geomType + '_' + featColor;
+      let s = catStyleCache.get(cacheKey);
+      if (!s) {
+        if (geomType.includes('Point')) {
+          s = new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: pointRadius,
+              fill: new ol.style.Fill({ color: featColor }),
+              stroke: new ol.style.Stroke({ color: '#ffffff', width: 2.0 })
+            }),
+            zIndex: 50
+          });
+        } else if (geomType.includes('Line')) {
+          s = new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: featColor,
+              width: strokeWidth,
+              lineDash: lineDash,
+              lineJoin: 'round',
+              lineCap: 'round'
+            }),
+            zIndex: 25
+          });
+        } else {
+          s = new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: featColor,
+              width: Math.max(1.0, strokeWidth),
+              lineDash: lineDash,
+              lineJoin: 'round',
+              lineCap: 'round'
+            }),
+            fill: new ol.style.Fill({
+              color: toRgba(featColor, fillOpacity)
+            }),
+            zIndex: 12
+          });
+        }
+        catStyleCache.set(cacheKey, s);
+      }
+      return s;
+    };
+  } else if (mode === 'graduated' && msg.attributeField && Array.isArray(msg.ranges) && msg.ranges.length > 0) {
+    const gradRanges = msg.ranges.map(r => ({
+      min: typeof r.min === 'number' ? r.min : (parseFloat(r.min) || 0),
+      max: typeof r.max === 'number' ? r.max : (parseFloat(r.max) || 0),
+      color: r.color || '#3B82F6',
+      visible: r.visible !== false
+    }));
+
+    const gradStyleCache = new Map();
+    updatedStyleFn = function (feature) {
+      const rawVal = feature.get(msg.attributeField);
+      const numVal = parseFloat(rawVal);
+      if (isNaN(numVal)) return null;
+
+      const match = gradRanges.find(r => numVal >= r.min && numVal <= r.max);
+      if (!match || match.visible === false) return null;
+      const featColor = match.color;
+
+      const geom = feature.getGeometry();
+      if (!geom) return null;
+      const geomType = geom.getType();
+
+      const cacheKey = geomType + '_' + featColor;
+      let s = gradStyleCache.get(cacheKey);
+      if (!s) {
+        if (geomType.includes('Point')) {
+          s = new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: pointRadius,
+              fill: new ol.style.Fill({ color: featColor }),
+              stroke: new ol.style.Stroke({ color: '#ffffff', width: 2.0 })
+            }),
+            zIndex: 50
+          });
+        } else if (geomType.includes('Line')) {
+          s = new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: featColor,
+              width: strokeWidth,
+              lineDash: lineDash,
+              lineJoin: 'round',
+              lineCap: 'round'
+            }),
+            zIndex: 25
+          });
+        } else {
+          s = new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: featColor,
+              width: Math.max(1.0, strokeWidth),
+              lineDash: lineDash,
+              lineJoin: 'round',
+              lineCap: 'round'
+            }),
+            fill: new ol.style.Fill({
+              color: toRgba(featColor, fillOpacity)
+            }),
+            zIndex: 12
+          });
+        }
+        gradStyleCache.set(cacheKey, s);
+      }
+      return s;
+    };
+  } else if (mode === 'inverted') {
+    const maskColor = msg.maskColor || '#1E293B';
+    const invStyle = new ol.style.Style({
+      stroke: new ol.style.Stroke({ color: '#ffffff', width: strokeWidth }),
+      fill: new ol.style.Fill({ color: toRgba(maskColor, 0.65) }),
+      zIndex: 12
+    });
+    updatedStyleFn = () => invStyle;
+  } else if (mode === '2.5d') {
+    const roofColor = msg.roofColor || '#3B82F6';
+    const wallColor = msg.wallColor || '#1E3A8A';
+    const style25d = [
+      new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: wallColor, width: 2.5 }),
+        fill: new ol.style.Fill({ color: toRgba(wallColor, 0.75) }),
+        zIndex: 10
+      }),
+      new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: '#FFFFFF', width: 1.0 }),
+        fill: new ol.style.Fill({ color: toRgba(roofColor, 0.85) }),
+        zIndex: 15
+      })
+    ];
+    updatedStyleFn = () => style25d;
+  } else if (mode === 'merged') {
+    const mergedPoly = new ol.style.Style({
+      stroke: new ol.style.Stroke({ color: fillColor, width: 0.1 }),
+      fill: new ol.style.Fill({ color: toRgba(fillColor, fillOpacity) }),
+      zIndex: 12
+    });
+    updatedStyleFn = () => mergedPoly;
+  } else {
+    // Single Symbol Default
+    const updatedPointStyle = new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: pointRadius,
+        fill: new ol.style.Fill({ color: fillColor }),
+        stroke: new ol.style.Stroke({ color: strokeColor, width: Math.max(1.0, strokeWidth) })
+      }),
+      zIndex: 50
+    });
+
+    const updatedLineStyle = new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: strokeColor,
+        width: strokeWidth,
+        lineDash: lineDash,
+        lineJoin: 'round',
+        lineCap: 'round'
+      }),
+      zIndex: 25
+    });
+
+    const updatedPolyStyle = new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: strokeColor,
+        width: strokeWidth,
+        lineDash: lineDash,
+        lineJoin: 'round',
+        lineCap: 'round'
+      }),
+      fill: new ol.style.Fill({
+        color: toRgba(fillColor, fillOpacity)
+      }),
+      zIndex: 12
+    });
+
+    updatedStyleFn = function (feature, resolution) {
+      const geom = feature.getGeometry();
+      if (!geom) return null;
+      const geomType = geom.getType();
+
+      if (geomType.includes('Point')) {
+        return updatedPointStyle;
+      }
+      if (geomType.includes('Line')) {
+        return updatedLineStyle;
+      }
+      return updatedPolyStyle;
+    };
+  }
+
+  const src = layer.getSource && layer.getSource();
+  if (src && typeof src.getFeatures === 'function') {
+    src.getFeatures().forEach(f => {
+      delete f._cachedPointStyle;
+      delete f._cachedLineStyle;
+      delete f._cachedPolyStyle;
+    });
+  }
+
+  layer._styleFn = updatedStyleFn;
+  layer.setStyle(updatedStyleFn);
+
+  if (msg.opacity !== undefined) {
+    layer.setOpacity(parseFloat(msg.opacity));
+  }
+
+  if (src && typeof src.changed === 'function') {
+    src.changed();
+  }
+  if (typeof layer.changed === 'function') {
+    layer.changed();
+  }
+  if (typeof map !== 'undefined' && map.render) {
+    map.render();
+  }
 }
 

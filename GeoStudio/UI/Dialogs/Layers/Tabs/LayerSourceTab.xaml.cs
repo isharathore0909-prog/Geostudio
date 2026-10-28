@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using GeoStudio.Models;
 using GeoStudio.Raster;
-using Microsoft.Win32;
+using GeoStudio.UI.Services;
 using OSGeo.GDAL;
 using OSGeo.OSR;
 
@@ -81,17 +81,7 @@ namespace GeoStudio.UI.Dialogs.Layers.Tabs
             ComboCrs.SelectedIndex = 0;
         }
 
-        private void BtnBrowseSource_Click(object sender, RoutedEventArgs e)
-        {
-            var ofd = new OpenFileDialog
-            {
-                Title = "Select Layer Data Source",
-                Filter = "All Supported Files|*.tif;*.tiff;*.geojson;*.shp;*.laz;*.las|GeoTIFF Rasters (*.tif)|*.tif;*.tiff|Vector Files (*.geojson;*.shp)|*.geojson;*.shp|All Files (*.*)|*.*"
-            };
-            if (ofd.ShowDialog() == true)
-            {
-                TxtSourcePath.Text = ofd.FileName;
-            }
-        }
+        private void BtnBrowseSource_Click(object sender, RoutedEventArgs e) =>
+            FileDialogHelper.PromptOpenInto(TxtSourcePath, "All Supported Files|*.tif;*.tiff;*.geojson;*.shp;*.laz;*.las|GeoTIFF Rasters (*.tif)|*.tif;*.tiff|Vector Files (*.geojson;*.shp)|*.geojson;*.shp|All Files (*.*)|*.*", "Select Layer Data Source");
     }
 }

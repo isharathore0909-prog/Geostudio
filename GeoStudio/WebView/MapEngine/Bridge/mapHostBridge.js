@@ -186,6 +186,9 @@ function handleHostMessage(msg) {
     case 'addVectorLayer':
       handleAddVectorLayer(msg);
       break;
+    case 'updateVectorLayerStyle':
+      if (typeof handleUpdateVectorLayerStyle === 'function') handleUpdateVectorLayerStyle(msg);
+      break;
     case 'toggleLayerGpu':
       if (typeof handleToggleLayerGpu === 'function') handleToggleLayerGpu(msg);
       break;

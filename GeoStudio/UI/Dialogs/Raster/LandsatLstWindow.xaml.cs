@@ -2,8 +2,8 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
-using Microsoft.Win32;
 using GeoStudio.Python;
+using GeoStudio.UI.Services;
 
 namespace GeoStudio.UI.Dialogs.Raster
 {
@@ -17,43 +17,15 @@ namespace GeoStudio.UI.Dialogs.Raster
 
         private void BtnBrowseMtl_Click(object sender, RoutedEventArgs e)
         {
-            var ofd = new OpenFileDialog
-            {
-                Filter = "Landsat MTL Files (*_MTL.txt)|*_MTL.txt|Text Files (*.txt)|*.txt|All Files (*.*)|*.*",
-                Title = "Select Landsat Collection 2 MTL File"
-            };
-            if (ofd.ShowDialog() == true)
-            {
-                TxtMtlPath.Text = ofd.FileName;
-                TryAutoFillBands(ofd.FileName);
-            }
+            if (FileDialogHelper.PromptOpenInto(TxtMtlPath, "Landsat MTL Files (*_MTL.txt)|*_MTL.txt|Text Files (*.txt)|*.txt|All Files (*.*)|*.*", "Select Landsat Collection 2 MTL File") is { } mtl)
+                TryAutoFillBands(mtl);
         }
 
-        private void BtnBrowseB10_Click(object sender, RoutedEventArgs e)
-        {
-            var ofd = new OpenFileDialog
-            {
-                Filter = "GeoTIFF (*.tif;*.tiff)|*.tif;*.tiff",
-                Title = "Select Landsat Band 10 Thermal GeoTIFF"
-            };
-            if (ofd.ShowDialog() == true)
-            {
-                TxtB10Path.Text = ofd.FileName;
-            }
-        }
+        private void BtnBrowseB10_Click(object sender, RoutedEventArgs e) =>
+            FileDialogHelper.PromptOpenInto(TxtB10Path, "GeoTIFF (*.tif;*.tiff)|*.tif;*.tiff", "Select Landsat Band 10 Thermal GeoTIFF");
 
-        private void BtnBrowseB11_Click(object sender, RoutedEventArgs e)
-        {
-            var ofd = new OpenFileDialog
-            {
-                Filter = "GeoTIFF (*.tif;*.tiff)|*.tif;*.tiff",
-                Title = "Select Landsat Band 11 Thermal GeoTIFF"
-            };
-            if (ofd.ShowDialog() == true)
-            {
-                TxtB11Path.Text = ofd.FileName;
-            }
-        }
+        private void BtnBrowseB11_Click(object sender, RoutedEventArgs e) =>
+            FileDialogHelper.PromptOpenInto(TxtB11Path, "GeoTIFF (*.tif;*.tiff)|*.tif;*.tiff", "Select Landsat Band 11 Thermal GeoTIFF");
 
         private void TryAutoFillBands(string mtlPath)
         {
@@ -177,16 +149,7 @@ namespace GeoStudio.UI.Dialogs.Raster
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
-            var main = Owner as MainWindow ?? Application.Current.MainWindow as MainWindow;
-            if (main != null)
-            {
-                if (main.WindowState == WindowState.Minimized)
-                {
-                    main.WindowState = WindowState.Normal;
-                }
-                main.Activate();
-                main.Focus();
-            }
+            WindowHelper.RestoreAndFocusMainWindow(this);
         }
     }
 }

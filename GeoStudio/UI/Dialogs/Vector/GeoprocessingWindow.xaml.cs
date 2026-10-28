@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.Win32;
 using GeoStudio.Models;
 using GeoStudio.Python;
+using GeoStudio.UI.Services;
 
 namespace GeoStudio.UI.Dialogs
 {
@@ -199,16 +199,10 @@ namespace GeoStudio.UI.Dialogs
 
         private void BtnBrowseClipMask_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new OpenFileDialog
+            if (FileDialogHelper.PromptOpen("Vector Files (*.geojson;*.json;*.shp;*.gpkg;*.kml)|*.geojson;*.json;*.shp;*.gpkg;*.kml|All Files (*.*)|*.*", "Select Clip Mask Vector File") is { } file)
             {
-                Title = "Select Clip Mask Vector File",
-                Filter = "Vector Files (*.geojson;*.json;*.shp;*.gpkg;*.kml)|*.geojson;*.json;*.shp;*.gpkg;*.kml|All Files (*.*)|*.*"
-            };
-
-            if (dlg.ShowDialog() == true)
-            {
-                _customMaskPath = dlg.FileName;
-                var newItem = new ComboBoxItem { Content = $"[File] {Path.GetFileName(dlg.FileName)}", Tag = dlg.FileName };
+                _customMaskPath = file;
+                var newItem = new ComboBoxItem { Content = $"[File] {Path.GetFileName(file)}", Tag = file };
                 ComboClipMaskLayer.Items.Insert(0, newItem);
                 ComboClipMaskLayer.SelectedItem = newItem;
             }

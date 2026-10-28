@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using GeoStudio.UI.Dialogs.Routing;
 
 namespace GeoStudio.UI.Views.Ribbon
 {
@@ -68,10 +69,22 @@ namespace GeoStudio.UI.Views.Ribbon
             win.ShowDialog();
         }
 
+        private RoutingWindow? _routingWindow;
+
         private void MenuRoadRouting_Click(object s, RoutedEventArgs e)
         {
-            var win = new GeoStudio.UI.Dialogs.Routing.RoutingWindow { Owner = Application.Current.MainWindow };
-            win.ShowDialog();
+            if (_routingWindow != null && _routingWindow.IsLoaded)
+            {
+                _routingWindow.WindowState = WindowState.Normal;
+                _routingWindow.Activate();
+                return;
+            }
+            _routingWindow = new GeoStudio.UI.Dialogs.Routing.RoutingWindow(Application.Current.MainWindow as MainWindow)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            _routingWindow.Closed += (sender, args) => _routingWindow = null;
+            _routingWindow.Show();
         }
 
         private void MenuLulcIntelligence_Click(object s, RoutedEventArgs e)

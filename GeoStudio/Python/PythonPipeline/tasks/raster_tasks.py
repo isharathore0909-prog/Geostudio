@@ -263,3 +263,172 @@ def task_raster_stats(args):
         "crs": srs
     })
     ds = None
+
+
+def task_viewshed(args):
+    """Calculates 3D line-of-sight visibility / viewshed from observer point using GDAL."""
+    import math
+    from osgeo import gdal, osr
+    gdal.UseExceptions()
+
+    # Safety for PROJ database lookup across Windows environments
+    for p in [r"C:\Program Files\QGIS 3.40.14\share\proj", r"C:\Program Files\QGIS 3.40.14\apps\proj\share\proj"]:
+        if os.path.exists(p):
+            os.environ["PROJ_LIB"] = p
+            os.environ["PROJ_DATA"] = p
+            try:
+                osr.SetPROJSearchPaths([p])
+            except Exception:
+                pass
+            break
+
+    dem_path = args.input
+    if not dem_path or not os.path.exists(dem_path):
+        raise FileNotFoundError(f"Input DEM raster not found: {dem_path}")
+
+    # Parse parameters
+    params = {}
+    if args.param1:
+        try:
+            params = json.loads(args.param1)
+        except Exception:
+            pass
+
+    out_path = args.output
+    if not out_path:
+        out_path = os.path.splitext(dem_path)[0] + "_viewshed.tif"
+
+    report_progress(10, "Opening DEM for line-of-sight analysis...")
+    ds = gdal.Open(dem_path, gdal.GA_ReadOnly)
+    gt = ds.GetGeoTransform()
+
+    # Determine coordinate system (Geographic vs Projected)
+    is_geo = False
+    srs_wkt = ds.GetProjection()
+    if srs_wkt:
+        try:
+            srs = osr.SpatialReference(srs_wkt)
+            is_geo = bool(srs.IsGeographic())
+        except Exception:
+            pass
+    if not is_geo and abs(gt[0]) <= 180.0 and abs(gt[3]) <= 90.0:
+        is_geo = True
+
+    # Raster spatial bounds
+    x_min = min(gt[0], gt[0] + ds.RasterXSize * gt[1])
+    x_max = max(gt[0], gt[0] + ds.RasterXSize * gt[1])
+    y_min = min(gt[3], gt[3] + ds.RasterYSize * gt[5])
+    y_max = max(gt[3], gt[3] + ds.RasterYSize * gt[5])
+
+    center_x = (x_min + x_max) / 2.0
+    center_y = (y_min + y_max) / 2.0
+
+    obs_x = float(params.get("observer_x", center_x))
+    obs_y = float(params.get("observer_y", center_y))
+    obs_h = float(params.get("observer_h", 2.0))
+    tgt_h = float(params.get("target_h", 0.0))
+    max_d_m = float(params.get("max_distance", 5000.0))
+    curv_coeff = float(params.get("curvature_coeff", 0.85714))
+
+    # Clamp observer coordinates into raster extent to prevent out-of-bounds error
+    obs_x = max(x_min, min(x_max, obs_x))
+    obs_y = max(y_min, min(y_max, obs_y))
+
+    # Convert distance to native raster coordinate units and calculate cell area in m^2
+    extent_diag = math.hypot(abs(x_max - x_min), abs(y_max - y_min))
+    if is_geo:
+        rad_lat = math.radians(min(89.0, max(-89.0, obs_y)))
+        cos_lat = max(0.01, math.cos(rad_lat))
+        deg_per_m_lat = 1.0 / 111320.0
+        deg_per_m_lon = 1.0 / (111320.0 * cos_lat)
+
+        max_d_native = max_d_m * max(deg_per_m_lat, deg_per_m_lon)
+        if max_d_m <= 0 or max_d_native >= extent_diag:
+            gdal_max_dist = 0.0  # GDAL 0.0 = compute without distance clipping error
+        else:
+            gdal_max_dist = float(max_d_native)
+
+        cell_w_m = abs(gt[1]) * 111320.0 * cos_lat
+        cell_h_m = abs(gt[5]) * 111320.0
+        cell_area_m2 = cell_w_m * cell_h_m
+    else:
+        if max_d_m <= 0 or max_d_m >= extent_diag:
+            gdal_max_dist = 0.0
+        else:
+            gdal_max_dist = float(max_d_m)
+        cell_area_m2 = abs(gt[1] * gt[5])
+
+    report_progress(25, "Optimizing surface resolution and observer geometry...")
+
+    # Performance optimization for ultra-high-resolution drone datasets (> 4000x4000 pixels)
+    vrt_ds = None
+    src_band = ds.GetRasterBand(1)
+    max_dim = max(ds.RasterXSize, ds.RasterYSize)
+    if max_dim > 4000:
+        scale_factor = int(math.ceil(max_dim / 4000.0))
+        vrt_options = gdal.BuildVRTOptions(
+            xRes=abs(gt[1]) * scale_factor,
+            yRes=abs(gt[5]) * scale_factor,
+            resampleAlg='bilinear'
+        )
+        vrt_ds = gdal.BuildVRT('', [dem_path], options=vrt_options)
+        src_band = vrt_ds.GetRasterBand(1)
+        cell_area_m2 = cell_area_m2 * (scale_factor ** 2)
+
+    report_progress(40, f"Computing Viewshed from observer ({obs_x:.4f}, {obs_y:.4f}) radius {max_d_m:,.0f}m...")
+
+    mode_val = getattr(gdal, "GVM_Diagonal", 2)
+    vs_ds = gdal.ViewshedGenerate(
+        srcBand=src_band,
+        driverName="GTiff",
+        targetRasterName=out_path,
+        creationOptions=["TILED=YES", "COMPRESS=LZW"],
+        observerX=obs_x,
+        observerY=obs_y,
+        observerHeight=obs_h,
+        targetHeight=tgt_h,
+        visibleVal=255.0,
+        invisibleVal=0.0,
+        outOfRangeVal=0.0,
+        noDataVal=0.0,
+        dfCurvCoeff=curv_coeff,
+        mode=mode_val,
+        maxDistance=gdal_max_dist
+    )
+    vs_ds = None
+    src_band = None
+    vrt_ds = None
+    ds = None
+
+    report_progress(80, "Calculating visibility metrics & surface coverage...")
+
+    out_ds = gdal.Open(out_path, gdal.GA_ReadOnly)
+    out_band = out_ds.GetRasterBand(1)
+    arr = out_band.ReadAsArray()
+
+    visible_count = int(np.count_nonzero(arr == 255))
+    radius_area_m2 = np.pi * (max_d_m ** 2)
+    visible_area_m2 = visible_count * cell_area_m2
+    visible_ha = visible_area_m2 / 10000.0
+    visible_km2 = visible_area_m2 / 1000000.0
+    radius_km2 = radius_area_m2 / 1000000.0
+    coverage_pct = (visible_area_m2 / radius_area_m2 * 100.0) if radius_area_m2 > 0 else 0.0
+
+    out_ds = None
+
+    report_progress(100, "Viewshed analysis complete!")
+    report_result(True, {
+        "output_path": out_path,
+        "observer_x": obs_x,
+        "observer_y": obs_y,
+        "observer_h": obs_h,
+        "target_h": tgt_h,
+        "max_distance": max_d_m,
+        "visible_cells": visible_count,
+        "visible_area_m2": round(visible_area_m2, 2),
+        "visible_ha": round(visible_ha, 2),
+        "visible_km2": round(visible_km2, 4),
+        "total_radius_km2": round(radius_km2, 4),
+        "coverage_percentage": round(coverage_pct, 2)
+    })
+

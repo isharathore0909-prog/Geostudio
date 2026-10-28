@@ -29,8 +29,9 @@ namespace GeoStudio.UI.Views.Ribbon
         private void MenuProfile_Click(object s, RoutedEventArgs e) => Main?.MenuProfile_Click(s, e);
         private void MenuContour_Click(object s, RoutedEventArgs e) => Main?.MenuContour_Click(s, e);
         private void MenuCutFill_Click(object s, RoutedEventArgs e) => Main?.MenuCutFill_Click(s, e);
+        private void MenuVolumetric_Click(object s, RoutedEventArgs e) => Main?.MenuVolumetric_Click(s, e);
+        private void MenuViewshed_Click(object s, RoutedEventArgs e) => Main?.MenuViewshed_Click(s, e);
         private void MenuWatershed_Click(object s, RoutedEventArgs e) => Main?.MenuWatershed_Click(s, e);
-        private void MenuLulc_Click(object s, RoutedEventArgs e) => Main?.MenuLulc_Click(s, e);
         private void BtnZoomFull_Click(object s, RoutedEventArgs e) => Main?.BtnZoomFull_Click(s, e);
         private void BtnRefresh_Click(object s, RoutedEventArgs e) => Main?.BtnRefresh_Click(s, e);
         private void BtnSplit_Click(object s, RoutedEventArgs e) => Main?.BtnSplit_Click(s, e);

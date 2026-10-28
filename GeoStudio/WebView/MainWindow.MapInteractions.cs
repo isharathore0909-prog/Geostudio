@@ -317,6 +317,17 @@ namespace GeoStudio
                         }
                     }
                 }
+                else if (action == "originPointPicked")
+                {
+                    string lonStr = root.TryGetProperty("lon", out var ln) ? ln.GetString() ?? "" : "";
+                    string latStr = root.TryGetProperty("lat", out var lt) ? lt.GetString() ?? "" : "";
+                    if (double.TryParse(lonStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double lon) &&
+                        double.TryParse(latStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double lat))
+                    {
+                        ActiveRoutingWindow?.SetOriginCoordinate(lon, lat);
+                        TxtStatus.Text = $"📍 Origin point captured: {lat:F5}°, {lon:F5}°";
+                    }
+                }
                 else if (action == "locateCoord")
                 {
                     string lon = root.TryGetProperty("lon", out var ln) ? ln.GetString() ?? "" : "";

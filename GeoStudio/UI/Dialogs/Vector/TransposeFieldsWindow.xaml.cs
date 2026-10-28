@@ -7,8 +7,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.Win32;
 using GeoStudio.Models;
+using GeoStudio.UI.Services;
 
 namespace GeoStudio.UI.Dialogs
 {
@@ -64,24 +64,12 @@ namespace GeoStudio.UI.Dialogs
 
         private void BtnBrowseInput_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new OpenFileDialog
+            if (FileDialogHelper.PromptOpen("All Vector & Tabular Files (*.geojson;*.json;*.csv;*.shp)|*.geojson;*.json;*.csv;*.shp|GeoJSON (*.geojson)|*.geojson|CSV Files (*.csv)|*.csv|All Files (*.*)|*.*", "Select Vector Dataset to Transpose") is { } file)
             {
-                Title = "Select Vector Dataset to Transpose",
-                Filter = "All Vector & Tabular Files (*.geojson;*.json;*.csv;*.shp)|*.geojson;*.json;*.csv;*.shp|GeoJSON (*.geojson)|*.geojson|CSV Files (*.csv)|*.csv|All Files (*.*)|*.*"
-            };
-
-            if (dlg.ShowDialog() == true)
-            {
-                _customInputFilePath = dlg.FileName;
-                var item = new ComboBoxItem
-                {
-                    Content = $"📄  {Path.GetFileName(dlg.FileName)}",
-                    Tag = dlg.FileName,
-                    IsSelected = true
-                };
-                ComboInputLayer.Items.Insert(0, item);
+                _customInputFilePath = file;
+                ComboInputLayer.Items.Insert(0, new ComboBoxItem { Content = $"📄  {Path.GetFileName(file)}", Tag = file, IsSelected = true });
                 ComboInputLayer.SelectedIndex = 0;
-                LoadFieldsFromPath(dlg.FileName);
+                LoadFieldsFromPath(file);
             }
         }
 
@@ -213,20 +201,8 @@ namespace GeoStudio.UI.Dialogs
             foreach (var item in selKeep) ListKeepFields.Items.Remove(item);
         }
 
-        private void BtnBrowseOutput_Click(object sender, RoutedEventArgs e)
-        {
-            var dlg = new SaveFileDialog
-            {
-                Title = "Save Transposed Output Table",
-                Filter = "CSV Files (*.csv)|*.csv|GeoJSON Dataset (*.geojson)|*.geojson|All Files (*.*)|*.*",
-                FileName = Path.GetFileName(TxtOutputPath.Text)
-            };
-
-            if (dlg.ShowDialog() == true)
-            {
-                TxtOutputPath.Text = dlg.FileName;
-            }
-        }
+        private void BtnBrowseOutput_Click(object sender, RoutedEventArgs e) =>
+            FileDialogHelper.PromptSaveInto(TxtOutputPath, "CSV Files (*.csv)|*.csv|GeoJSON Dataset (*.geojson)|*.geojson|All Files (*.*)|*.*", Path.GetFileName(TxtOutputPath.Text), "Save Transposed Output Table");
 
         private async void BtnRun_Click(object sender, RoutedEventArgs e)
         {

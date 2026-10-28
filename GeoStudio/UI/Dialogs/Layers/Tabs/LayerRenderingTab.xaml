@@ -32,11 +32,9 @@
             <Expander Header="Hardware Acceleration &amp; Canvas Options" IsExpanded="True" Style="{StaticResource QgisExpanderHeader}">
                 <Border Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="12,10" Margin="0,4,0,10">
                     <StackPanel>
-                        <CheckBox x:Name="ChkGpuRendering" Content="⚡ Use GPU Hardware Acceleration (WebGL Canvas)" 
+                        <CheckBox x:Name="ChkGpuRendering" Content="⚡ Use GPU Hardware Acceleration" 
                                   FontSize="11.5" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,10"
                                   Checked="ChkGpuRendering_Checked" Unchecked="ChkGpuRendering_Unchecked"/>
-                        <TextBlock Text="Hardware acceleration uses WebGL 2.0 texture shaders on the GPU to achieve 60 FPS pan/zoom across multi-gigabyte rasters." 
-                                   FontSize="10.5" Foreground="#64748B" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>

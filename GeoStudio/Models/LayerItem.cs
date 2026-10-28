@@ -20,7 +20,12 @@ namespace GeoStudio.Models
         private LayerType _type = LayerType.Vector;
         private bool _isVisible = true;
         private double _opacity = 1.0;
-        private string _colorHex = "#3B82F6";
+        private string _colorHex = "#10B981";
+        private string? _fillColorHex = null;
+        private double _strokeWidth = 1.6;
+        private double _fillOpacity = 0.28;
+        private string _dashPattern = "solid";
+        private double _pointRadius = 6.0;
         private string _details = string.Empty;
         private string _filePath = string.Empty;
         private long _fileSizeBytes = 0;
@@ -37,11 +42,25 @@ namespace GeoStudio.Models
         private double _maxElevation = 0;
         private bool _useGpuAcceleration = true;
         private System.Collections.Generic.List<string> _attributeFields = new();
+        private string _vectorRenderType = "single";
+        private string? _geoJsonCachePath;
 
         public bool UseGpuAcceleration
         {
             get => _useGpuAcceleration;
             set { _useGpuAcceleration = value; OnPropertyChanged(); }
+        }
+
+        public string VectorRenderType
+        {
+            get => _vectorRenderType;
+            set { _vectorRenderType = value; OnPropertyChanged(); }
+        }
+
+        public string? GeoJsonCachePath
+        {
+            get => _geoJsonCachePath;
+            set { _geoJsonCachePath = value; OnPropertyChanged(); }
         }
 
         public System.Collections.Generic.List<string> AttributeFields
@@ -144,6 +163,36 @@ namespace GeoStudio.Models
         {
             get => _colorHex;
             set { _colorHex = value; OnPropertyChanged(); }
+        }
+
+        public string FillColorHex
+        {
+            get => string.IsNullOrEmpty(_fillColorHex) || _fillColorHex.Equals("#FFFFFF", StringComparison.OrdinalIgnoreCase) ? _colorHex : _fillColorHex;
+            set { _fillColorHex = value; OnPropertyChanged(); }
+        }
+
+        public double StrokeWidth
+        {
+            get => _strokeWidth <= 0 ? 2.0 : _strokeWidth;
+            set { _strokeWidth = value; OnPropertyChanged(); }
+        }
+
+        public double FillOpacity
+        {
+            get => _fillOpacity;
+            set { _fillOpacity = value; OnPropertyChanged(); }
+        }
+
+        public string DashPattern
+        {
+            get => _dashPattern ?? "solid";
+            set { _dashPattern = value; OnPropertyChanged(); }
+        }
+
+        public double PointRadius
+        {
+            get => _pointRadius <= 0 ? 6.0 : _pointRadius;
+            set { _pointRadius = value; OnPropertyChanged(); }
         }
 
         public string Details

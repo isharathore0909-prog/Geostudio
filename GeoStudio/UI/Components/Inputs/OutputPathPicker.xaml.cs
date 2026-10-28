@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.Win32;
+using GeoStudio.UI.Services;
 
 namespace GeoStudio.UI.Components
 {
@@ -100,17 +100,10 @@ namespace GeoStudio.UI.Components
 
         private void BtnBrowse_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new SaveFileDialog
+            string defaultName = !string.IsNullOrEmpty(PathText) ? Path.GetFileName(PathText) : $"output{DefaultExtension}";
+            if (FileDialogHelper.PromptSave(FileFilter, defaultName, DialogTitle) is { } path)
             {
-                Title = DialogTitle,
-                Filter = FileFilter,
-                DefaultExt = DefaultExtension,
-                FileName = !string.IsNullOrEmpty(PathText) ? Path.GetFileName(PathText) : $"output{DefaultExtension}"
-            };
-
-            if (dlg.ShowDialog() == true)
-            {
-                PathText = dlg.FileName;
+                PathText = path;
             }
         }
     }

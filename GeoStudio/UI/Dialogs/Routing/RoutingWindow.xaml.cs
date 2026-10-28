@@ -1,118 +1,279 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 using System.Windows;
-using Microsoft.Win32;
 using GeoStudio.Routing.Models;
 using GeoStudio.Routing.Services;
+using GeoStudio.UI.Services;
+using Microsoft.Win32;
 
 namespace GeoStudio.UI.Dialogs.Routing
 {
     public partial class RoutingWindow : Window
     {
+        private readonly MainWindow? _main;
         private RouteGeometryResponse? _lastRoute;
+        private readonly List<(double Lng, double Lat, string Name)> _destCentroids = new();
 
-        public RoutingWindow()
+        public RoutingWindow() : this(Application.Current.MainWindow as MainWindow) { }
+
+        public RoutingWindow(MainWindow? main)
         {
             InitializeComponent();
+            _main = main;
+            AutoDetectCentroidsLayer();
+        }
+
+        private void AutoDetectCentroidsLayer()
+        {
+            if (_main?.Layers != null)
+            {
+                foreach (var l in _main.Layers)
+                {
+                    if (l.Type == Models.LayerType.Vector && !string.IsNullOrEmpty(l.FilePath) && File.Exists(l.FilePath))
+                    {
+                        if (l.Name.Contains("centroid", StringComparison.OrdinalIgnoreCase) ||
+                            l.FilePath.Contains("centroid", StringComparison.OrdinalIgnoreCase))
+                        {
+                            TxtDestGeoJson.Text = l.FilePath;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            string downloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "Bhairwanda_centroids.geojson");
+            if (File.Exists(downloads))
+            {
+                TxtDestGeoJson.Text = downloads;
+            }
+        }
+
+        private void CalculateOption_Changed(object sender, RoutedEventArgs e)
+        {
+            if (GridRoadMetric != null && ChkRoad != null)
+            {
+                GridRoadMetric.Visibility = ChkRoad.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
 
         private void BtnPickOrigin_Click(object sender, RoutedEventArgs e)
         {
-            TxtStatusMsg.Text = "Origin picker active. Current coordinates retained.";
+            _main?.StartOriginPicker(this);
+            TxtStatusMsg.Text = "📍 Click anywhere on the map canvas to set Origin.";
         }
 
-        private void BtnPickDest_Click(object sender, RoutedEventArgs e)
+        public void SetOriginCoordinate(double lon, double lat)
         {
-            TxtStatusMsg.Text = "Destination picker active. Current coordinates retained.";
+            Dispatcher.Invoke(() =>
+            {
+                TxtStartCoords.Text = $"{lon:F5}, {lat:F5}";
+                TxtStatusMsg.Text = $"✓ Origin set: {lat:F5}°, {lon:F5}°";
+                WindowState = WindowState.Normal;
+                Activate();
+            });
         }
 
-        private void BtnComputeRoute_Click(object sender, RoutedEventArgs e)
+        private void BtnBrowseDest_Click(object sender, RoutedEventArgs e)
         {
+            var dlg = new OpenFileDialog { Title = "Select Centroids GeoJSON", Filter = "GeoJSON (*.geojson;*.json)|*.geojson;*.json" };
+            if (dlg.ShowDialog() == true) TxtDestGeoJson.Text = dlg.FileName;
+        }
+
+        private void TxtDestGeoJson_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            _destCentroids.Clear();
+            string path = TxtDestGeoJson.Text.Trim();
+            if (!File.Exists(path)) return;
+
             try
             {
-                if (!TryParseCoords(TxtStartCoords.Text, out double sLng, out double sLat) ||
-                    !TryParseCoords(TxtEndCoords.Text, out double eLng, out double eLat))
+                using var doc = JsonDocument.Parse(File.ReadAllText(path));
+                if (doc.RootElement.TryGetProperty("features", out var feats))
                 {
-                    MessageBox.Show("Please enter valid Longitude, Latitude coordinates (e.g. 75.78, 26.91).", "Invalid Coordinates", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    int idx = 1;
+                    foreach (var f in feats.EnumerateArray())
+                    {
+                        if (f.TryGetProperty("geometry", out var g) && g.TryGetProperty("coordinates", out var c) && c.GetArrayLength() >= 2)
+                        {
+                            string name = $"Centroid #{idx++}";
+                            if (f.TryGetProperty("properties", out var p) && p.TryGetProperty("name", out var np))
+                                name = np.GetString() ?? name;
+                            _destCentroids.Add((c[0].GetDouble(), c[1].GetDouble(), name));
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private async void BtnComputeRoute_Click(object sender, RoutedEventArgs e)
+        {
+            if (!TryParseCoords(TxtStartCoords.Text, out double sLng, out double sLat))
+            {
+                MessageBox.Show("Specify valid Origin coordinates or click '📍 Map Click'.", "Origin Missing", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (_destCentroids.Count == 0)
+            {
+                MessageBox.Show("Browse or select a valid Centroids GeoJSON file first.", "Centroids Missing", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            bool doRoad = ChkRoad.IsChecked == true;
+            bool doAerial = ChkAerial.IsChecked == true;
+
+            if (!doRoad && !doAerial)
+            {
+                MessageBox.Show("Please check at least one calculation option (Road Distance or Aerial Distance).", "Select Calculation", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            BtnComputeRoute.IsEnabled = false;
+            TxtStatusMsg.Text = $"Calculating distances for {_destCentroids.Count} centroids...";
+
+            var opt = RadioFastest.IsChecked == true ? RoutingOptimization.FastestTime : RoutingOptimization.ShortestDistance;
+            var sw = Stopwatch.StartNew();
+
+            try
+            {
+                var (routes, roadTotal, aerialTotal, totalDur, solvedCount) = await System.Threading.Tasks.Task.Run(() =>
+                {
+                    double rSum = 0, aSum = 0, dSum = 0;
+                    var routeList = new List<object>();
+
+                    foreach (var d in _destCentroids)
+                    {
+                        RouteGeometryResponse? roadResp = null;
+                        RouteGeometryResponse? aerialResp = null;
+
+                        if (doRoad)
+                        {
+                            roadResp = RoadRoutingService.Instance.Route(sLng, sLat, d.Lng, d.Lat, opt);
+                            if (roadResp.Success)
+                            {
+                                rSum += roadResp.DistanceKm;
+                                dSum += roadResp.DurationMin;
+                                routeList.Add(new
+                                {
+                                    type = "Feature",
+                                    geometry = new { type = "LineString", coordinates = roadResp.Coordinates },
+                                    properties = new
+                                    {
+                                        target = d.Name,
+                                        type = "Road Route",
+                                        distance_km = Math.Round(roadResp.DistanceKm, 2),
+                                        duration_min = Math.Round(roadResp.DurationMin, 1)
+                                    }
+                                });
+                            }
+                        }
+
+                        if (doAerial)
+                        {
+                            aerialResp = RoadRoutingService.Instance.RouteAerial(sLng, sLat, d.Lng, d.Lat);
+                            if (aerialResp.Success)
+                            {
+                                aSum += aerialResp.DistanceKm;
+                                if (!doRoad) dSum += aerialResp.DurationMin;
+
+                                routeList.Add(new
+                                {
+                                    type = "Feature",
+                                    geometry = new { type = "LineString", coordinates = aerialResp.Coordinates },
+                                    properties = new
+                                    {
+                                        target = d.Name,
+                                        type = "Aerial Air Line",
+                                        distance_km = Math.Round(aerialResp.DistanceKm, 2),
+                                        duration_min = Math.Round(aerialResp.DurationMin, 1)
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                    return (routeList, rSum, aSum, dSum, _destCentroids.Count);
+                });
+
+                sw.Stop();
+                if (routes.Count == 0)
+                {
+                    TxtStatusMsg.Text = "Could not compute paths to centroids.";
                     return;
                 }
 
-                var opt = RadioFastest.IsChecked == true ? RoutingOptimization.FastestTime : RoutingOptimization.ShortestDistance;
-                _lastRoute = RoadRoutingService.Instance.Route(sLng, sLat, eLng, eLat, opt);
+                _lastRoute = new RouteGeometryResponse
+                {
+                    Success = true,
+                    DistanceKm = doRoad ? roadTotal : aerialTotal,
+                    DurationMin = totalDur,
+                    SearchTimeMs = sw.Elapsed.TotalMilliseconds,
+                    GeoJson = JsonSerializer.Serialize(new { type = "FeatureCollection", features = routes })
+                };
 
-                if (_lastRoute.Success)
-                {
-                    TxtResultDistance.Text = $"Total Distance: {_lastRoute.DistanceKm:F2} km ({_lastRoute.DistanceKm * 0.621371:F2} miles)";
-                    TxtResultDuration.Text = $"Estimated Duration: {_lastRoute.DurationMin:F1} minutes";
-                    TxtResultTime.Text = $"Calculation Time: {_lastRoute.SearchTimeMs:F1} ms";
-                    TxtStatusMsg.Text = $"Route computed successfully ({_lastRoute.Coordinates.Count} path vertices).";
-                }
+                // Display Road Distance
+                if (doRoad)
+                    TxtResultRoad.Text = $"🚗 Road Distance: {roadTotal:F2} km (Avg: {roadTotal / solvedCount:F2} km / centroid)";
                 else
-                {
-                    TxtStatusMsg.Text = $"Routing error: {_lastRoute.ErrorMessage}";
-                }
+                    TxtResultRoad.Text = "🚗 Road Distance: (Not selected)";
+
+                // Display Aerial Distance
+                if (doAerial)
+                    TxtResultAerial.Text = $"✈️ Aerial Distance: {aerialTotal:F2} km (Avg: {aerialTotal / solvedCount:F2} km / centroid)";
+                else
+                    TxtResultAerial.Text = "✈️ Aerial Distance: (Not selected)";
+
+                // Duration & Circuity Factor
+                if (doRoad && doAerial && aerialTotal > 0)
+                    TxtResultDuration.Text = $"Road/Aerial Factor: {roadTotal / aerialTotal:F2}x • Est. Drive Duration: {totalDur:F1} min";
+                else if (doRoad)
+                    TxtResultDuration.Text = $"Estimated Drive Duration: {totalDur:F1} min";
+                else
+                    TxtResultDuration.Text = $"Direct Flight Duration: {totalDur:F1} min";
+
+                TxtResultTime.Text = $"Solved {routes.Count} lines across {solvedCount} centroids in {sw.Elapsed.TotalMilliseconds:F0} ms";
+                TxtStatusMsg.Text = $"✓ Calculated distances for all {solvedCount} centroids. Click 'Draw on Map' to display.";
             }
-            catch (Exception ex)
+            finally
             {
-                MessageBox.Show($"Route calculation failed: {ex.Message}", "Routing Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BtnComputeRoute.IsEnabled = true;
             }
         }
 
         private void BtnDrawOnMap_Click(object sender, RoutedEventArgs e)
         {
-            if (_lastRoute == null || !_lastRoute.Success || string.IsNullOrEmpty(_lastRoute.GeoJson))
-            {
-                MessageBox.Show("Please compute a route first before adding to the map.", "No Route", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            var main = Application.Current.MainWindow as MainWindow;
-            if (main != null)
-            {
-                // Send GeoJSON to map
-                string tempPath = Path.Combine(Path.GetTempPath(), $"route_{Guid.NewGuid():N}.geojson");
-                File.WriteAllText(tempPath, _lastRoute.GeoJson);
-                main.LoadVectorFile(tempPath, customColor: "#4F46E5");
-                TxtStatusMsg.Text = "Route layer added to map canvas.";
-            }
+            if (_lastRoute?.GeoJson == null) { MessageBox.Show("Compute routes first.", "No Route", MessageBoxButton.OK, MessageBoxImage.Information); return; }
+            string tmp = Path.Combine(Path.GetTempPath(), $"routes_{DateTime.Now:yyyyMMdd_HHmmss}.geojson");
+            File.WriteAllText(tmp, _lastRoute.GeoJson);
+            string routeColor = (ChkRoad.IsChecked == true) ? "#4F46E5" : "#0284C7";
+            _main?.LoadVectorFile(tmp, customColor: routeColor);
+            TxtStatusMsg.Text = "✓ Route layer added to map canvas.";
         }
 
         private void BtnExportGeoJson_Click(object sender, RoutedEventArgs e)
         {
-            if (_lastRoute == null || string.IsNullOrEmpty(_lastRoute.GeoJson))
+            if (_lastRoute?.GeoJson == null) { MessageBox.Show("Compute routes first.", "No Route", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+            if (FileDialogHelper.PromptSave("GeoJSON File (*.geojson)|*.geojson", "centroid_routes.geojson") is { } savePath)
             {
-                MessageBox.Show("Please calculate a route before exporting.", "No Data", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var sfd = new SaveFileDialog
-            {
-                Filter = "GeoJSON File (*.geojson)|*.geojson",
-                FileName = "optimized_route.geojson"
-            };
-
-            if (sfd.ShowDialog() == true)
-            {
-                File.WriteAllText(sfd.FileName, _lastRoute.GeoJson);
-                MessageBox.Show($"Route GeoJSON exported to:\n{sfd.FileName}", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                File.WriteAllText(savePath, _lastRoute.GeoJson);
+                MessageBox.Show($"Exported to:\n{savePath}", "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
-        private void BtnClose_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
+        private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
 
         private static bool TryParseCoords(string input, out double lng, out double lat)
         {
             lng = 0; lat = 0;
             if (string.IsNullOrWhiteSpace(input)) return false;
-            string[] parts = input.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 2 && double.TryParse(parts[0], out lng) && double.TryParse(parts[1], out lat))
-            {
-                return true;
-            }
-            return false;
+            string[] p = input.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            return p.Length >= 2 &&
+                   double.TryParse(p[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out lng) &&
+                   double.TryParse(p[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out lat);
         }
     }
 }

@@ -37,31 +37,60 @@ namespace GeoStudio
         {
             if (layer == null) return;
             string layerId = layer.Id;
-            Layers.Remove(layer);
+            string layerName = layer.Name;
+            var layerType = layer.Type;
 
-            if (LayersListControl.ItemsSource is ObservableCollection<LayerItem> currentSource && currentSource != Layers)
+            try
             {
-                currentSource.Remove(layer);
-            }
+                // 1. Remove from UI collections
+                Layers.Remove(layer);
 
-            if (_activeRasterLayerId == layerId)
-            {
-                _activeRasterLayerId = null;
-                _activeRasterFilePath = null;
-                _activeRasterShaderMode = null;
-                _activeRasterPalette = null;
-                _rasterCts?.Cancel();
-            }
+                if (LayersListControl?.ItemsSource is ObservableCollection<LayerItem> currentSource && currentSource != Layers)
+                {
+                    currentSource.Remove(layer);
+                }
 
-            UpdateLayerCount();
-            if (Layers.Count <= 1)
-            {
-                if (CardBenchmark != null) CardBenchmark.Visibility = Visibility.Collapsed;
-                GdalRasterService.ClearCache();
-                DuckDbPointCloudService.Clear();
+                // 2. Clear active raster if it matches the removed layer
+                if (_activeRasterLayerId == layerId)
+                {
+                    _activeRasterLayerId = null;
+                    _activeRasterFilePath = null;
+                    _activeRasterShaderMode = null;
+                    _activeRasterPalette = null;
+                    _rasterCts?.Cancel();
+                }
+
+                // 3. Update UI layer counter
+                UpdateLayerCount();
+
+                // 4. ALWAYS inform MapEngine canvas to remove the layer and dismiss its widgets
+                PostMessageToMap(new { action = "removeLayer", id = layerId, type = layerType.ToString() });
+
+                // 5. Clean up caches safely
+                if (layerType == LayerType.Raster || Layers.Count == 0)
+                {
+                    try { GdalRasterService.ClearCache(); } catch { }
+                }
+
+                if (layerType == LayerType.PointCloud || Layers.Count == 0)
+                {
+                    try { DuckDbPointCloudService.Clear(); } catch { }
+                }
+
+                if (Layers.Count == 0)
+                {
+                    if (CardBenchmark != null) CardBenchmark.Visibility = Visibility.Collapsed;
+                }
+
+                TxtStatus.Text = $"Removed layer: {layerName}";
             }
-            PostMessageToMap(new { action = "removeLayer", id = layerId, type = layer.Type.ToString() });
-            TxtStatus.Text = $"Removed layer: {layer.Name}";
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RemoveLayer Error]: {ex.Message}");
+                // Ensure canvas removes the layer even on unexpected failure
+                try { PostMessageToMap(new { action = "removeLayer", id = layerId, type = layerType.ToString() }); } catch { }
+                TxtStatus.Text = $"Removed layer: {layerName}";
+            }
         }
 
         internal void ZoomToLayer(LayerItem layer)
@@ -184,12 +213,12 @@ namespace GeoStudio
             }
             else
             {
-                layer = Layers.FirstOrDefault(l => l.Type == LayerType.Raster);
+                layer = Layers.FirstOrDefault(l => l.IsVisible) ?? Layers.FirstOrDefault();
             }
 
             if (layer == null)
             {
-                MessageBox.Show("Please select or load a raster layer to configure symbology.", "Layer Symbology", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Please select or load a layer to configure symbology.", "Layer Symbology", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 

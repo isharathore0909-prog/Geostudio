@@ -3,9 +3,9 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.Win32;
 using GeoStudio.Hydrology.Models;
 using GeoStudio.Hydrology.Services;
+using GeoStudio.UI.Services;
 
 namespace GeoStudio.UI.Dialogs.Hydrology
 {
@@ -89,26 +89,20 @@ namespace GeoStudio.UI.Dialogs.Hydrology
         {
             if (_lastEstimate == null || _lastEstimate.Items.Count == 0) return;
 
-            var sfd = new SaveFileDialog
-            {
-                Filter = "CSV Spreadsheet (*.csv)|*.csv",
-                FileName = $"BOQ_Estimate_{_lastEstimate.Type}.csv"
-            };
+            if (FileDialogHelper.PromptSave("CSV Spreadsheet (*.csv)|*.csv", $"BOQ_Estimate_{_lastEstimate.Type}.csv") is not { } savePath)
+                return;
 
-            if (sfd.ShowDialog() == true)
+            var sb = new StringBuilder();
+            sb.AppendLine("Item_No,Description,Quantity,Unit,Unit_Rate_INR,Amount_INR");
+            foreach (var line in _lastEstimate.Items)
             {
-                var sb = new StringBuilder();
-                sb.AppendLine("Item_No,Description,Quantity,Unit,Unit_Rate_INR,Amount_INR");
-                foreach (var line in _lastEstimate.Items)
-                {
-                    sb.AppendLine($"{line.ItemNo},\"{line.ItemDescription}\",{line.Quantity:F2},{line.Unit},{line.UnitRateInr},{line.TotalCostInr:F2}");
-                }
-                sb.AppendLine($",\"Sub-Total\",,,,{_lastEstimate.SubTotalInr:F2}");
-                sb.AppendLine($",\"Total Estimated Cost (inc. 3% contingency + 2% QC)\",,,,{_lastEstimate.TotalEstimatedCostInr:F2}");
-
-                File.WriteAllText(sfd.FileName, sb.ToString(), Encoding.UTF8);
-                MessageBox.Show($"BOQ estimate exported to:\n{sfd.FileName}", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                sb.AppendLine($"{line.ItemNo},\"{line.ItemDescription}\",{line.Quantity:F2},{line.Unit},{line.UnitRateInr},{line.TotalCostInr:F2}");
             }
+            sb.AppendLine($",\"Sub-Total\",,,,{_lastEstimate.SubTotalInr:F2}");
+            sb.AppendLine($",\"Total Estimated Cost (inc. 3% contingency + 2% QC)\",,,,{_lastEstimate.TotalEstimatedCostInr:F2}");
+
+            File.WriteAllText(savePath, sb.ToString(), Encoding.UTF8);
+            MessageBox.Show($"BOQ estimate exported to:\n{savePath}", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();

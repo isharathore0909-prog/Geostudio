@@ -51,6 +51,8 @@ function setTool(tool) {
     map.getViewport().style.cursor = 'crosshair';
   } else if (tool === 'locate') {
     map.getViewport().style.cursor = 'crosshair';
+  } else if (tool === 'pick_origin') {
+    map.getViewport().style.cursor = 'crosshair';
   } else if (tool === 'select') {
     map.getViewport().style.cursor = 'pointer';
   } else if (tool === 'zoom_box') {
@@ -332,6 +334,24 @@ map.on('singleclick', function (evt) {
 
   if (elev === null) {
     elev = Math.round(Math.abs(Math.sin(lon * 0.05) * Math.cos(lat * 0.05)) * 1250 + 120);
+  }
+
+  // 0. ORIGIN PICKER FOR ROUTING
+  if (activeTool === 'pick_origin') {
+    markerSource.clear();
+    const pin = new ol.Feature({
+      geometry: new ol.geom.Point(evt.coordinate),
+      label: `Origin (${lat.toFixed(4)}°, ${lon.toFixed(4)}°)`
+    });
+    markerSource.addFeature(pin);
+
+    postToHost({
+      action: 'originPointPicked',
+      lon: lon.toFixed(6),
+      lat: lat.toFixed(6)
+    });
+    setTool('pan');
+    return;
   }
 
   // 1. IDENTIFY TOOL

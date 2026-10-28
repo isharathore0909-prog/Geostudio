@@ -7,8 +7,8 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Microsoft.Win32;
 using GeoStudio.Models;
+using GeoStudio.UI.Services;
 
 namespace GeoStudio.UI.Dialogs
 {
@@ -266,18 +266,12 @@ namespace GeoStudio.UI.Dialogs
                 return;
             }
 
-            var dlg = new SaveFileDialog
-            {
-                Title = "Export Attributes to CSV",
-                Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
-                FileName = $"attributes_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
-            };
+            if (FileDialogHelper.PromptSave("CSV Files (*.csv)|*.csv|All Files (*.*)|*.*", $"attributes_{DateTime.Now:yyyyMMdd_HHmmss}.csv", "Export Attributes to CSV") is not { } savePath)
+                return;
 
-            if (dlg.ShowDialog() == true)
+            try
             {
-                try
-                {
-                    using var sw = new StreamWriter(dlg.FileName);
+                using var sw = new StreamWriter(savePath);
                     var colNames = _dataTable.Columns.Cast<DataColumn>().Select(c => $"\"{c.ColumnName.Replace("\"", "\"\"")}\"");
                     sw.WriteLine(string.Join(",", colNames));
 
@@ -287,13 +281,12 @@ namespace GeoStudio.UI.Dialogs
                         sw.WriteLine(string.Join(",", fields));
                     }
 
-                    MessageBox.Show($"Successfully exported {_dataTable.DefaultView.Count} records to:\n{dlg.FileName}", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"Successfully exported {_dataTable.DefaultView.Count} records to:\n{savePath}", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Failed to export CSV: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-            }
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();

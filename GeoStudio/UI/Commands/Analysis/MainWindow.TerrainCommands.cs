@@ -211,6 +211,34 @@ namespace GeoStudio
             win.ShowDialog();
         }
 
+        internal void MenuVolumetric_Click(object sender, RoutedEventArgs e)
+        {
+            var rasterLayers = Layers.Where(l => (l.Type == LayerType.Raster || l.Type == LayerType.Elevation) && !string.IsNullOrEmpty(l.FilePath) && File.Exists(l.FilePath)).ToList();
+            if (rasterLayers.Count == 0)
+            {
+                MessageBox.Show("Please load at least one DEM elevation raster surface to compute Volumetrics & Stage-Storage Capacity.", "Volumetric Analysis", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var win = new GeoStudio.UI.Dialogs.Terrain.VolumetricAnalysisWindow(rasterLayers);
+            win.Owner = this;
+            win.ShowDialog();
+        }
+
+        internal void MenuViewshed_Click(object sender, RoutedEventArgs e)
+        {
+            var rasterLayers = Layers.Where(l => (l.Type == LayerType.Raster || l.Type == LayerType.Elevation) && !string.IsNullOrEmpty(l.FilePath) && File.Exists(l.FilePath)).ToList();
+            if (rasterLayers.Count == 0)
+            {
+                MessageBox.Show("Please load a DEM / Elevation raster layer first before running 3D Viewshed Line-of-Sight Analysis.", "Viewshed Analysis", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var win = new GeoStudio.UI.Dialogs.Terrain.ViewshedWindow(this);
+            win.Owner = this;
+            win.ShowDialog();
+        }
+
         internal void MenuLulc_Click(object sender, RoutedEventArgs e)
         {
             var win = new GeoStudio.UI.Dialogs.Raster.LulcIntelligenceWindow(this);

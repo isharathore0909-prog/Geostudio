@@ -1,166 +1,347 @@
 <Window x:Class="GeoStudio.UI.Dialogs.Raster.LayerSymbologyWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Layer Symbology" Height="700" Width="680" MinHeight="520" MinWidth="580"
+        Title="Layer Symbology" Height="680" Width="660" MinHeight="500" MinWidth="560"
         WindowStartupLocation="CenterOwner" Background="#F0F0F0" Foreground="#1E293B"
         FontFamily="Segoe UI" FontSize="11.5" ResizeMode="CanResizeWithGrip">
 
     <Window.Resources>
-        <Style x:Key="QgisExpanderHeader" TargetType="Expander">
-            <Setter Property="Foreground" Value="#0F172A"/><Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="12"/><Setter Property="Margin" Value="0,0,0,6"/><Setter Property="Padding" Value="4,2"/>
-        </Style>
-        <Style x:Key="QgisParamLabel" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11"/><Setter Property="Foreground" Value="#334155"/>
-            <Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Margin" Value="0,0,6,0"/>
-        </Style>
-        <Style x:Key="QgisTextBox" TargetType="TextBox">
-            <Setter Property="Height" Value="24"/><Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="BorderBrush" Value="#CBD5E1"/><Setter Property="Background" Value="#FFFFFF"/><Setter Property="Padding" Value="4,0"/><Setter Property="FontSize" Value="11"/>
-        </Style>
-        <Style x:Key="QgisComboBox" TargetType="ComboBox">
-            <Setter Property="Height" Value="24"/><Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="BorderBrush" Value="#CBD5E1"/><Setter Property="Background" Value="#FFFFFF"/><Setter Property="FontSize" Value="11"/>
-        </Style>
-        <Style x:Key="QgisButton" TargetType="Button">
-            <Setter Property="Height" Value="24"/><Setter Property="Padding" Value="8,0"/><Setter Property="Background" Value="#F8FAFC"/>
-            <Setter Property="BorderBrush" Value="#CBD5E1"/><Setter Property="BorderThickness" Value="1"/><Setter Property="Cursor" Value="Hand"/><Setter Property="FontSize" Value="11"/>
-        </Style>
+        <Style x:Key="QgisExpanderHeader" TargetType="Expander"><Setter Property="Foreground" Value="#0F172A"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="FontSize" Value="12"/><Setter Property="Margin" Value="0,0,0,6"/><Setter Property="Padding" Value="4,2"/></Style>
+        <Style x:Key="QgisParamLabel" TargetType="TextBlock"><Setter Property="FontSize" Value="11"/><Setter Property="Foreground" Value="#334155"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Margin" Value="0,0,6,0"/></Style>
+        <Style x:Key="QgisTextBox" TargetType="TextBox"><Setter Property="Height" Value="24"/><Setter Property="VerticalContentAlignment" Value="Center"/><Setter Property="BorderBrush" Value="#CBD5E1"/><Setter Property="Background" Value="#FFFFFF"/><Setter Property="Padding" Value="4,0"/><Setter Property="FontSize" Value="11"/></Style>
+        <Style x:Key="QgisComboBox" TargetType="ComboBox"><Setter Property="Height" Value="24"/><Setter Property="VerticalContentAlignment" Value="Center"/><Setter Property="BorderBrush" Value="#CBD5E1"/><Setter Property="Background" Value="#FFFFFF"/><Setter Property="FontSize" Value="11"/></Style>
+        <Style x:Key="QgisButton" TargetType="Button"><Setter Property="Height" Value="24"/><Setter Property="Padding" Value="8,0"/><Setter Property="Background" Value="#F8FAFC"/><Setter Property="BorderBrush" Value="#CBD5E1"/><Setter Property="BorderThickness" Value="1"/><Setter Property="Cursor" Value="Hand"/><Setter Property="FontSize" Value="11"/></Style>
     </Window.Resources>
 
     <Grid Margin="10,8,10,10">
         <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,6,0">
-            <StackPanel Orientation="Vertical">
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="0,0,6,0">
+            <StackPanel>
+                <!-- 0. VECTOR SYMBOLOGY -->
+                <StackPanel x:Name="PanelVectorSymbology" Visibility="Collapsed" Margin="0,0,0,8">
+                    <!-- Top Symbol Render Type Dropdown -->
+                    <Border Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="🗂️" FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox Grid.Column="1" x:Name="ComboVectorRenderType" Style="{StaticResource QgisComboBox}" Height="26" FontWeight="SemiBold" SelectionChanged="ComboVectorRenderType_SelectionChanged">
+                                <ComboBoxItem Content="Single Symbol" Tag="single" IsSelected="True"/><ComboBoxItem Content="Categorized" Tag="categorized"/><ComboBoxItem Content="Graduated" Tag="graduated"/><ComboBoxItem Content="Rule-based" Tag="rule"/><ComboBoxItem Content="Merged Features" Tag="merged"/><ComboBoxItem Content="Inverted Polygons" Tag="inverted"/><ComboBoxItem Content="2.5 D" Tag="2.5d"/><ComboBoxItem Content="No Symbols" Tag="nosymbol"/>
+                            </ComboBox>
+                        </Grid>
+                    </Border>
 
-                <!-- 1. BAND RENDERING SECTION (Exact QGIS 7 Modes) -->
-                <Expander Header="Band Rendering" IsExpanded="True" Style="{StaticResource QgisExpanderHeader}">
+                    <!-- 0A. SINGLE SYMBOL -->
+                    <StackPanel x:Name="PanelVectorSingleSymbol" Visibility="Visible">
+                        <!-- Preview Card -->
+                        <Border Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="68"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="64" Height="64" Background="#F1F5F9" BorderBrush="#94A3B8" BorderThickness="1" CornerRadius="3">
+                                    <Grid x:Name="GridBigSymbolPreview" ClipToBounds="True">
+                                        <Polygon x:Name="PreviewPolygon" Points="6,50 18,12 48,16 58,50" Fill="#10B981" Opacity="0.28"/>
+                                        <Polyline x:Name="PreviewPolyline" Points="6,50 18,12 48,16 58,50" Stroke="#10B981" StrokeThickness="1.6"/>
+                                        <Ellipse x:Name="PreviewPoint" Width="10" Height="10" Fill="#10B981" Stroke="#FFFFFF" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <Border x:Name="BorderTreeFillIcon" Width="14" Height="14" Background="#10B981" BorderBrush="#10B981" BorderThickness="1" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Feature Geometry (Fill &amp; Stroke)" FontWeight="SemiBold" FontSize="11.5" Foreground="#0F172A"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="BorderTreeSubFillIcon" Width="12" Height="12" Background="#10B981" BorderBrush="#10B981" BorderThickness="1" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Simple Solid Layer" FontSize="11" Foreground="#64748B"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Parameters -->
+                        <Border Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="12,8" Margin="0,0,0,8">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="65"/><ColumnDefinition Width="*"/><ColumnDefinition Width="65"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Fill Color" Style="{StaticResource QgisParamLabel}"/>
+                                    <Button Grid.Column="1" x:Name="BtnWideFillColor" Height="26" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" HorizontalContentAlignment="Stretch" Padding="4,2" Margin="0,0,8,0" Click="BtnPickFillColor_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="36"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" x:Name="SwatchWideFill" Width="32" Height="17" Background="#10B981" BorderBrush="#94A3B8" BorderThickness="1" CornerRadius="2" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" x:Name="TxtWideFillHex" Text="#10B981" FontSize="11" Foreground="#334155" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                            <TextBlock Grid.Column="2" Text="▾" FontSize="11" Foreground="#64748B" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        </Grid>
+                                    </Button>
+                                    <TextBlock Grid.Column="2" Text="Stroke" Style="{StaticResource QgisParamLabel}"/>
+                                    <Button Grid.Column="3" x:Name="BtnWideStrokeColor" Height="26" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" HorizontalContentAlignment="Stretch" Padding="4,2" Click="BtnPickStrokeColor_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="36"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" x:Name="SwatchWideStroke" Width="32" Height="17" Background="#10B981" BorderBrush="#94A3B8" BorderThickness="1" CornerRadius="2" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" x:Name="TxtWideStrokeHex" Text="#10B981" FontSize="11" Foreground="#334155" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                            <TextBlock Grid.Column="2" Text="▾" FontSize="11" Foreground="#64748B" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        </Grid>
+                                    </Button>
+                                </Grid>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="65"/><ColumnDefinition Width="*"/><ColumnDefinition Width="60"/><ColumnDefinition Width="65"/><ColumnDefinition Width="*"/><ColumnDefinition Width="60"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Opacity" Style="{StaticResource QgisParamLabel}"/>
+                                    <Slider Grid.Column="1" x:Name="SliderVectorFillOpacity" Minimum="0" Maximum="100" Value="28" VerticalAlignment="Center" Margin="0,0,6,0" ValueChanged="VectorParam_ValueChanged"/>
+                                    <TextBox Grid.Column="2" x:Name="TxtVectorFillOpacity" Text="{Binding Value, ElementName=SliderVectorFillOpacity, StringFormat={}{0:F0}%}" Style="{StaticResource QgisTextBox}" IsReadOnly="True" HorizontalContentAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="3" Text="Width" Style="{StaticResource QgisParamLabel}"/>
+                                    <Slider Grid.Column="4" x:Name="SliderVectorStrokeWidth" Minimum="0.2" Maximum="8.0" Value="1.6" TickFrequency="0.2" VerticalAlignment="Center" Margin="0,0,6,0" ValueChanged="VectorParam_ValueChanged"/>
+                                    <TextBox Grid.Column="5" x:Name="TxtVectorStrokeWidth" Text="{Binding Value, ElementName=SliderVectorStrokeWidth, StringFormat={}{0:F1}mm}" Style="{StaticResource QgisTextBox}" IsReadOnly="True" HorizontalContentAlignment="Center"/>
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="65"/><ColumnDefinition Width="*"/><ColumnDefinition Width="65"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Style" Style="{StaticResource QgisParamLabel}"/>
+                                    <ComboBox Grid.Column="1" x:Name="ComboVectorDashStyle" Style="{StaticResource QgisComboBox}" Margin="0,0,8,0" SelectionChanged="ComboVectorDashStyle_SelectionChanged">
+                                        <ComboBoxItem Content="Solid Line" Tag="solid" IsSelected="True"/><ComboBoxItem Content="Dashed" Tag="dashed"/><ComboBoxItem Content="Dotted" Tag="dotted"/><ComboBoxItem Content="Dash-Dot" Tag="dashdot"/>
+                                    </ComboBox>
+                                    <TextBlock Grid.Column="2" Text="Unit" Style="{StaticResource QgisParamLabel}"/>
+                                    <ComboBox Grid.Column="3" x:Name="ComboVectorUnit" Style="{StaticResource QgisComboBox}">
+                                        <ComboBoxItem Content="Millimeters" IsSelected="True"/><ComboBoxItem Content="Pixels"/><ComboBoxItem Content="Points"/>
+                                    </ComboBox>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Presets Library -->
+                        <Border Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="10,6" Margin="0,0,0,8">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,4">
+                                    <TextBlock Text="Quick Styles Library" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center"/>
+                                    <TextBox x:Name="TxtSearchSymbols" Visibility="Collapsed"/>
+                                    <Button Content="Save Symbol..." Style="{StaticResource QgisButton}" HorizontalAlignment="Right" Click="BtnSaveSymbol_Click"/>
+                                </Grid>
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                    <ItemsControl x:Name="ItemsProjectStyles">
+                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Width="78" Margin="0,0,6,0" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="BtnPresetStyle_Click">
+                                                    <StackPanel HorizontalAlignment="Center">
+                                                        <Border Width="52" Height="36" Background="{Binding BackgroundBrush}" BorderBrush="{Binding BorderBrush}" BorderThickness="{Binding BorderThickness}" CornerRadius="2"/>
+                                                        <TextBlock Text="{Binding Name}" FontSize="9.5" TextAlignment="Center" Margin="0,2,0,0" Foreground="#334155"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- 0B. CATEGORIZED -->
+                    <StackPanel x:Name="PanelVectorCategorized" Visibility="Collapsed" Margin="0,0,0,8">
+                        <Border Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,0,6">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Value" Style="{StaticResource QgisParamLabel}"/>
+                                <ComboBox Grid.Column="1" x:Name="ComboCategorizedField" Style="{StaticResource QgisComboBox}" Margin="0,0,8,0"/>
+                                <TextBlock Grid.Column="2" Text="Color ramp" Style="{StaticResource QgisParamLabel}"/>
+                                <ComboBox Grid.Column="3" x:Name="ComboCategorizedRamp" Style="{StaticResource QgisComboBox}">
+                                    <ComboBoxItem Content="Viridis" Tag="Viridis" IsSelected="True"/><ComboBoxItem Content="Spectral" Tag="Spectral"/><ComboBoxItem Content="Turbo" Tag="Turbo"/><ComboBoxItem Content="Magma" Tag="Magma"/><ComboBoxItem Content="Blues" Tag="Blues"/><ComboBoxItem Content="Greens" Tag="Greens"/><ComboBoxItem Content="Reds" Tag="Reds"/><ComboBoxItem Content="🎲 Random" Tag="random"/>
+                                </ComboBox>
+                            </Grid>
+                        </Border>
+                        <Border BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="2" Background="#FFFFFF" MaxHeight="200" Margin="0,0,0,4">
+                            <DataGrid x:Name="GridVectorCategories" AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F1F5F9" RowHeight="24" FontSize="11" BorderThickness="0" Background="#FFFFFF">
+                                <DataGrid.Columns>
+                                    <DataGridCheckBoxColumn Header="Show" Binding="{Binding IsVisible}" Width="45"/>
+                                    <DataGridTemplateColumn Header="Symbol" Width="55">
+                                        <DataGridTemplateColumn.CellTemplate><DataTemplate><Button Width="32" Height="16" Background="{Binding ColorHex}" BorderBrush="#94A3B8" BorderThickness="1" Cursor="Hand" Click="BtnCategoryColor_Click"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="130"/>
+                                    <DataGridTextColumn Header="Legend / Label" Binding="{Binding Label}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="⚡ Classify" Style="{StaticResource QgisButton}" FontWeight="SemiBold" Margin="0,0,6,0" Click="BtnCategorizedClassify_Click"/>
+                            <Button Content="➕ Add" Style="{StaticResource QgisButton}" Margin="0,0,6,0" Click="BtnCategorizedAdd_Click"/>
+                            <Button Content="➖ Delete" Style="{StaticResource QgisButton}" Margin="0,0,6,0" Click="BtnCategorizedDelete_Click"/>
+                            <Button Content="🗑️ Clear" Style="{StaticResource QgisButton}" Click="BtnCategorizedDeleteAll_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 0C. GRADUATED -->
+                    <StackPanel x:Name="PanelVectorGraduated" Visibility="Collapsed" Margin="0,0,0,8">
+                        <Border Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,0,6">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="45"/></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Value" Style="{StaticResource QgisParamLabel}"/>
+                                <ComboBox Grid.Column="1" x:Name="ComboGraduatedField" Style="{StaticResource QgisComboBox}" Margin="0,0,6,0"/>
+                                <TextBlock Grid.Column="2" Text="Ramp" Style="{StaticResource QgisParamLabel}"/>
+                                <ComboBox Grid.Column="3" x:Name="ComboGraduatedRamp" Style="{StaticResource QgisComboBox}" Margin="0,0,6,0">
+                                    <ComboBoxItem Content="Viridis" Tag="Viridis" IsSelected="True"/><ComboBoxItem Content="Spectral" Tag="Spectral"/><ComboBoxItem Content="Turbo" Tag="Turbo"/><ComboBoxItem Content="Blues" Tag="Blues"/><ComboBoxItem Content="Greens" Tag="Greens"/><ComboBoxItem Content="Reds" Tag="Reds"/>
+                                </ComboBox>
+                                <TextBlock Grid.Column="4" Text="Classes" Style="{StaticResource QgisParamLabel}"/>
+                                <TextBox Grid.Column="5" x:Name="TxtGraduatedClassesCount" Text="5" Style="{StaticResource QgisTextBox}" HorizontalContentAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Border BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="2" Background="#FFFFFF" MaxHeight="200" Margin="0,0,0,4">
+                            <DataGrid x:Name="GridVectorGraduated" AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F1F5F9" RowHeight="24" FontSize="11" BorderThickness="0" Background="#FFFFFF">
+                                <DataGrid.Columns>
+                                    <DataGridCheckBoxColumn Header="Show" Binding="{Binding IsVisible}" Width="45"/>
+                                    <DataGridTemplateColumn Header="Symbol" Width="55">
+                                        <DataGridTemplateColumn.CellTemplate><DataTemplate><Button Width="32" Height="16" Background="{Binding ColorHex}" BorderBrush="#94A3B8" BorderThickness="1" Cursor="Hand" Click="BtnGraduatedColor_Click"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Values Range" Binding="{Binding ValueRange}" Width="140" IsReadOnly="True"/>
+                                    <DataGridTextColumn Header="Legend" Binding="{Binding Label}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="⚡ Classify" Style="{StaticResource QgisButton}" FontWeight="SemiBold" Margin="0,0,6,0" Click="BtnGraduatedClassify_Click"/>
+                            <Button Content="➕ Add" Style="{StaticResource QgisButton}" Margin="0,0,6,0" Click="BtnGraduatedAdd_Click"/>
+                            <Button Content="➖ Delete" Style="{StaticResource QgisButton}" Click="BtnGraduatedDelete_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 0D. RULE-BASED -->
+                    <StackPanel x:Name="PanelVectorRuleBased" Visibility="Collapsed" Margin="0,0,0,8">
+                        <Border BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="2" Background="#FFFFFF" MaxHeight="160" Margin="0,0,0,4">
+                            <DataGrid x:Name="GridVectorRules" AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F1F5F9" RowHeight="24" FontSize="11" BorderThickness="0" Background="#FFFFFF">
+                                <DataGrid.Columns>
+                                    <DataGridCheckBoxColumn Header="Show" Binding="{Binding IsVisible}" Width="45"/>
+                                    <DataGridTemplateColumn Header="Symbol" Width="55">
+                                        <DataGridTemplateColumn.CellTemplate><DataTemplate><Button Width="32" Height="16" Background="{Binding ColorHex}" BorderBrush="#94A3B8" BorderThickness="1" Cursor="Hand" Click="BtnRuleColor_Click"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="120"/>
+                                    <DataGridTextColumn Header="Filter Expression" Binding="{Binding Expression}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="➕ Add Rule" Style="{StaticResource QgisButton}" Margin="0,0,6,0" Click="BtnRuleAdd_Click"/>
+                            <Button Content="➖ Delete" Style="{StaticResource QgisButton}" Click="BtnRuleDelete_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 0E. NO SYMBOLS -->
+                    <Border x:Name="PanelVectorNoSymbols" Visibility="Collapsed" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="14,16" Margin="0,0,0,8">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="🚫 No symbols rendered on canvas" FontWeight="SemiBold" FontSize="11.5" Foreground="#64748B" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Features remain active and queryable for attribute tables and analysis." FontSize="10.5" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 0F. INVERTED POLYGONS -->
+                    <Border x:Name="PanelVectorInverted" Visibility="Collapsed" Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="80"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Mask Color" Style="{StaticResource QgisParamLabel}"/>
+                            <Button Grid.Column="1" x:Name="BtnInvertedMaskColor" Height="24" Background="#1E293B" BorderBrush="#94A3B8" BorderThickness="1" Cursor="Hand" Click="BtnInvertedColor_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- 0G. 2.5D -->
+                    <Border x:Name="PanelVector25D" Visibility="Collapsed" Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/><ColumnDefinition Width="70"/><ColumnDefinition Width="40"/><ColumnDefinition Width="70"/><ColumnDefinition Width="40"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Height Field" Style="{StaticResource QgisParamLabel}"/>
+                            <ComboBox Grid.Column="1" x:Name="Combo25DHeightField" Style="{StaticResource QgisComboBox}" Margin="0,0,6,0"/>
+                            <TextBlock Grid.Column="2" Text="Angle" Style="{StaticResource QgisParamLabel}"/>
+                            <Slider Grid.Column="3" x:Name="Slider25DAngle" Minimum="0" Maximum="90" Value="70" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Grid.Column="4" Text="Roof" Style="{StaticResource QgisParamLabel}"/>
+                            <Button Grid.Column="5" x:Name="Btn25DRoofColor" Height="22" Background="#3B82F6" BorderBrush="#94A3B8" BorderThickness="1" Cursor="Hand" Margin="0,0,6,0" Click="Btn25DRoof_Click"/>
+                            <TextBlock Grid.Column="6" Text="Wall" Style="{StaticResource QgisParamLabel}"/>
+                            <Button Grid.Column="7" x:Name="Btn25DWallColor" Height="22" Background="#1E3A8A" BorderBrush="#94A3B8" BorderThickness="1" Cursor="Hand" Click="Btn25DWall_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- 0H. MERGED -->
+                    <Border x:Name="PanelVectorMerged" Visibility="Collapsed" Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,0,0,8">
+                        <TextBlock Text="Merged Features: Adjacent polygon features are rendered with unified borders." FontSize="11" Foreground="#64748B"/>
+                    </Border>
+
+                    <!-- Vector Rendering Controls -->
+                    <Border Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="10,6" Margin="0,0,0,6">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="65"/><ColumnDefinition Width="*"/><ColumnDefinition Width="50"/><ColumnDefinition Width="75"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Opacity" Style="{StaticResource QgisParamLabel}"/>
+                            <Slider Grid.Column="1" x:Name="SliderVectorLayerOpacity" Minimum="0" Maximum="100" Value="100" VerticalAlignment="Center" Margin="0,0,6,0" ValueChanged="VectorParam_ValueChanged"/>
+                            <TextBox Grid.Column="2" x:Name="TxtVectorLayerOpacity" Text="{Binding Value, ElementName=SliderVectorLayerOpacity, StringFormat={}{0:F0}%}" Style="{StaticResource QgisTextBox}" IsReadOnly="True" HorizontalContentAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="3" Text="Blending" Style="{StaticResource QgisParamLabel}"/>
+                            <ComboBox Grid.Column="4" x:Name="ComboVectorLayerBlend" Style="{StaticResource QgisComboBox}">
+                                <ComboBoxItem Content="Normal" IsSelected="True"/><ComboBoxItem Content="Multiply"/><ComboBoxItem Content="Screen"/><ComboBoxItem Content="Overlay"/>
+                            </ComboBox>
+                            <ComboBox x:Name="ComboVectorFeatureBlend" Visibility="Collapsed"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!-- 1. BAND RENDERING (Raster) -->
+                <Expander x:Name="ExpanderBandRendering" Header="Band Rendering" IsExpanded="True" Style="{StaticResource QgisExpanderHeader}">
                     <Border Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,4,0,8">
                         <StackPanel>
-                            <!-- Render Type Dropdown (Exact QGIS List) -->
                             <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Render type" Style="{StaticResource QgisParamLabel}"/>
                                 <ComboBox Grid.Column="1" x:Name="ComboRenderType" Style="{StaticResource QgisComboBox}" SelectionChanged="ComboRenderType_SelectionChanged">
-                                    <ComboBoxItem Content="Multiband color" Tag="multiband"/>
-                                    <ComboBoxItem Content="Paletted/Unique values" Tag="paletted" IsSelected="True"/>
-                                    <ComboBoxItem Content="Singleband gray" Tag="gray"/>
-                                    <ComboBoxItem Content="Singleband pseudocolor" Tag="pseudocolor"/>
-                                    <ComboBoxItem Content="Single color" Tag="singlecolor"/>
-                                    <ComboBoxItem Content="Hillshade" Tag="hillshade"/>
-                                    <ComboBoxItem Content="Contours" Tag="contours"/>
+                                    <ComboBoxItem Content="Multiband color" Tag="multiband"/><ComboBoxItem Content="Paletted/Unique values" Tag="paletted" IsSelected="True"/><ComboBoxItem Content="Singleband gray" Tag="gray"/><ComboBoxItem Content="Singleband pseudocolor" Tag="pseudocolor"/><ComboBoxItem Content="Single color" Tag="singlecolor"/><ComboBoxItem Content="Hillshade" Tag="hillshade"/><ComboBoxItem Content="Contours" Tag="contours"/>
                                 </ComboBox>
                             </Grid>
-
-                            <!-- 1A. Multiband Color Panel -->
+                            <!-- 1A. Multiband -->
                             <StackPanel x:Name="PanelMultiband" Visibility="Collapsed">
-                                <Grid Margin="0,2,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Red band" Style="{StaticResource QgisParamLabel}"/><ComboBox Grid.Column="1" x:Name="ComboRedBand" Style="{StaticResource QgisComboBox}"/>
+                                <Grid Margin="0,2,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="50"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="50"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Red band" Style="{StaticResource QgisParamLabel}"/><ComboBox Grid.Column="1" x:Name="ComboRedBand" Style="{StaticResource QgisComboBox}" Margin="0,0,8,0"/><TextBlock Grid.Column="2" Text="Min" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="3" x:Name="TxtRedMin" Text="0" Style="{StaticResource QgisTextBox}" Margin="0,0,6,0"/><TextBlock Grid.Column="4" Text="Max" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="5" x:Name="TxtRedMax" Text="255" Style="{StaticResource QgisTextBox}"/>
                                 </Grid>
-                                <Grid Margin="100,0,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Min" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="1" x:Name="TxtRedMin" Text="0" Style="{StaticResource QgisTextBox}" Margin="0,0,8,0"/>
-                                    <TextBlock Grid.Column="2" Text="Max" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="3" x:Name="TxtRedMax" Text="255" Style="{StaticResource QgisTextBox}"/>
+                                <Grid Margin="0,2,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="50"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="50"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Green band" Style="{StaticResource QgisParamLabel}"/><ComboBox Grid.Column="1" x:Name="ComboGreenBand" Style="{StaticResource QgisComboBox}" Margin="0,0,8,0"/><TextBlock Grid.Column="2" Text="Min" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="3" x:Name="TxtGreenMin" Text="0" Style="{StaticResource QgisTextBox}" Margin="0,0,6,0"/><TextBlock Grid.Column="4" Text="Max" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="5" x:Name="TxtGreenMax" Text="255" Style="{StaticResource QgisTextBox}"/>
                                 </Grid>
-                                <Grid Margin="0,2,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Green band" Style="{StaticResource QgisParamLabel}"/><ComboBox Grid.Column="1" x:Name="ComboGreenBand" Style="{StaticResource QgisComboBox}"/>
-                                </Grid>
-                                <Grid Margin="100,0,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Min" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="1" x:Name="TxtGreenMin" Text="0" Style="{StaticResource QgisTextBox}" Margin="0,0,8,0"/>
-                                    <TextBlock Grid.Column="2" Text="Max" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="3" x:Name="TxtGreenMax" Text="255" Style="{StaticResource QgisTextBox}"/>
-                                </Grid>
-                                <Grid Margin="0,2,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Blue band" Style="{StaticResource QgisParamLabel}"/><ComboBox Grid.Column="1" x:Name="ComboBlueBand" Style="{StaticResource QgisComboBox}"/>
-                                </Grid>
-                                <Grid Margin="100,0,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Min" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="1" x:Name="TxtBlueMin" Text="0" Style="{StaticResource QgisTextBox}" Margin="0,0,8,0"/>
-                                    <TextBlock Grid.Column="2" Text="Max" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="3" x:Name="TxtBlueMax" Text="255" Style="{StaticResource QgisTextBox}"/>
+                                <Grid Margin="0,2,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="50"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="50"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Blue band" Style="{StaticResource QgisParamLabel}"/><ComboBox Grid.Column="1" x:Name="ComboBlueBand" Style="{StaticResource QgisComboBox}" Margin="0,0,8,0"/><TextBlock Grid.Column="2" Text="Min" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="3" x:Name="TxtBlueMin" Text="0" Style="{StaticResource QgisTextBox}" Margin="0,0,6,0"/><TextBlock Grid.Column="4" Text="Max" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="5" x:Name="TxtBlueMax" Text="255" Style="{StaticResource QgisTextBox}"/>
                                 </Grid>
                             </StackPanel>
-
-                            <!-- 1B. Paletted / Unique Values Panel (Exact QGIS Color Ramps) -->
+                            <!-- 1B. Paletted -->
                             <StackPanel x:Name="PanelPaletted" Visibility="Visible">
                                 <Grid Margin="0,0,0,6">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="Color ramp" Style="{StaticResource QgisParamLabel}"/>
                                     <ComboBox Grid.Column="1" x:Name="ComboColorRamp" Style="{StaticResource QgisComboBox}" Margin="0,0,6,0" SelectionChanged="ComboColorRamp_SelectionChanged">
-                                        <ComboBoxItem Content="Viridis" Tag="Viridis" IsSelected="True"/>
-                                        <ComboBoxItem Content="Spectral" Tag="Spectral"/>
-                                        <ComboBoxItem Content="Turbo" Tag="Turbo"/>
-                                        <ComboBoxItem Content="Magma" Tag="Magma"/>
-                                        <ComboBoxItem Content="Cividis" Tag="Cividis"/>
-                                        <ComboBoxItem Content="Blues" Tag="Blues"/>
-                                        <ComboBoxItem Content="Greens" Tag="Greens"/>
-                                        <ComboBoxItem Content="Reds" Tag="Reds"/>
-                                        <ComboBoxItem Content="Greys" Tag="Greys"/>
-                                        <ComboBoxItem Content="Mako" Tag="Mako"/>
-                                        <ComboBoxItem Content="Rocket" Tag="Rocket"/>
-                                        <ComboBoxItem Content="RdGy" Tag="RdGy"/>
-                                        <ComboBoxItem Content="🌿 LULC Intelligence (22 Classes)" Tag="lulc22"/>
-                                        <ComboBoxItem Content="🌍 Dynamic World (9 Classes)" Tag="dw9"/>
-                                        <ComboBoxItem Content="🎲 Random Color Ramp" Tag="random"/>
+                                        <ComboBoxItem Content="Viridis" Tag="Viridis" IsSelected="True"/><ComboBoxItem Content="Spectral" Tag="Spectral"/><ComboBoxItem Content="Turbo" Tag="Turbo"/><ComboBoxItem Content="Magma" Tag="Magma"/><ComboBoxItem Content="Cividis" Tag="Cividis"/><ComboBoxItem Content="Blues" Tag="Blues"/><ComboBoxItem Content="Greens" Tag="Greens"/><ComboBoxItem Content="Reds" Tag="Reds"/><ComboBoxItem Content="Greys" Tag="Greys"/><ComboBoxItem Content="Mako" Tag="Mako"/><ComboBoxItem Content="Rocket" Tag="Rocket"/><ComboBoxItem Content="RdGy" Tag="RdGy"/><ComboBoxItem Content="🌿 LULC Intelligence (22 Classes)" Tag="lulc22"/><ComboBoxItem Content="🌍 Dynamic World (9 Classes)" Tag="dw9"/><ComboBoxItem Content="🎲 Random Color Ramp" Tag="random"/>
                                     </ComboBox>
                                     <CheckBox Grid.Column="2" x:Name="ChkInvertRamp" Content="Invert" VerticalAlignment="Center" Margin="0,0,6,0" Click="ChkInvertRamp_Click"/>
                                     <Button Grid.Column="3" Content="⚡ Classify" Style="{StaticResource QgisButton}" Click="BtnScanClasses_Click"/>
                                 </Grid>
-
                                 <Border BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="2" Background="#FFFFFF" MaxHeight="190">
-                                    <DataGrid x:Name="GridClasses" AutoGenerateColumns="False" CanUserAddRows="False"
-                                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                                              HorizontalGridLinesBrush="#F1F5F9" RowHeight="24" FontSize="11" BorderThickness="0" Background="#FFFFFF">
+                                    <DataGrid x:Name="GridClasses" AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F1F5F9" RowHeight="24" FontSize="11" BorderThickness="0" Background="#FFFFFF">
                                         <DataGrid.Columns>
                                             <DataGridCheckBoxColumn Header="Show" Binding="{Binding IsVisible}" Width="45"/>
                                             <DataGridTextColumn Header="Value" Binding="{Binding Value}" IsReadOnly="True" Width="55"/>
                                             <DataGridTemplateColumn Header="Color" Width="65">
-                                                <DataGridTemplateColumn.CellTemplate>
-                                                    <DataTemplate>
-                                                        <Button Width="36" Height="17" Background="{Binding ColorHex}" BorderBrush="#94A3B8" BorderThickness="1" Cursor="Hand" Click="BtnColorPick_Click"/>
-                                                    </DataTemplate>
-                                                </DataGridTemplateColumn.CellTemplate>
+                                                <DataGridTemplateColumn.CellTemplate><DataTemplate><Button Width="36" Height="17" Background="{Binding ColorHex}" BorderBrush="#94A3B8" BorderThickness="1" Cursor="Hand" Click="BtnColorPick_Click"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
                                             </DataGridTemplateColumn>
                                             <DataGridTextColumn Header="Label / Class Description" Binding="{Binding Label}" Width="*"/>
                                         </DataGrid.Columns>
                                     </DataGrid>
                                 </Border>
-
-                                <!-- Table Action Buttons (Add/Remove) -->
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
-                                    <Button Content="➕ Add Class" Style="{StaticResource QgisButton}" Margin="0,0,6,0" Click="BtnAddClass_Click"/>
-                                    <Button Content="➖ Remove Class" Style="{StaticResource QgisButton}" Margin="0,0,6,0" Click="BtnRemoveClass_Click"/>
-                                    <Button Content="🎲 Shuffle Random" Style="{StaticResource QgisButton}" Click="BtnShuffle_Click"/>
+                                    <Button Content="➕ Add Class" Style="{StaticResource QgisButton}" Margin="0,0,6,0" Click="BtnAddClass_Click"/><Button Content="➖ Remove Class" Style="{StaticResource QgisButton}" Margin="0,0,6,0" Click="BtnRemoveClass_Click"/><Button Content="🎲 Shuffle Random" Style="{StaticResource QgisButton}" Click="BtnShuffle_Click"/>
                                 </StackPanel>
                             </StackPanel>
-
-                            <!-- 1C. Singleband Gray Panel -->
+                            <!-- 1C. Gray -->
                             <StackPanel x:Name="PanelGray" Visibility="Collapsed">
                                 <Grid Margin="0,0,0,6"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Color gradient" Style="{StaticResource QgisParamLabel}"/>
-                                    <ComboBox Grid.Column="1" x:Name="ComboGrayGradient" Style="{StaticResource QgisComboBox}"><ComboBoxItem Content="Black to white" IsSelected="True"/><ComboBoxItem Content="White to black"/></ComboBox>
+                                    <TextBlock Grid.Column="0" Text="Color gradient" Style="{StaticResource QgisParamLabel}"/><ComboBox Grid.Column="1" x:Name="ComboGrayGradient" Style="{StaticResource QgisComboBox}"><ComboBoxItem Content="Black to white" IsSelected="True"/><ComboBoxItem Content="White to black"/></ComboBox>
                                 </Grid>
                             </StackPanel>
-
-                            <!-- 1D. Singleband Pseudocolor Panel -->
-                            <StackPanel x:Name="PanelPseudocolor" Visibility="Collapsed">
-                                <TextBlock Text="Styled via selected continuous color ramp." FontSize="10.5" Foreground="#64748B" Margin="100,0,0,4"/>
-                            </StackPanel>
-
-                            <!-- 1E. Single Color Panel -->
+                            <!-- 1D. Pseudocolor -->
+                            <StackPanel x:Name="PanelPseudocolor" Visibility="Collapsed"><TextBlock Text="Styled via selected continuous color ramp." FontSize="10.5" Foreground="#64748B" Margin="100,0,0,4"/></StackPanel>
+                            <!-- 1E. Single Color -->
                             <StackPanel x:Name="PanelSingleColor" Visibility="Collapsed">
                                 <Grid Margin="0,0,0,6"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Color" Style="{StaticResource QgisParamLabel}"/>
-                                    <Button Grid.Column="1" x:Name="BtnSingleColorPick" Content="Pick Color..." Style="{StaticResource QgisButton}" HorizontalAlignment="Left" Click="BtnSingleColor_Click"/>
+                                    <TextBlock Grid.Column="0" Text="Color" Style="{StaticResource QgisParamLabel}"/><Button Grid.Column="1" x:Name="BtnSingleColorPick" Content="Pick Color..." Style="{StaticResource QgisButton}" HorizontalAlignment="Left" Click="BtnSingleColor_Click"/>
                                 </Grid>
                             </StackPanel>
-
-                            <!-- 1F. Hillshade Panel -->
+                            <!-- 1F. Hillshade -->
                             <StackPanel x:Name="PanelHillshade" Visibility="Collapsed">
                                 <Grid Margin="0,0,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/><ColumnDefinition Width="60"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Altitude" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="1" x:Name="TxtAltitude" Text="45" Style="{StaticResource QgisTextBox}" Margin="0,0,8,0"/>
-                                    <TextBlock Grid.Column="2" Text="Azimuth" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="3" x:Name="TxtAzimuth" Text="315" Style="{StaticResource QgisTextBox}"/>
+                                    <TextBlock Grid.Column="0" Text="Altitude" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="1" x:Name="TxtAltitude" Text="45" Style="{StaticResource QgisTextBox}" Margin="0,0,8,0"/><TextBlock Grid.Column="2" Text="Azimuth" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="3" x:Name="TxtAzimuth" Text="315" Style="{StaticResource QgisTextBox}"/>
                                 </Grid>
                             </StackPanel>
-
-                            <!-- 1G. Contours Panel -->
+                            <!-- 1G. Contours -->
                             <StackPanel x:Name="PanelContours" Visibility="Collapsed">
                                 <Grid Margin="0,0,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="Interval (m)" Style="{StaticResource QgisParamLabel}"/><TextBox Grid.Column="1" x:Name="TxtContourInterval" Text="25" Style="{StaticResource QgisTextBox}"/>
@@ -170,96 +351,55 @@
                     </Border>
                 </Expander>
 
-                <!-- 2. LAYER RENDERING SECTION (QGIS Sliders, Blend, Invert) -->
-                <Expander Header="Layer Rendering" IsExpanded="True" Style="{StaticResource QgisExpanderHeader}">
+                <!-- 2. LAYER RENDERING (Raster) -->
+                <Expander x:Name="ExpanderLayerRendering" Header="Layer Rendering" IsExpanded="True" Style="{StaticResource QgisExpanderHeader}">
                     <Border Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,4,0,8">
                         <StackPanel>
-                            <!-- Blending mode & Reset Button -->
-                            <Grid Margin="0,0,0,8">
+                            <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Blending mode" Style="{StaticResource QgisParamLabel}"/>
                                 <ComboBox Grid.Column="1" x:Name="ComboBlendMode" Style="{StaticResource QgisComboBox}" Margin="0,0,8,0" SelectionChanged="ComboBlendMode_SelectionChanged">
-                                    <ComboBoxItem Content="Normal" IsSelected="True"/>
-                                    <ComboBoxItem Content="Multiply"/><ComboBoxItem Content="Screen"/><ComboBoxItem Content="Overlay"/>
-                                    <ComboBoxItem Content="Darken"/><ComboBoxItem Content="Lighten"/><ComboBoxItem Content="Color Dodge"/>
-                                    <ComboBoxItem Content="Color Burn"/><ComboBoxItem Content="Hard Light"/><ComboBoxItem Content="Difference"/>
-                                    <ComboBoxItem Content="Exclusion"/>
+                                    <ComboBoxItem Content="Normal" IsSelected="True"/><ComboBoxItem Content="Multiply"/><ComboBoxItem Content="Screen"/><ComboBoxItem Content="Overlay"/><ComboBoxItem Content="Darken"/><ComboBoxItem Content="Lighten"/><ComboBoxItem Content="Difference"/>
                                 </ComboBox>
                                 <Button Grid.Column="2" x:Name="BtnResetRendering" Content="⟲ Reset" Style="{StaticResource QgisButton}" Foreground="#D97706" FontWeight="SemiBold" Click="BtnResetRendering_Click"/>
                             </Grid>
-
-                            <!-- Sliders: Brightness & Contrast -->
-                            <Grid Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Grid Grid.Column="0" Margin="0,0,8,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="42"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Brightness" Style="{StaticResource QgisParamLabel}"/>
-                                    <Slider Grid.Column="1" x:Name="SliderBrightness" Minimum="-100" Maximum="100" Value="0" VerticalAlignment="Center" ValueChanged="SliderBrightness_ValueChanged"/>
-                                    <TextBox Grid.Column="2" x:Name="TxtBrightness" Text="{Binding Value, ElementName=SliderBrightness, StringFormat={}{0:F0}}" Style="{StaticResource QgisTextBox}" Margin="4,0,0,0"/>
-                                </Grid>
-                                <Grid Grid.Column="1">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="60"/><ColumnDefinition Width="*"/><ColumnDefinition Width="42"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Contrast" Style="{StaticResource QgisParamLabel}"/>
-                                    <Slider Grid.Column="1" x:Name="SliderContrast" Minimum="-100" Maximum="100" Value="0" VerticalAlignment="Center" ValueChanged="SliderContrast_ValueChanged"/>
-                                    <TextBox Grid.Column="2" x:Name="TxtContrast" Text="{Binding Value, ElementName=SliderContrast, StringFormat={}{0:F0}}" Style="{StaticResource QgisTextBox}" Margin="4,0,0,0"/>
-                                </Grid>
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="42"/><ColumnDefinition Width="60"/><ColumnDefinition Width="*"/><ColumnDefinition Width="42"/></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Brightness" Style="{StaticResource QgisParamLabel}"/><Slider Grid.Column="1" x:Name="SliderBrightness" Minimum="-100" Maximum="100" Value="0" VerticalAlignment="Center" Margin="0,0,4,0" ValueChanged="SliderBrightness_ValueChanged"/><TextBox Grid.Column="2" x:Name="TxtBrightness" Text="{Binding Value, ElementName=SliderBrightness, StringFormat={}{0:F0}}" Style="{StaticResource QgisTextBox}" Margin="0,0,8,0"/>
+                                <TextBlock Grid.Column="3" Text="Contrast" Style="{StaticResource QgisParamLabel}"/><Slider Grid.Column="4" x:Name="SliderContrast" Minimum="-100" Maximum="100" Value="0" VerticalAlignment="Center" Margin="0,0,4,0" ValueChanged="SliderContrast_ValueChanged"/><TextBox Grid.Column="5" x:Name="TxtContrast" Text="{Binding Value, ElementName=SliderContrast, StringFormat={}{0:F0}}" Style="{StaticResource QgisTextBox}"/>
                             </Grid>
-
-                            <!-- Sliders: Gamma & Saturation -->
-                            <Grid Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Grid Grid.Column="0" Margin="0,0,8,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="42"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Gamma" Style="{StaticResource QgisParamLabel}"/>
-                                    <Slider Grid.Column="1" x:Name="SliderGamma" Minimum="0.1" Maximum="4.0" Value="1.0" SmallChange="0.05" VerticalAlignment="Center" ValueChanged="SliderGamma_ValueChanged"/>
-                                    <TextBox Grid.Column="2" x:Name="TxtGamma" Text="{Binding Value, ElementName=SliderGamma, StringFormat={}{0:F2}}" Style="{StaticResource QgisTextBox}" Margin="4,0,0,0"/>
-                                </Grid>
-                                <Grid Grid.Column="1">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="60"/><ColumnDefinition Width="*"/><ColumnDefinition Width="42"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Saturation" Style="{StaticResource QgisParamLabel}"/>
-                                    <Slider Grid.Column="1" x:Name="SliderSaturation" Minimum="-100" Maximum="100" Value="0" VerticalAlignment="Center" ValueChanged="SliderSaturation_ValueChanged"/>
-                                    <TextBox Grid.Column="2" x:Name="TxtSaturation" Text="{Binding Value, ElementName=SliderSaturation, StringFormat={}{0:F0}}" Style="{StaticResource QgisTextBox}" Margin="4,0,0,0"/>
-                                </Grid>
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="42"/><ColumnDefinition Width="60"/><ColumnDefinition Width="*"/><ColumnDefinition Width="42"/></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Gamma" Style="{StaticResource QgisParamLabel}"/><Slider Grid.Column="1" x:Name="SliderGamma" Minimum="0.1" Maximum="4.0" Value="1.0" SmallChange="0.05" VerticalAlignment="Center" Margin="0,0,4,0" ValueChanged="SliderGamma_ValueChanged"/><TextBox Grid.Column="2" x:Name="TxtGamma" Text="{Binding Value, ElementName=SliderGamma, StringFormat={}{0:F2}}" Style="{StaticResource QgisTextBox}" Margin="0,0,8,0"/>
+                                <TextBlock Grid.Column="3" Text="Saturation" Style="{StaticResource QgisParamLabel}"/><Slider Grid.Column="4" x:Name="SliderSaturation" Minimum="-100" Maximum="100" Value="0" VerticalAlignment="Center" Margin="0,0,4,0" ValueChanged="SliderSaturation_ValueChanged"/><TextBox Grid.Column="5" x:Name="TxtSaturation" Text="{Binding Value, ElementName=SliderSaturation, StringFormat={}{0:F0}}" Style="{StaticResource QgisTextBox}"/>
                             </Grid>
-
-                            <!-- Invert & Grayscale -->
-                            <Grid Margin="0,2,0,6">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <Grid Margin="0,2,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="60"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                 <CheckBox Grid.Column="0" x:Name="ChkInvertColors" Content="Invert colors" VerticalAlignment="Center" Margin="0,0,8,0" Click="ChkInvertColors_Click"/>
-                                <Grid Grid.Column="1">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="60"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Grayscale" Style="{StaticResource QgisParamLabel}"/>
-                                    <ComboBox Grid.Column="1" x:Name="ComboGrayscale" Style="{StaticResource QgisComboBox}" SelectionChanged="ComboGrayscale_SelectionChanged">
-                                        <ComboBoxItem Content="Off" IsSelected="True"/>
-                                        <ComboBoxItem Content="By lightness"/><ComboBoxItem Content="By luminosity"/><ComboBoxItem Content="By average"/>
-                                    </ComboBox>
-                                </Grid>
+                                <TextBlock Grid.Column="1" Text="Grayscale" Style="{StaticResource QgisParamLabel}"/>
+                                <ComboBox Grid.Column="2" x:Name="ComboGrayscale" Style="{StaticResource QgisComboBox}" SelectionChanged="ComboGrayscale_SelectionChanged">
+                                    <ComboBoxItem Content="Off" IsSelected="True"/><ComboBoxItem Content="By lightness"/><ComboBoxItem Content="By luminosity"/><ComboBoxItem Content="By average"/>
+                                </ComboBox>
                             </Grid>
                         </StackPanel>
                     </Border>
                 </Expander>
 
-                <!-- 3. RESAMPLING SECTION -->
-                <Expander Header="Resampling" IsExpanded="False" Style="{StaticResource QgisExpanderHeader}">
+                <!-- 3. RESAMPLING -->
+                <Expander x:Name="ExpanderResampling" Header="Resampling" IsExpanded="False" Style="{StaticResource QgisExpanderHeader}">
                     <Border Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,4,0,8">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Zoomed: in" Style="{StaticResource QgisParamLabel}"/>
-                            <ComboBox Grid.Column="1" x:Name="ComboResampleIn" Style="{StaticResource QgisComboBox}" Margin="0,0,8,0">
-                                <ComboBoxItem Content="Nearest Neighbour" IsSelected="True"/><ComboBoxItem Content="Bilinear"/><ComboBoxItem Content="Cubic"/>
-                            </ComboBox>
-                            <TextBlock Grid.Column="2" Text="out" Style="{StaticResource QgisParamLabel}"/>
-                            <ComboBox Grid.Column="3" x:Name="ComboResampleOut" Style="{StaticResource QgisComboBox}">
-                                <ComboBoxItem Content="Nearest Neighbour" IsSelected="True"/><ComboBoxItem Content="Average"/>
-                            </ComboBox>
+                            <TextBlock Grid.Column="0" Text="Zoomed: in" Style="{StaticResource QgisParamLabel}"/><ComboBox Grid.Column="1" x:Name="ComboResampleIn" Style="{StaticResource QgisComboBox}" Margin="0,0,8,0"><ComboBoxItem Content="Nearest Neighbour" IsSelected="True"/><ComboBoxItem Content="Bilinear"/><ComboBoxItem Content="Cubic"/></ComboBox>
+                            <TextBlock Grid.Column="2" Text="out" Style="{StaticResource QgisParamLabel}"/><ComboBox Grid.Column="3" x:Name="ComboResampleOut" Style="{StaticResource QgisComboBox}"><ComboBoxItem Content="Nearest Neighbour" IsSelected="True"/><ComboBoxItem Content="Average"/></ComboBox>
                         </Grid>
                     </Border>
                 </Expander>
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Dialog Footer (QGIS Style) -->
-        <Border Grid.Row="1" BorderBrush="#D1D5DB" BorderThickness="0,1,0,0" Padding="0,10,0,0" Margin="0,4,0,0">
+        <!-- Footer -->
+        <Border Grid.Row="1" BorderBrush="#D1D5DB" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,4,0,0">
             <Grid>
                 <Button Content="Style ▾" HorizontalAlignment="Left" Style="{StaticResource QgisButton}"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

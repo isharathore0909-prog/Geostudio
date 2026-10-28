@@ -165,14 +165,6 @@
 
         <!-- 15. PLUGINS TAB PANEL -->
         <StackPanel x:Name="PanelRibbonPlugins" Orientation="Horizontal" Visibility="Collapsed">
-            <StackPanel Orientation="Vertical">
-                <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Plugin Hub" Tag="/Resources/Icons/configure.png" ToolTip="Open Full Extension &amp; Plugin Manager" Click="BtnOpenPlugins_Click"/>
-                </StackPanel>
-                <TextBlock Text="Extension Hub" Style="{StaticResource RustGisGroupLabel}"/>
-            </StackPanel>
-
-            <Rectangle Width="1" Fill="#E2E8F0" Margin="6,4,6,4" VerticalAlignment="Stretch"/>
 
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">

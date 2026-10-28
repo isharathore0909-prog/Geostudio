@@ -45,6 +45,7 @@ from tasks import (
     task_satellite_index,
     task_clip_raster,
     task_raster_stats,
+    task_viewshed,
     task_landsat_lst,
     task_lulc_intelligence,
     task_transpose_fields,
@@ -63,6 +64,7 @@ TASK_REGISTRY = {
     "terrain": task_terrain_analysis,
     "elevation_relief": task_elevation_relief,
     "cut_fill": task_cut_fill,
+    "viewshed": task_viewshed,
 
     # Hydrological Modeling Tasks
     "watershed": task_watershed,

@@ -12,6 +12,21 @@ public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
+        AppDomain.CurrentDomain.AssemblyResolve += (s, args) =>
+        {
+            try
+            {
+                var asmName = new System.Reflection.AssemblyName(args.Name).Name;
+                string candidate = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{asmName}.dll");
+                if (File.Exists(candidate))
+                {
+                    return System.Reflection.Assembly.LoadFrom(candidate);
+                }
+            }
+            catch { }
+            return null;
+        };
+
         DispatcherUnhandledException += (s, args) =>
         {
             System.Diagnostics.Debug.WriteLine($"[UNHANDLED UI EXCEPTION] {args.Exception}");

@@ -21,10 +21,11 @@
                 <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Contours" Tag="/Resources/Icons/elevation.png" ToolTip="Generate Vector Contours" Click="MenuContour_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Cut / Fill" Tag="/Resources/Icons/cut_fill.png" ToolTip="Cut &amp; Fill Volumetrics" Click="MenuCutFill_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Volumetrics" Tag="/Resources/Icons/profile.png" ToolTip="Volumetric Analysis &amp; Stage-Storage Capacity" Click="MenuVolumetric_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Viewshed" Tag="/Resources/Icons/viewshed.png" ToolTip="3D Viewshed &amp; Line-of-Sight Visibility" Click="MenuViewshed_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Watershed" Tag="/Resources/Icons/watershed.png" ToolTip="Hydrological Watershed Delineation" Click="MenuWatershed_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="LULC Map" Tag="/Resources/Icons/classify_veg.png" ToolTip="Land Use &amp; Land Cover (LULC) Intelligence" Click="MenuLulc_Click"/>
                 </StackPanel>
-                <TextBlock Text="Terrain &amp; Land Cover" Style="{StaticResource RustGisGroupLabel}"/>
+                <TextBlock Text="Terrain &amp; Hydrology" Style="{StaticResource RustGisGroupLabel}"/>
             </StackPanel>
         </StackPanel>
 

@@ -82,20 +82,6 @@ namespace GeoStudio.UI.Dialogs.Layers
             };
         }
 
-        private void TxtSearchTabs_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (LstTabs == null || TxtSearchTabs == null) return;
-            string query = TxtSearchTabs.Text.Trim().ToLowerInvariant();
-            foreach (var item in LstTabs.Items)
-            {
-                if (item is ListBoxItem lbi)
-                {
-                    string tag = lbi.Tag?.ToString()?.ToLowerInvariant() ?? "";
-                    lbi.Visibility = (string.IsNullOrEmpty(query) || tag.Contains(query)) ? Visibility.Visible : Visibility.Collapsed;
-                }
-            }
-        }
-
         private void BtnStyle_Click(object sender, RoutedEventArgs e)
         {
             var cm = new ContextMenu();
@@ -112,9 +98,17 @@ namespace GeoStudio.UI.Dialogs.Layers
         private void BtnApply_Click(object sender, RoutedEventArgs e)
         {
             if (_layer == null) return;
-            _sourceTab.ApplyChanges(_layer, _main);
-            _transparencyTab.ApplyChanges(_layer, _main);
-            _renderingTab.ApplyChanges(_layer, _main);
+            try
+            {
+                _sourceTab?.ApplyChanges(_layer, _main);
+                _transparencyTab?.ApplyChanges(_layer, _main);
+                _renderingTab?.ApplyChanges(_layer, _main);
+                _symbologyTab?.ApplyChanges(_layer, _main);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[LayerOptions Apply Error]: {ex.Message}");
+            }
         }
 
         private void BtnOk_Click(object sender, RoutedEventArgs e)

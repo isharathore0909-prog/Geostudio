@@ -236,9 +236,13 @@ namespace GeoStudio
                     ? $"CONTOURS | {(featureCount > 0 ? $"{featureCount:N0} segments • " : "")}{fileInfo.Length / 1024.0:F1} KB"
                     : $"{ext.ToUpperInvariant().TrimStart('.')} | {(featureCount > 0 ? $"{featureCount:N0} features • " : "")}{fileInfo.Length / 1024.0:F1} KB",
                 ColorHex = colorHex,
+                FillColorHex = colorHex,
+                StrokeWidth = 1.6,
+                FillOpacity = 0.28,
                 FeatureCount = featureCount,
                 BoundingBox = bounds,
                 AttributeFields = System.Linq.Enumerable.ToList(attributeFields),
+                GeoJsonCachePath = cacheFilePath,
                 LoadTimeText = readText,
                 CanvasRenderTimeText = "Rendering...",
                 TotalDurationText = readText,
@@ -255,6 +259,13 @@ namespace GeoStudio
                 filePath.Contains("stream", StringComparison.OrdinalIgnoreCase) ||
                 filePath.Contains("drainage", StringComparison.OrdinalIgnoreCase));
 
+            bool isPointOrCentroid = layerName.Contains("centroid", StringComparison.OrdinalIgnoreCase) ||
+                layerName.Contains("point", StringComparison.OrdinalIgnoreCase) ||
+                filePath.Contains("centroid", StringComparison.OrdinalIgnoreCase) ||
+                filePath.Contains("point", StringComparison.OrdinalIgnoreCase);
+
+            int vectorZIndex = isPointOrCentroid ? 30 : (isDrainageStream ? 25 : 12);
+
             if (File.Exists(cacheFilePath))
             {
                 if (TxtBenchmarkStatus != null) TxtBenchmarkStatus.Text = "Rendering vector onto GPU map canvas...";
@@ -269,7 +280,8 @@ namespace GeoStudio
                     bounds = bounds,
                     isContour = isContourDetected,
                     isStream = isDrainageStream,
-                    zIndex = isDrainageStream ? 25 : 12,
+                    isPoint = isPointOrCentroid,
+                    zIndex = vectorZIndex,
                     interval = contourInterval ?? 10.0,
                     color = colorHex,
                     fileSizeBytes = fileInfo.Length,

@@ -6,9 +6,20 @@ namespace GeoStudio.DuckDB
 {
     public static class DuckDbPointCloudService
     {
-        public static bool HasData => DuckDbConnectionManager.HasData;
+        public static bool HasData
+        {
+            get
+            {
+                try { return DuckDbConnectionManager.HasData; }
+                catch { return false; }
+            }
+        }
 
-        public static void Initialize() => DuckDbConnectionManager.Initialize();
+        public static void Initialize()
+        {
+            try { DuckDbConnectionManager.Initialize(); }
+            catch { }
+        }
 
         public static PointCloudStats IngestLasFile(string filePath, Action<int>? progressCallback = null, int maxPointsToIngest = 1000000) =>
             DuckDbLasIngestor.IngestLasFile(filePath, progressCallback, maxPointsToIngest);
@@ -64,6 +75,10 @@ namespace GeoStudio.DuckDB
             return list;
         }
 
-        public static void Clear() => DuckDbConnectionManager.Clear();
+        public static void Clear()
+        {
+            try { DuckDbConnectionManager.Clear(); }
+            catch { }
+        }
     }
 }

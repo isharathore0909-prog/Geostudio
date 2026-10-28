@@ -1,0 +1,207 @@
+
+<Window x:Class="GeoStudio.UI.Dialogs.Terrain.VolumetricAnalysisWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:GeoStudio.UI.Components"
+        Title="Volumetric Analysis &amp; Stage-Storage Capacity"
+        Height="680" Width="820" MinHeight="540" MinWidth="700"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC" Foreground="#0F172A"
+        FontFamily="Segoe UI" FontSize="11.5">
+
+    <Window.Resources>
+        <Style x:Key="DialogCard" TargetType="Border">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,12"/>
+        </Style>
+        <Style x:Key="DialogParamLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="DialogActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#0284C7"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="12,6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="DialogSecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="10,5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <!-- 0. Header -->
+            <RowDefinition Height="Auto"/>
+            <!-- 1. Parameters Card -->
+            <RowDefinition Height="Auto"/>
+            <!-- 2. Metrics Grid -->
+            <RowDefinition Height="Auto"/>
+            <!-- 3. Stage-Storage DataGrid -->
+            <RowDefinition Height="*"/>
+            <!-- 4. Footer Bar -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 0. Header -->
+        <components:DialogHeader Grid.Row="0"
+            Icon="🌊" IconBrush="#0284C7" IconBg="#E0F2FE"
+            Title="Volumetric Analysis &amp; Stage-Storage Capacity"
+            Description="Calculate single-surface spatial volume above/below datum elevation and model hypsometric reservoir capacity curves."/>
+
+        <!-- 1. Parameters Card -->
+        <Border Grid.Row="1" Style="{StaticResource DialogCard}" Margin="0,0,0,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- DEM Surface -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="DEM Surface:" Style="{StaticResource DialogParamLabel}" Margin="0,4"/>
+                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="ComboDemSurface" Height="28" Margin="0,3,10,3" VerticalContentAlignment="Center" Background="#FFFFFF" SelectionChanged="ComboDemSurface_SelectionChanged"/>
+
+                <!-- Datum Mode -->
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Datum Elevation:" Style="{StaticResource DialogParamLabel}" Margin="0,4"/>
+                <ComboBox Grid.Row="0" Grid.Column="3" x:Name="ComboDatumMode" Height="28" Margin="0,3,10,3" VerticalContentAlignment="Center" Background="#FFFFFF" SelectionChanged="ComboDatumMode_SelectionChanged">
+                    <ComboBoxItem Content="Mean Elevation (Auto)" IsSelected="True"/>
+                    <ComboBoxItem Content="Minimum DEM Surface"/>
+                    <ComboBoxItem Content="Custom Elevation Datum (m)"/>
+                </ComboBox>
+
+                <!-- Custom Datum Value Input -->
+                <TextBox Grid.Row="0" Grid.Column="4" x:Name="TxtCustomDatum" Width="90" Height="28" Margin="0,3,0,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Padding="4,0" Text="0.0" IsEnabled="False"/>
+
+                <!-- Stage Intervals -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Stage Increments:" Style="{StaticResource DialogParamLabel}" Margin="0,8,0,4"/>
+                <ComboBox Grid.Row="1" Grid.Column="1" x:Name="ComboStageSteps" Height="28" Margin="0,6,10,2" VerticalContentAlignment="Center" Background="#FFFFFF">
+                    <ComboBoxItem Content="15 Incremental Stages"/>
+                    <ComboBoxItem Content="25 Incremental Stages" IsSelected="True"/>
+                    <ComboBoxItem Content="50 Detailed Stages"/>
+                </ComboBox>
+
+                <!-- Compute Button -->
+                <Button Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2" Content="⚡ Compute Volumetrics &amp; Stage-Storage" Height="30" Margin="0,6,0,2" Style="{StaticResource DialogActionButton}" Click="BtnCompute_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- 2. Metrics Summary Cards -->
+        <Grid Grid.Row="2" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Volume Below Datum (Water Storage Capacity) -->
+            <components:MetricTile x:Name="TileStorageCap" Grid.Column="0" Margin="0,0,6,0"
+                Label="RESERVOIR CAPACITY (BELOW DATUM)" Value="0.00 m³" Subtext="— ML (Megaliters)"
+                LabelBrush="#0284C7" ValueBrush="#0369A1" TileBackground="#F0F9FF" TileBorderBrush="#BAE6FD"/>
+
+            <!-- Volume Above Datum (Stockpile / Mountain) -->
+            <components:MetricTile x:Name="TileVolAbove" Grid.Column="1" Margin="3,0,3,0"
+                Label="VOLUME ABOVE DATUM (TERRAIN)" Value="0.00 m³" Subtext="Excess bulk volume"
+                LabelBrush="#D97706" ValueBrush="#B45309" TileBackground="#FFFBEB" TileBorderBrush="#FDE68A"/>
+
+            <!-- Total Surface Area -->
+            <components:MetricTile x:Name="TileSurfaceArea" Grid.Column="2" Margin="3,0,3,0"
+                Label="TOTAL SURFACE AREA" Value="0.0 ha" Subtext="— m² total planimetric"
+                LabelBrush="#16A34A" ValueBrush="#15803D" TileBackground="#F0FDF4" TileBorderBrush="#BBF7D0"/>
+
+            <!-- Elevation Range -->
+            <components:MetricTile x:Name="TileElevRange" Grid.Column="3" Margin="6,0,0,0"
+                Label="ELEVATION PROFILE" Value="— m" Subtext="Min: — m | Max: — m"
+                LabelBrush="#64748B" ValueBrush="#334155" TileBackground="#F8FAFC" TileBorderBrush="#E2E8F0"/>
+        </Grid>
+
+        <!-- 3. Stage-Storage DataGrid -->
+        <Border Grid.Row="3" Style="{StaticResource DialogCard}" Padding="0" Margin="0,0,0,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="12,7">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📊" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="HYPSOMETRIC STAGE-STORAGE CAPACITY CURVE TABLE" FontWeight="Bold" FontSize="11" Foreground="#334155" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock x:Name="TxtTableInfo" HorizontalAlignment="Right" Text="0 stages calculated" FontSize="10.5" Foreground="#64748B" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <DataGrid Grid.Row="1" x:Name="GridStageStorage" AutoGenerateColumns="False" IsReadOnly="True"
+                          Background="#FFFFFF" BorderThickness="0" GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="#F1F5F9" RowHeaderWidth="0" SelectionMode="Single"
+                          AlternatingRowBackground="#F8FAFC" FontSize="11">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Stage" Binding="{Binding StageIndex}" Width="55"/>
+                        <DataGridTextColumn Header="Elevation (m)" Binding="{Binding ElevationText}" Width="105"/>
+                        <DataGridTextColumn Header="Depth / Head (m)" Binding="{Binding StageHeightText}" Width="115"/>
+                        <DataGridTextColumn Header="Inundated Area (ha)" Binding="{Binding AreaHaText}" Width="125"/>
+                        <DataGridTextColumn Header="Surface Area (m²)" Binding="{Binding AreaM2Text}" Width="130"/>
+                        <DataGridTextColumn Header="Incremental Vol (m³)" Binding="{Binding VolumeBelowText}" Width="135"/>
+                        <DataGridTextColumn Header="Cumulative Storage (m³)" Binding="{Binding CumulativeCapacityText}" Width="*"/>
+                        <DataGridTextColumn Header="Storage (ML)" Binding="{Binding MegaLitersText}" Width="95"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <!-- 4. Footer Bar -->
+        <Border Grid.Row="4" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10,8">
+            <Grid VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="📁" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtStatus" Text="Ready to calculate volumetric analysis." FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="BtnExportCsv" Content="📥 Export Stage-Storage CSV..." Style="{StaticResource DialogSecondaryButton}" Margin="0,0,8,0" Click="BtnExportCsv_Click" IsEnabled="False"/>
+                    <Button Content="Close" Style="{StaticResource DialogSecondaryButton}" Width="75" Click="BtnClose_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

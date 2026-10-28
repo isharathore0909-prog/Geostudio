@@ -28,6 +28,7 @@ from .raster_tasks import (
     task_satellite_index,
     task_clip_raster,
     task_raster_stats,
+    task_viewshed,
 )
 
 from .landsat_tasks import (

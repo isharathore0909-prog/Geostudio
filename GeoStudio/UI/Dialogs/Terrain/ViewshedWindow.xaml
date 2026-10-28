@@ -1,0 +1,217 @@
+<Window x:Class="GeoStudio.UI.Dialogs.Terrain.ViewshedWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:GeoStudio.UI.Components"
+        Title="3D Viewshed &amp; Line-of-Sight Analysis"
+        Height="650" Width="750" MinHeight="520" MinWidth="650"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC" Foreground="#0F172A"
+        FontFamily="Segoe UI" FontSize="11.5">
+
+    <Window.Resources>
+        <Style x:Key="DialogCard" TargetType="Border">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,12"/>
+        </Style>
+        <Style x:Key="DialogParamLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="DialogActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#059669"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="14,7">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="DialogSecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="10,5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <!-- 0. Header -->
+            <RowDefinition Height="Auto"/>
+            <!-- 1. Observer & DEM Card -->
+            <RowDefinition Height="Auto"/>
+            <!-- 2. Visibility Sight Parameters Card -->
+            <RowDefinition Height="Auto"/>
+            <!-- 3. Output Path & Actions -->
+            <RowDefinition Height="Auto"/>
+            <!-- 4. Result Metrics Grid -->
+            <RowDefinition Height="*"/>
+            <!-- 5. Footer Bar -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 0. Header -->
+        <components:DialogHeader Grid.Row="0"
+            Icon="👁️" IconBrush="#059669" IconBg="#ECFDF5"
+            Title="3D Viewshed &amp; Line-of-Sight Visibility"
+            Description="Calculate visible and obstructed terrain areas from an observer viewpoint with Earth curvature and refraction."/>
+
+        <!-- 1. Observer & DEM Card -->
+        <Border Grid.Row="1" Style="{StaticResource DialogCard}" Margin="0,0,0,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="130"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- DEM Surface -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="DEM Surface:" Style="{StaticResource DialogParamLabel}" Margin="0,4"/>
+                <ComboBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" x:Name="ComboDemSurface" Height="28" Margin="0,3,0,3" VerticalContentAlignment="Center" Background="#FFFFFF" SelectionChanged="ComboDemSurface_SelectionChanged"/>
+
+                <!-- Observer Coordinates -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Observer (X, Y):" Style="{StaticResource DialogParamLabel}" Margin="0,8,0,4"/>
+                <Grid Grid.Row="1" Grid.Column="1" Margin="0,6,8,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0" x:Name="TxtObserverX" Height="28" Margin="0,0,4,0" VerticalContentAlignment="Center" Padding="4,0" ToolTip="Observer X (Easting / Longitude)"/>
+                    <TextBox Grid.Column="1" x:Name="TxtObserverY" Height="28" Margin="4,0,0,0" VerticalContentAlignment="Center" Padding="4,0" ToolTip="Observer Y (Northing / Latitude)"/>
+                </Grid>
+                <Button Grid.Row="1" Grid.Column="2" Content="🎯 Center of DEM" Height="28" Margin="0,6,0,2" Style="{StaticResource DialogSecondaryButton}" Click="BtnSetCenter_Click" ToolTip="Auto-populate observer point with DEM center coordinates"/>
+            </Grid>
+        </Border>
+
+        <!-- 2. Visibility Sight Parameters Card -->
+        <Border Grid.Row="2" Style="{StaticResource DialogCard}" Margin="0,0,0,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="160"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Observer Height -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Observer Height (m):" Style="{StaticResource DialogParamLabel}" Margin="0,4"/>
+                <TextBox Grid.Row="0" Grid.Column="1" x:Name="TxtObserverHeight" Height="28" Margin="0,3,10,3" VerticalContentAlignment="Center" Text="2.0" ToolTip="Height above ground (e.g. 1.75m eye level, 10m watchtower, 30m tower)"/>
+
+                <!-- Target Height -->
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Target Object Height (m):" Style="{StaticResource DialogParamLabel}" Margin="0,4"/>
+                <TextBox Grid.Row="0" Grid.Column="3" x:Name="TxtTargetHeight" Height="28" Margin="0,3,0,3" VerticalContentAlignment="Center" Text="0.0" ToolTip="Height of target object above ground (e.g. 0m ground, 2m vehicle)"/>
+
+                <!-- Max Sight Distance -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Max Sight Radius (m):" Style="{StaticResource DialogParamLabel}" Margin="0,8,0,4"/>
+                <TextBox Grid.Row="1" Grid.Column="1" x:Name="TxtMaxDistance" Height="28" Margin="0,6,10,2" VerticalContentAlignment="Center" Text="5000" ToolTip="Maximum analysis radius (meters)"/>
+
+                <!-- Curvature & Refraction -->
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="Refraction &amp; Curvature:" Style="{StaticResource DialogParamLabel}" Margin="0,8,0,4"/>
+                <TextBox Grid.Row="1" Grid.Column="3" x:Name="TxtCurvature" Height="28" Margin="0,6,0,2" VerticalContentAlignment="Center" Text="0.85714" ToolTip="Earth curvature and atmospheric refraction coefficient (default: 0.85714)"/>
+            </Grid>
+        </Border>
+
+        <!-- 3. Output Path & Compute Action -->
+        <Border Grid.Row="3" Style="{StaticResource DialogCard}" Margin="0,0,0,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="130"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Output Viewshed:" Style="{StaticResource DialogParamLabel}" Margin="0,4"/>
+                <components:OutputPathPicker Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" x:Name="PickerOutput" Height="30" Margin="0,2,0,4"
+                                            FileFilter="GeoTIFF Raster (*.tif)|*.tif"
+                                            DialogTitle="Save Viewshed Output GeoTIFF"/>
+
+                <CheckBox Grid.Row="1" Grid.Column="1" x:Name="ChkAddToCanvas" Content="Load Viewshed layer onto map canvas on completion"
+                          IsChecked="True" VerticalAlignment="Center" Margin="0,6,0,0" Foreground="#334155" FontWeight="SemiBold"/>
+
+                <Button Grid.Row="1" Grid.Column="2" Content="⚡ Calculate Viewshed Visibility" Height="32" Margin="0,6,0,0"
+                        Style="{StaticResource DialogActionButton}" Click="BtnCompute_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- 4. Result Metrics Grid -->
+        <Grid Grid.Row="4" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Visible Area -->
+            <components:MetricTile x:Name="TileVisibleArea" Grid.Column="0" Margin="0,0,5,0"
+                Label="VISIBLE TERRAIN AREA" Value="0.00 km²" Subtext="— ha visible"
+                LabelBrush="#059669" ValueBrush="#047857" TileBackground="#ECFDF5" TileBorderBrush="#A7F3D0"/>
+
+            <!-- Total Radius Area -->
+            <components:MetricTile x:Name="TileRadiusArea" Grid.Column="1" Margin="3,0,3,0"
+                Label="ANALYZED SIGHT RADIUS" Value="0.00 km²" Subtext="— m radius"
+                LabelBrush="#0284C7" ValueBrush="#0369A1" TileBackground="#F0F9FF" TileBorderBrush="#BAE6FD"/>
+
+            <!-- Visibility Coverage Ratio -->
+            <components:MetricTile x:Name="TileCoverageRatio" Grid.Column="2" Margin="3,0,3,0"
+                Label="VISIBILITY COVERAGE" Value="0.0%" Subtext="Line-of-Sight ratio"
+                LabelBrush="#D97706" ValueBrush="#B45309" TileBackground="#FFFBEB" TileBorderBrush="#FDE68A"/>
+
+            <!-- Observer Coordinates & Elevation -->
+            <components:MetricTile x:Name="TileObserverInfo" Grid.Column="3" Margin="5,0,0,0"
+                Label="OBSERVER POSITION" Value="— m Ground" Subtext="X: — | Y: —"
+                LabelBrush="#64748B" ValueBrush="#334155" TileBackground="#F8FAFC" TileBorderBrush="#E2E8F0"/>
+        </Grid>
+
+        <!-- 5. Footer Bar -->
+        <Border Grid.Row="5" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10,8">
+            <Grid VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="📁" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtStatus" Text="Ready to calculate 3D Viewshed." FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Close" Style="{StaticResource DialogSecondaryButton}" Width="75" Click="BtnClose_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

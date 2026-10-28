@@ -3,68 +3,30 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
+using System.Windows.Media;
 using GeoStudio.Raster.Services;
 
 namespace GeoStudio.UI.Dialogs.Raster
 {
     public partial class LayerSymbologyWindow
     {
-        [StructLayout(LayoutKind.Sequential)]
-        private struct CHOOSECOLOR
-        {
-            public int lStructSize;
-            public IntPtr hwndOwner;
-            public IntPtr hInstance;
-            public int rgbResult;
-            public IntPtr lpCustColors;
-            public int Flags;
-            public IntPtr lCustData;
-            public IntPtr lpfnHook;
-            public IntPtr lpTemplateName;
-        }
-
-        [DllImport("comdlg32.dll", SetLastError = true)]
-        private static extern bool ChooseColor(ref CHOOSECOLOR cc);
-
-        private static readonly int[] _customColors = new int[16];
-
         private void BtnColorPick_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.DataContext is RasterClassItem item)
             {
-                byte r = item.R;
-                byte g = item.G;
-                byte b = item.B;
-
-                var cc = new CHOOSECOLOR();
-                cc.lStructSize = Marshal.SizeOf(cc);
-                cc.hwndOwner = new WindowInteropHelper(this).Handle;
-                cc.rgbResult = r | (g << 8) | (b << 16);
-                cc.Flags = 0x00000001 | 0x00000002;
-
-                var handle = GCHandle.Alloc(_customColors, GCHandleType.Pinned);
-                try
+                string? hex = GeoStudio.UI.Services.ColorDialogHelper.PromptColorHex(item.ColorHex, this);
+                if (!string.IsNullOrEmpty(hex))
                 {
-                    cc.lpCustColors = handle.AddrOfPinnedObject();
-                    if (ChooseColor(ref cc))
+                    var c = (Color)ColorConverter.ConvertFromString(hex);
+                    item.R = c.R; item.G = c.G; item.B = c.B; item.A = 255;
+                    item.ColorHex = hex;
+
+                    int idx = _classes.IndexOf(item);
+                    if (idx >= 0)
                     {
-                        item.R = (byte)(cc.rgbResult & 0xFF);
-                        item.G = (byte)((cc.rgbResult >> 8) & 0xFF);
-                        item.B = (byte)((cc.rgbResult >> 16) & 0xFF);
-                        item.A = 255;
-                        item.ColorHex = $"#{item.R:X2}{item.G:X2}{item.B:X2}";
-
-                        int idx = _classes.IndexOf(item);
-                        if (idx >= 0)
-                        {
-                            _classes.RemoveAt(idx);
-                            _classes.Insert(idx, item);
-                        }
+                        _classes.RemoveAt(idx);
+                        _classes.Insert(idx, item);
                     }
-                }
-                finally
-                {
-                    handle.Free();
                 }
             }
         }

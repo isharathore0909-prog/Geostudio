@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using GeoStudio.Raster.Services;
 
 namespace GeoStudio.UI.Dialogs.Raster
@@ -164,29 +165,12 @@ namespace GeoStudio.UI.Dialogs.Raster
 
         private void PickSingleColor()
         {
-            byte r = 59, g = 130, b = 246;
-            var cc = new CHOOSECOLOR();
-            cc.lStructSize = System.Runtime.InteropServices.Marshal.SizeOf(cc);
-            cc.hwndOwner = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-            cc.rgbResult = r | (g << 8) | (b << 16);
-            cc.Flags = 0x00000001 | 0x00000002;
-
-            var handle = System.Runtime.InteropServices.GCHandle.Alloc(_customColors, System.Runtime.InteropServices.GCHandleType.Pinned);
-            try
+            string? hex = GeoStudio.UI.Services.ColorDialogHelper.PromptColorHex("#3B82F6", this);
+            if (!string.IsNullOrEmpty(hex))
             {
-                cc.lpCustColors = handle.AddrOfPinnedObject();
-                if (ChooseColor(ref cc))
-                {
-                    r = (byte)(cc.rgbResult & 0xFF);
-                    g = (byte)((cc.rgbResult >> 8) & 0xFF);
-                    b = (byte)((cc.rgbResult >> 16) & 0xFF);
-                    BtnSingleColorPick.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
-                    BtnSingleColorPick.Content = $"#{r:X2}{g:X2}{b:X2}";
-                }
-            }
-            finally
-            {
-                handle.Free();
+                var brush = (Brush)new BrushConverter().ConvertFromString(hex)!;
+                BtnSingleColorPick.Background = brush;
+                BtnSingleColorPick.Content = hex;
             }
         }
     }

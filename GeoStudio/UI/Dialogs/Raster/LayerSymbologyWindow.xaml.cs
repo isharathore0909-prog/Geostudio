@@ -17,19 +17,31 @@ namespace GeoStudio.UI.Dialogs.Raster
         private readonly LayerItem _layer;
         private readonly ObservableCollection<RasterClassItem> _classes = new();
         private int _bandCount = 1;
+        private bool _isInitializing = true;
 
         public LayerSymbologyWindow(MainWindow main, LayerItem layer)
         {
-            InitializeComponent();
+            _isInitializing = true;
             _main = main;
             _layer = layer;
+
+            InitializeComponent();
             Owner = main;
 
             Title = $"{layer.Name} — Symbology";
-            GridClasses.ItemsSource = _classes;
+            if (GridClasses != null) GridClasses.ItemsSource = _classes;
 
-            InspectBandsAndPopulate();
-            LoadLayerInitialSymbology();
+            if (_layer.Type == LayerType.Vector)
+            {
+                InitializeVectorSymbology();
+            }
+            else
+            {
+                InspectBandsAndPopulate();
+                LoadLayerInitialSymbology();
+            }
+
+            _isInitializing = false;
         }
 
         private void InspectBandsAndPopulate()
@@ -114,6 +126,12 @@ namespace GeoStudio.UI.Dialogs.Raster
 
         private void ApplySymbology()
         {
+            if (_layer.Type == LayerType.Vector)
+            {
+                ApplyVectorSymbology();
+                return;
+            }
+
             string mode = (ComboRenderType.SelectedItem as ComboBoxItem)?.Tag as string ?? "paletted";
 
             if (mode == "paletted")

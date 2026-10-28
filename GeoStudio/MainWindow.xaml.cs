@@ -25,9 +25,17 @@ namespace GeoStudio
         public UI.Dialogs.ClipRasterWindow? ActiveClipRasterWindow { get; set; }
         public UI.Dialogs.GeoprocessingWindow? ActiveClipVectorWindow { get; set; }
         public UI.Dialogs.SpectralIndicesWindow? ActiveSpectralIndicesWindow { get; set; }
+        public UI.Dialogs.Routing.RoutingWindow? ActiveRoutingWindow { get; set; }
         private PointCloud.PointCloudBatch? _activePointCloudBatch = null;
         private bool _lidarClassifiedWithSmrf = false;
         private string? _activeLidarClassificationState = null;
+
+        public void StartOriginPicker(UI.Dialogs.Routing.RoutingWindow window)
+        {
+            ActiveRoutingWindow = window;
+            PostMessageToMap(new { action = "setTool", tool = "pick_origin" });
+            TxtStatus.Text = "📍 Click anywhere on the map canvas to set Origin...";
+        }
 
         public MainWindow()
         {

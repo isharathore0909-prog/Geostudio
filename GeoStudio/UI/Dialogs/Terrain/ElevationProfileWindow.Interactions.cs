@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.Win32;
+using GeoStudio.UI.Services;
 
 namespace GeoStudio.UI
 {
@@ -85,23 +85,16 @@ namespace GeoStudio.UI
 
         private void BtnExportCsv_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new SaveFileDialog
-            {
-                Title = "Export Elevation Profile CSV",
-                Filter = "CSV Files (*.csv)|*.csv",
-                FileName = $"{Path.GetFileNameWithoutExtension(_layerName)}_elevation_profile.csv"
-            };
+            if (FileDialogHelper.PromptSave("CSV Files (*.csv)|*.csv", $"{Path.GetFileNameWithoutExtension(_layerName)}_elevation_profile.csv", "Export Elevation Profile CSV") is not { } savePath)
+                return;
 
-            if (dlg.ShowDialog() == true)
+            using var sw = new StreamWriter(savePath);
+            sw.WriteLine("Station_Distance_m,Elevation_m");
+            for (int i = 0; i < _distances.Length; i++)
             {
-                using var sw = new StreamWriter(dlg.FileName);
-                sw.WriteLine("Station_Distance_m,Elevation_m");
-                for (int i = 0; i < _distances.Length; i++)
-                {
-                    sw.WriteLine($"{_distances[i]:F3},{_elevations[i]:F3}");
-                }
-                MessageBox.Show($"Elevation transect exported to CSV ({_distances.Length} points).", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                sw.WriteLine($"{_distances[i]:F3},{_elevations[i]:F3}");
             }
+            MessageBox.Show($"Elevation transect exported to CSV ({_distances.Length} points).", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)

@@ -60,27 +60,11 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Border Width="10" Height="10" CornerRadius="2" Margin="0,0,6,0" VerticalAlignment="Center" Background="#2563EB"/>
                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="11.5" Foreground="#1E293B" 
-                                       TextTrimming="CharacterEllipsis" MaxWidth="190" ToolTip="{Binding Name}"/>
-                            <Border Visibility="{Binding UseGpuAcceleration, Converter={StaticResource BoolToVis}}" 
-                                    Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="2" 
-                                    Padding="2,0" Margin="4,0,0,0" VerticalAlignment="Center" ToolTip="GPU Hardware Accelerated Layer">
-                                <TextBlock Text="⚡ GPU" FontSize="8" FontWeight="Bold" Foreground="#2563EB"/>
-                            </Border>
+                                       TextTrimming="CharacterEllipsis" MaxWidth="210" ToolTip="{Binding Name}"/>
                         </StackPanel>
 
                         <TextBlock Text="{Binding Details}" FontSize="9.5" Foreground="#64748B" Margin="16,2,0,0" 
-                                   TextTrimming="CharacterEllipsis" MaxWidth="200" ToolTip="{Binding Details}"/>
-
-                        <!-- Load & Canvas Render Duration Pill -->
-                        <Border Visibility="{Binding HasLoadTime, Converter={StaticResource BoolToVis}}" 
-                                Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="3" 
-                                Padding="4,1" Margin="16,3,0,0" HorizontalAlignment="Left">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="⏱️" FontSize="8.5" Margin="0,0,3,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding TotalDurationText}" FontSize="8.5" FontWeight="SemiBold" Foreground="#15803D" VerticalAlignment="Center"/>
-                                <TextBlock Text=" to canvas" FontSize="8" Foreground="#16A34A" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
+                                   TextTrimming="CharacterEllipsis" MaxWidth="210" ToolTip="{Binding Details}"/>
                     </StackPanel>
                 </Grid>
             </Border>

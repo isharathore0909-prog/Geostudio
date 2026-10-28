@@ -29,7 +29,91 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14,12">
         <StackPanel>
-            <Expander Header="Band Rendering" IsExpanded="True" Style="{StaticResource QgisExpanderHeader}">
+            <!-- Vector Symbology (QGIS Single Symbol) -->
+            <Expander x:Name="ExpanderVectorSymbology" Header="Vector Feature Symbology" IsExpanded="True" Style="{StaticResource QgisExpanderHeader}" Visibility="Collapsed">
+                <Border Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="12,10" Margin="0,4,0,10">
+                    <StackPanel>
+                        <!-- Render Type -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Symbol type" Style="{StaticResource QgisParamLabel}"/>
+                            <ComboBox Grid.Column="1" x:Name="ComboTabVectorRenderType" Height="24" VerticalContentAlignment="Center" BorderBrush="#CBD5E1" Background="#FFFFFF" FontSize="11" SelectionChanged="ComboTabVectorRenderType_SelectionChanged">
+                                <ComboBoxItem Content="Single Symbol" Tag="single" IsSelected="True"/>
+                                <ComboBoxItem Content="Categorized" Tag="categorized"/>
+                                <ComboBoxItem Content="Graduated" Tag="graduated"/>
+                                <ComboBoxItem Content="Rule-based" Tag="rule"/>
+                                <ComboBoxItem Content="Merged Features" Tag="merged"/>
+                                <ComboBoxItem Content="Inverted Polygons" Tag="inverted"/>
+                                <ComboBoxItem Content="2.5 D" Tag="2.5d"/>
+                                <ComboBoxItem Content="No Symbols" Tag="nosymbol"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Fill Color -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Color" Style="{StaticResource QgisParamLabel}"/>
+                            <Button Grid.Column="1" x:Name="BtnTabFillColorBar" Height="26" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" HorizontalContentAlignment="Stretch" Padding="4,2" Click="BtnTabPickFill_Click">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="38"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" x:Name="SwatchTabFill" Width="34" Height="18" Background="#10B981" BorderBrush="#94A3B8" BorderThickness="1" CornerRadius="2" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" x:Name="TxtTabFillHex" Text="#10B981" FontSize="11" Foreground="#334155" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                    <TextBlock Grid.Column="2" Text="▾" FontSize="11" Foreground="#64748B" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                </Grid>
+                            </Button>
+                        </Grid>
+
+                        <!-- Fill Opacity -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="55"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Opacity" Style="{StaticResource QgisParamLabel}"/>
+                            <Slider Grid.Column="1" x:Name="SliderTabFillOpacity" Minimum="0" Maximum="100" Value="28" VerticalAlignment="Center" Margin="0,0,8,0" ValueChanged="SliderTab_ValueChanged"/>
+                            <TextBox Grid.Column="2" Text="{Binding Value, ElementName=SliderTabFillOpacity, StringFormat={}{0:F1}%}" Height="22" VerticalContentAlignment="Center" BorderBrush="#CBD5E1" FontSize="10.5" IsReadOnly="True" HorizontalContentAlignment="Center"/>
+                        </Grid>
+
+                        <!-- Stroke Color -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Stroke" Style="{StaticResource QgisParamLabel}"/>
+                            <Button Grid.Column="1" x:Name="BtnTabStrokeColorBar" Height="26" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" HorizontalContentAlignment="Stretch" Padding="4,2" Click="BtnTabPickStroke_Click">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="38"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" x:Name="SwatchTabStroke" Width="34" Height="18" Background="#10B981" BorderBrush="#94A3B8" BorderThickness="1" CornerRadius="2" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" x:Name="TxtTabStrokeHex" Text="#10B981" FontSize="11" Foreground="#334155" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                    <TextBlock Grid.Column="2" Text="▾" FontSize="11" Foreground="#64748B" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                </Grid>
+                            </Button>
+                        </Grid>
+
+                        <!-- Stroke Width -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="55"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Width" Style="{StaticResource QgisParamLabel}"/>
+                            <Slider Grid.Column="1" x:Name="SliderTabStrokeWidth" Minimum="0.2" Maximum="8.0" Value="1.5" VerticalAlignment="Center" Margin="0,0,8,0" ValueChanged="SliderTab_ValueChanged"/>
+                            <TextBox Grid.Column="2" Text="{Binding Value, ElementName=SliderTabStrokeWidth, StringFormat={}{0:F2} mm}" Height="22" VerticalContentAlignment="Center" BorderBrush="#CBD5E1" FontSize="10.5" IsReadOnly="True" HorizontalContentAlignment="Center"/>
+                        </Grid>
+
+                        <!-- Stroke Style -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Style" Style="{StaticResource QgisParamLabel}"/>
+                            <ComboBox Grid.Column="1" x:Name="ComboTabDashStyle" Height="24" VerticalContentAlignment="Center" BorderBrush="#CBD5E1" Background="#FFFFFF" FontSize="11" SelectionChanged="ComboTabDashStyle_SelectionChanged">
+                                <ComboBoxItem Content="Solid Line" Tag="solid" IsSelected="True"/>
+                                <ComboBoxItem Content="Dashed Line" Tag="dashed"/>
+                                <ComboBoxItem Content="Dotted Line" Tag="dotted"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Actions -->
+                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                            <Button Content="Open Full Symbology Studio..." Style="{StaticResource QgisStandardButton}" Click="BtnOpenFullSymbology_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Expander>
+
+            <!-- Raster Symbology -->
+            <Expander x:Name="ExpanderRasterSymbology" Header="Band Rendering" IsExpanded="True" Style="{StaticResource QgisExpanderHeader}">
                 <Border Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,4,0,10">
                     <StackPanel>
                         <!-- Render Type -->
