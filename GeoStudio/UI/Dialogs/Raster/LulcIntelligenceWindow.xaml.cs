@@ -122,17 +122,10 @@ namespace GeoStudio.UI.Dialogs.Raster
                             using var doc = JsonDocument.Parse(result.OutputData);
                             var root = doc.RootElement;
                             if (root.TryGetProperty("total_area_ha", out var totElem))
-                                TileTotal.Value = $"{totElem.GetDouble():N0} ha";
-                            if (root.TryGetProperty("forest_area_ha", out var forElem))
-                                TileForest.Value = $"{forElem.GetDouble():N0} ha";
-                            if (root.TryGetProperty("crop_area_ha", out var crpElem))
-                                TileAgri.Value = $"{crpElem.GetDouble():N0} ha";
-                            if (root.TryGetProperty("water_area_ha", out var wtrElem))
-                                TileWater.Value = $"{wtrElem.GetDouble():N0} ha";
+                                ActionBar.StatusText = $"LULC complete! Total extent: {totElem.GetDouble():N0} ha.";
                         }
                         catch
                         {
-                            // Metric update fallback
                         }
                     }
 

@@ -40,24 +40,26 @@
             </Grid>
         </Border>
 
-        <!-- Metric Stat Cards Component Row -->
-        <Grid Grid.Row="1" Margin="0,0,0,14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <!-- Clean Stat Summary Strip -->
+        <Border Grid.Row="1" Style="{StaticResource DialogCard}" Padding="12,8" Margin="0,0,0,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-            <components:MetricTile x:Name="TxtLength" Grid.Column="0" Label="TRANSECT LENGTH" Value="0.0 m" ValueBrush="#0284C7"/>
-            <components:MetricTile x:Name="TxtMinElev" Grid.Column="1" Label="MIN ELEVATION" Value="0.0 m" ValueBrush="#10B981"/>
-            <components:MetricTile x:Name="TxtMaxElev" Grid.Column="2" Label="MAX ELEVATION" Value="0.0 m" ValueBrush="#D97706"/>
-            <components:MetricTile x:Name="TxtRelief" Grid.Column="3" Label="RELIEF (ΔZ)" Value="0.0 m" ValueBrush="#8B5CF6"/>
-            <components:MetricTile x:Name="TxtGainLoss" Grid.Column="4" Label="ELEV GAIN / LOSS" Value="+0.0m / -0.0m" ValueBrush="#EC4899"/>
-            <components:MetricTile x:Name="TxtSlope" Grid.Column="5" Label="AVG / MAX SLOPE" Value="0.0° / 0.0°" ValueBrush="#0F172A"/>
-        </Grid>
+                <TextBlock Grid.Column="0"><Run Text="Length: " FontWeight="SemiBold" Foreground="#64748B"/><Run x:Name="TxtLength" Text="0.0 m" FontWeight="Bold" Foreground="#0284C7"/></TextBlock>
+                <TextBlock Grid.Column="1"><Run Text="Min Elev: " FontWeight="SemiBold" Foreground="#64748B"/><Run x:Name="TxtMinElev" Text="0.0 m" FontWeight="Bold" Foreground="#10B981"/></TextBlock>
+                <TextBlock Grid.Column="2"><Run Text="Max Elev: " FontWeight="SemiBold" Foreground="#64748B"/><Run x:Name="TxtMaxElev" Text="0.0 m" FontWeight="Bold" Foreground="#D97706"/></TextBlock>
+                <TextBlock Grid.Column="3"><Run Text="Relief: " FontWeight="SemiBold" Foreground="#64748B"/><Run x:Name="TxtRelief" Text="0.0 m" FontWeight="Bold" Foreground="#8B5CF6"/></TextBlock>
+                <TextBlock Grid.Column="4"><Run Text="Gain/Loss: " FontWeight="SemiBold" Foreground="#64748B"/><Run x:Name="TxtGainLoss" Text="+0.0m / -0.0m" FontWeight="Bold" Foreground="#EC4899"/></TextBlock>
+                <TextBlock Grid.Column="5"><Run Text="Slope: " FontWeight="SemiBold" Foreground="#64748B"/><Run x:Name="TxtSlope" Text="0.0° / 0.0°" FontWeight="Bold" Foreground="#0F172A"/></TextBlock>
+            </Grid>
+        </Border>
 
         <!-- Profile Plot Canvas Border -->
         <Border Grid.Row="2" Style="{StaticResource DialogCard}" Padding="0" ClipToBounds="True">

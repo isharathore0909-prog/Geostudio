@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:components="clr-namespace:GeoStudio.UI.Components"
         Title="Watershed &amp; Catchment Delineation"
-        Height="580" Width="720" MinHeight="460" MinWidth="620"
+        Height="520" Width="720" MinHeight="420" MinWidth="620"
         WindowStartupLocation="CenterOwner"
         Background="#F8FAFC" Foreground="#0F172A"
         FontFamily="Segoe UI" ResizeMode="CanResizeWithGrip">
@@ -117,30 +117,6 @@
                             HelperText="Each delineated catchment is indexed with discrete IDs, geometric area in ha/m², perimeter, and distinct boundary coloring."/>
                     </StackPanel>
                 </Border>
-
-                <!-- Metric Summary Grid -->
-                <Grid Margin="0,0,0,4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Basins Count -->
-                    <components:MetricTile x:Name="TileBasins" Grid.Column="0" Margin="0,0,4,0"
-                        Label="DELINEATED BASINS" Value="--" Subtext="Unique catchment divides"
-                        LabelBrush="#0284C7" ValueBrush="#0369A1" TileBackground="#F0F9FF" TileBorderBrush="#BAE6FD"/>
-
-                    <!-- Total Area -->
-                    <components:MetricTile x:Name="TileArea" Grid.Column="1" Margin="2,0,2,0"
-                        Label="TOTAL DRAINAGE AREA" Value="--" Subtext="Surveyed watershed extent"
-                        LabelBrush="#16A34A" ValueBrush="#15803D" TileBackground="#F0FDF4" TileBorderBrush="#BBF7D0"/>
-
-                    <!-- Current Threshold -->
-                    <components:MetricTile x:Name="TileThreshold" Grid.Column="2" Margin="4,0,0,0"
-                        Label="STREAM THRESHOLD" Value="2,000 cells" Subtext="Min upslope accumulation"
-                        LabelBrush="#D97706" ValueBrush="#B45309" TileBackground="#FFFBEB" TileBorderBrush="#FDE68A"/>
-                </Grid>
             </StackPanel>
         </ScrollViewer>
 

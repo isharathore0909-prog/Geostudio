@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:components="clr-namespace:GeoStudio.UI.Components"
         Title="Land Use &amp; Land Cover (LULC) Intelligence"
-        Height="620" Width="740" MinHeight="520" MinWidth="660"
+        Height="520" Width="740" MinHeight="440" MinWidth="660"
         WindowStartupLocation="CenterOwner"
         Background="#F8FAFC" Foreground="#0F172A"
         FontFamily="Segoe UI" ResizeMode="CanResizeWithGrip">
@@ -83,32 +83,6 @@
                             HelperText="Generates uint8 GeoTIFF with embedded GDAL ColorTable and detailed area statistics."/>
                     </StackPanel>
                 </Border>
-
-                <!-- Metric Summary Grid -->
-                <Grid Margin="0,0,0,4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <components:MetricTile x:Name="TileTotal" Grid.Column="0" Margin="0,0,3,0"
-                        Label="TOTAL EXTENT" Value="--" Subtext="Survey area (ha)"
-                        LabelBrush="#059669" ValueBrush="#047857" TileBackground="#ECFDF5" TileBorderBrush="#A7F3D0"/>
-
-                    <components:MetricTile x:Name="TileForest" Grid.Column="1" Margin="2,0,2,0"
-                        Label="FOREST COVER" Value="--" Subtext="Dense, sparse, degraded"
-                        LabelBrush="#16A34A" ValueBrush="#15803D" TileBackground="#F0FDF4" TileBorderBrush="#BBF7D0"/>
-
-                    <components:MetricTile x:Name="TileAgri" Grid.Column="2" Margin="2,0,2,0"
-                        Label="AGRICULTURE" Value="--" Subtext="Irrigated &amp; fallow crops"
-                        LabelBrush="#D97706" ValueBrush="#B45309" TileBackground="#FFFBEB" TileBorderBrush="#FDE68A"/>
-
-                    <components:MetricTile x:Name="TileWater" Grid.Column="3" Margin="3,0,0,0"
-                        Label="WATER / WETLAND" Value="--" Subtext="Permanent &amp; seasonal"
-                        LabelBrush="#0284C7" ValueBrush="#0369A1" TileBackground="#F0F9FF" TileBorderBrush="#BAE6FD"/>
-                </Grid>
             </StackPanel>
         </ScrollViewer>
 

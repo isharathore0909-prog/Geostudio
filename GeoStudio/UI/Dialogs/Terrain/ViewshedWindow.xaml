@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:components="clr-namespace:GeoStudio.UI.Components"
         Title="3D Viewshed &amp; Line-of-Sight Analysis"
-        Height="650" Width="750" MinHeight="520" MinWidth="650"
+        Height="480" Width="750" MinHeight="420" MinWidth="650"
         WindowStartupLocation="CenterOwner"
         Background="#F8FAFC" Foreground="#0F172A"
         FontFamily="Segoe UI" FontSize="11.5">
@@ -69,9 +69,7 @@
             <RowDefinition Height="Auto"/>
             <!-- 3. Output Path & Actions -->
             <RowDefinition Height="Auto"/>
-            <!-- 4. Result Metrics Grid -->
-            <RowDefinition Height="*"/>
-            <!-- 5. Footer Bar -->
+            <!-- 4. Footer Bar -->
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -170,38 +168,8 @@
             </Grid>
         </Border>
 
-        <!-- 4. Result Metrics Grid -->
-        <Grid Grid.Row="4" Margin="0,0,0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Visible Area -->
-            <components:MetricTile x:Name="TileVisibleArea" Grid.Column="0" Margin="0,0,5,0"
-                Label="VISIBLE TERRAIN AREA" Value="0.00 km²" Subtext="— ha visible"
-                LabelBrush="#059669" ValueBrush="#047857" TileBackground="#ECFDF5" TileBorderBrush="#A7F3D0"/>
-
-            <!-- Total Radius Area -->
-            <components:MetricTile x:Name="TileRadiusArea" Grid.Column="1" Margin="3,0,3,0"
-                Label="ANALYZED SIGHT RADIUS" Value="0.00 km²" Subtext="— m radius"
-                LabelBrush="#0284C7" ValueBrush="#0369A1" TileBackground="#F0F9FF" TileBorderBrush="#BAE6FD"/>
-
-            <!-- Visibility Coverage Ratio -->
-            <components:MetricTile x:Name="TileCoverageRatio" Grid.Column="2" Margin="3,0,3,0"
-                Label="VISIBILITY COVERAGE" Value="0.0%" Subtext="Line-of-Sight ratio"
-                LabelBrush="#D97706" ValueBrush="#B45309" TileBackground="#FFFBEB" TileBorderBrush="#FDE68A"/>
-
-            <!-- Observer Coordinates & Elevation -->
-            <components:MetricTile x:Name="TileObserverInfo" Grid.Column="3" Margin="5,0,0,0"
-                Label="OBSERVER POSITION" Value="— m Ground" Subtext="X: — | Y: —"
-                LabelBrush="#64748B" ValueBrush="#334155" TileBackground="#F8FAFC" TileBorderBrush="#E2E8F0"/>
-        </Grid>
-
-        <!-- 5. Footer Bar -->
-        <Border Grid.Row="5" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10,8">
+        <!-- 4. Footer Bar -->
+        <Border Grid.Row="4" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10,8">
             <Grid VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="📁" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>

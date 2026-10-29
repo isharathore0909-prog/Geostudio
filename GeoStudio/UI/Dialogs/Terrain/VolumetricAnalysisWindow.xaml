@@ -66,11 +66,9 @@
             <RowDefinition Height="Auto"/>
             <!-- 1. Parameters Card -->
             <RowDefinition Height="Auto"/>
-            <!-- 2. Metrics Grid -->
-            <RowDefinition Height="Auto"/>
-            <!-- 3. Stage-Storage DataGrid -->
+            <!-- 2. Stage-Storage DataGrid -->
             <RowDefinition Height="*"/>
-            <!-- 4. Footer Bar -->
+            <!-- 3. Footer Bar -->
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -123,38 +121,8 @@
             </Grid>
         </Border>
 
-        <!-- 2. Metrics Summary Cards -->
-        <Grid Grid.Row="2" Margin="0,0,0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Volume Below Datum (Water Storage Capacity) -->
-            <components:MetricTile x:Name="TileStorageCap" Grid.Column="0" Margin="0,0,6,0"
-                Label="RESERVOIR CAPACITY (BELOW DATUM)" Value="0.00 m³" Subtext="— ML (Megaliters)"
-                LabelBrush="#0284C7" ValueBrush="#0369A1" TileBackground="#F0F9FF" TileBorderBrush="#BAE6FD"/>
-
-            <!-- Volume Above Datum (Stockpile / Mountain) -->
-            <components:MetricTile x:Name="TileVolAbove" Grid.Column="1" Margin="3,0,3,0"
-                Label="VOLUME ABOVE DATUM (TERRAIN)" Value="0.00 m³" Subtext="Excess bulk volume"
-                LabelBrush="#D97706" ValueBrush="#B45309" TileBackground="#FFFBEB" TileBorderBrush="#FDE68A"/>
-
-            <!-- Total Surface Area -->
-            <components:MetricTile x:Name="TileSurfaceArea" Grid.Column="2" Margin="3,0,3,0"
-                Label="TOTAL SURFACE AREA" Value="0.0 ha" Subtext="— m² total planimetric"
-                LabelBrush="#16A34A" ValueBrush="#15803D" TileBackground="#F0FDF4" TileBorderBrush="#BBF7D0"/>
-
-            <!-- Elevation Range -->
-            <components:MetricTile x:Name="TileElevRange" Grid.Column="3" Margin="6,0,0,0"
-                Label="ELEVATION PROFILE" Value="— m" Subtext="Min: — m | Max: — m"
-                LabelBrush="#64748B" ValueBrush="#334155" TileBackground="#F8FAFC" TileBorderBrush="#E2E8F0"/>
-        </Grid>
-
-        <!-- 3. Stage-Storage DataGrid -->
-        <Border Grid.Row="3" Style="{StaticResource DialogCard}" Padding="0" Margin="0,0,0,10">
+        <!-- 2. Stage-Storage DataGrid -->
+        <Border Grid.Row="2" Style="{StaticResource DialogCard}" Padding="0" Margin="0,0,0,10">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -189,8 +157,8 @@
             </Grid>
         </Border>
 
-        <!-- 4. Footer Bar -->
-        <Border Grid.Row="4" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10,8">
+        <!-- 3. Footer Bar -->
+        <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10,8">
             <Grid VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="📁" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>

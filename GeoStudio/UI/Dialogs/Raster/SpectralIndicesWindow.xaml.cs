@@ -128,7 +128,7 @@ namespace GeoStudio.UI.Dialogs
 
         private void UpdateModeUI()
         {
-            if (!_isLoaded || TxtFormula == null || TxtModeDesc == null || TxtBandNir == null) return;
+            if (!_isLoaded || TxtBandNir == null) return;
 
             if (!SpectralIndexDefinitions.Modes.TryGetValue(_activeMode, out var info))
                 info = SpectralIndexDefinitions.Modes["NDVI"];
@@ -145,10 +145,6 @@ namespace GeoStudio.UI.Dialogs
                 tb.Background = needed ? activeBg : normalBg;
                 tb.Opacity = needed ? 1.0 : 0.45;
             }
-
-            TxtFormula.Text = info.Formula;
-            TxtFormula.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(info.ColorHex));
-            TxtModeDesc.Text = info.Description;
 
             StyleBox(TxtBandNir, info.NeedsNir);
             StyleBox(TxtBandRed, info.NeedsRed);

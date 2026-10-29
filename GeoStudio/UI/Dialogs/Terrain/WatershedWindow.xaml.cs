@@ -78,20 +78,11 @@ namespace GeoStudio.UI.Dialogs
                     TxtThreshold.Background = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#F1F5F9")!;
                     TxtThreshold.Text = tag;
                 }
-
-                if (int.TryParse(TxtThreshold.Text.Trim(), out int val))
-                {
-                    TileThreshold.Value = $"{val:N0} cells";
-                }
             }
         }
 
         private void TxtThreshold_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (TileThreshold != null && int.TryParse(TxtThreshold.Text.Trim(), out int val))
-            {
-                TileThreshold.Value = $"{val:N0} cells";
-            }
         }
 
         private void ComboMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -209,8 +200,10 @@ namespace GeoStudio.UI.Dialogs
                         }
                     }
 
-                    if (numBasins > 0) TileBasins.Value = $"{numBasins:N0}";
-                    if (totalAreaHa > 0) TileArea.Value = $"{totalAreaHa:N1} ha";
+                    if (numBasins > 0 || totalAreaHa > 0)
+                    {
+                        ActionBar.StatusText = $"Delineated {numBasins:N0} basins ({totalAreaHa:N1} ha).";
+                    }
 
                     if (ChkLoadToMap.IsChecked == true)
                     {

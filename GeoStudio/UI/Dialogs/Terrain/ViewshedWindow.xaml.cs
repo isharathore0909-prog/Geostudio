@@ -67,7 +67,6 @@ namespace GeoStudio.UI.Dialogs.Terrain
                     string defaultOut = Path.Combine(dir, $"{Path.GetFileNameWithoutExtension(layer.FilePath)}_Viewshed.tif");
                     PickerOutput.PathText = defaultOut;
 
-                    TileObserverInfo.Subtext = $"Center X: {TxtObserverX.Text} | Y: {TxtObserverY.Text}";
                     TxtStatus.Text = $"Selected DEM: {layer.Name}. Observer centered.";
                 }
             }
@@ -164,21 +163,12 @@ namespace GeoStudio.UI.Dialogs.Terrain
                     double visHa = root.TryGetProperty("visible_ha", out var pVh) ? pVh.GetDouble() : 0.0;
                     double totalKm2 = root.TryGetProperty("total_radius_km2", out var pTk) ? pTk.GetDouble() : 0.0;
                     double covPct = root.TryGetProperty("coverage_percentage", out var pCp) ? pCp.GetDouble() : 0.0;
-
-                    TileVisibleArea.Value = $"{visKm2:N2} km²";
-                    TileVisibleArea.Subtext = $"{visHa:N1} ha visible";
-
-                    TileRadiusArea.Value = $"{totalKm2:N2} km²";
-                    TileRadiusArea.Subtext = $"{maxDist:N0} m radius circle";
-
-                    TileCoverageRatio.Value = $"{covPct:F1}%";
-                    TileCoverageRatio.Subtext = "Visible / Total sight area";
-
-                    TileObserverInfo.Value = $"{obsH:F1} m Eye / Tower";
-                    TileObserverInfo.Subtext = $"Target H: {tgtH:F1} m";
+                    TxtStatus.Text = $"Viewshed computation complete! Visible: {visKm2:N2} km² ({covPct:F1}% coverage). Saved to: {Path.GetFileName(outPath)}";
                 }
-
-                TxtStatus.Text = $"Viewshed computation complete! Output saved to: {Path.GetFileName(outPath)}";
+                else
+                {
+                    TxtStatus.Text = $"Viewshed computation complete! Output saved to: {Path.GetFileName(outPath)}";
+                }
 
                 // Add to Map Canvas if checked
                 if (ChkAddToCanvas.IsChecked == true && File.Exists(outPath))

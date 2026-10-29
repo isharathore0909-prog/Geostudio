@@ -64,19 +64,13 @@ namespace GeoStudio.UI
                 _ratio = result.ratio;
                 _meanThick = result.meanThick;
 
-                TileCut.Value = $"{_cutVol:N2} m³";
-                TileCut.Subtext = $"Area: {_cutArea:N1} m² ({_cutArea / 10000.0:F2} ha)";
+                string ratioStr = double.IsInfinity(_ratio) ? "∞" : _ratio.ToString("F3");
+                string netStatus = _netVol > 0 ? "Surplus (Excess Excavation)" : _netVol < 0 ? "Deficit (Embankment Required)" : "Balanced";
 
-                TileFill.Value = $"{_fillVol:N2} m³";
-                TileFill.Subtext = $"Area: {_fillArea:N1} m² ({_fillArea / 10000.0:F2} ha)";
-
-                TileNet.Value = $"{_netVol:N2} m³";
-                TileNet.Subtext = _netVol > 0 ? "Status: Excess Excavation (Cut Surplus)" :
-                                        _netVol < 0 ? "Status: Embankment Deficit (Fill Required)" : "Status: Balanced";
-
-                TileRatio.Value = double.IsInfinity(_ratio) ? "∞" : $"{_ratio:F3}";
-                TileMeanThick.Value = $"{_meanThick:F2} m";
-                TileTotalArea.Value = $"{_totalArea / 10000.0:F2} ha ({_totalArea:N0} m²)";
+                TxtResults.Text = $"• Cut Volume: {_cutVol:N2} m³ (Area: {_cutArea / 10000.0:F2} ha)\n" +
+                                  $"• Fill Volume: {_fillVol:N2} m³ (Area: {_fillArea / 10000.0:F2} ha)\n" +
+                                  $"• Net Volume: {_netVol:N2} m³ — {netStatus}\n" +
+                                  $"• Cut/Fill Ratio: {ratioStr} | Mean Thickness (ΔZ): {_meanThick:F2} m | Survey Area: {_totalArea / 10000.0:F2} ha";
 
                 TxtStatus.Text = $"Earthwork calculation complete ({result.sampledCells:N0} survey cells computed in {result.elapsedMs}ms).";
             }

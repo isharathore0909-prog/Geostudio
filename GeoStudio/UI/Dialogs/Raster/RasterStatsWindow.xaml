@@ -54,19 +54,21 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- MetricTile Components -->
-            <Grid Grid.Row="0" Margin="0,0,0,10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <components:MetricTile x:Name="TxtMin" Grid.Column="0" Label="MINIMUM" Value="--" ValueBrush="#0284C7"/>
-                <components:MetricTile x:Name="TxtMax" Grid.Column="1" Label="MAXIMUM" Value="--" ValueBrush="#0284C7"/>
-                <components:MetricTile x:Name="TxtMean" Grid.Column="2" Label="MEAN (μ)" Value="--" ValueBrush="#0F172A"/>
-                <components:MetricTile x:Name="TxtStdDev" Grid.Column="3" Label="STD DEV (σ)" Value="--" ValueBrush="#0F172A"/>
-            </Grid>
+            <!-- Clean Stats Summary Strip -->
+            <Border Grid.Row="0" Style="{StaticResource DialogCard}" Padding="12,8" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"><Run Text="Min: " FontWeight="SemiBold" Foreground="#64748B"/><Run x:Name="TxtMin" Text="--" FontWeight="Bold" Foreground="#0284C7"/></TextBlock>
+                    <TextBlock Grid.Column="1"><Run Text="Max: " FontWeight="SemiBold" Foreground="#64748B"/><Run x:Name="TxtMax" Text="--" FontWeight="Bold" Foreground="#0284C7"/></TextBlock>
+                    <TextBlock Grid.Column="2"><Run Text="Mean (μ): " FontWeight="SemiBold" Foreground="#64748B"/><Run x:Name="TxtMean" Text="--" FontWeight="Bold" Foreground="#0F172A"/></TextBlock>
+                    <TextBlock Grid.Column="3"><Run Text="Std Dev (σ): " FontWeight="SemiBold" Foreground="#64748B"/><Run x:Name="TxtStdDev" Text="--" FontWeight="Bold" Foreground="#0F172A"/></TextBlock>
+                </Grid>
+            </Border>
 
             <!-- Histogram Chart & Metadata -->
             <Border Grid.Row="1" Style="{StaticResource DialogCard}" Padding="14">

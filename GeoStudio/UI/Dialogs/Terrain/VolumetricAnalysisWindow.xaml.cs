@@ -77,9 +77,6 @@ namespace GeoStudio.UI.Dialogs.Terrain
                 _demMax = maxZ;
                 _demMean = meanZ;
 
-                TileElevRange.Value = $"{meanZ:F1} m (Mean)";
-                TileElevRange.Subtext = $"Min: {minZ:F1} m | Max: {maxZ:F1} m";
-
                 if (ComboDatumMode.SelectedIndex == 0) // Mean
                 {
                     TxtCustomDatum.Text = $"{meanZ:F2}";
@@ -143,18 +140,6 @@ namespace GeoStudio.UI.Dialogs.Terrain
             try
             {
                 var result = await Task.Run(() => ComputeVolumetricsAndStorage(layer.FilePath, datum, numStages));
-
-                TileStorageCap.Value = $"{result.volBelow:N0} m³";
-                TileStorageCap.Subtext = $"{result.volBelow / 1000.0:N2} ML (MegaLiters)";
-
-                TileVolAbove.Value = $"{result.volAbove:N0} m³";
-                TileVolAbove.Subtext = result.netVol >= 0 ? $"Net Surplus: +{result.netVol:N0} m³" : $"Net Deficit: {result.netVol:N0} m³";
-
-                TileSurfaceArea.Value = $"{result.totalAreaM2 / 10000.0:N2} ha";
-                TileSurfaceArea.Subtext = $"{result.totalAreaM2:N0} m² planimetric";
-
-                TileElevRange.Value = $"{result.meanZ:F1} m (Datum: {datum:F1}m)";
-                TileElevRange.Subtext = $"Min: {result.minZ:F1}m | Max: {result.maxZ:F1}m";
 
                 foreach (var step in result.steps)
                 {

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:components="clr-namespace:GeoStudio.UI.Components"
         Title="Multispectral Indices &amp; Remote Sensing"
-        Height="620" Width="740" MinHeight="580" MinWidth="680"
+        Height="530" Width="720" MinHeight="480" MinWidth="650"
         WindowStartupLocation="CenterOwner"
         Background="#F8FAFC" Foreground="#0F172A"
         FontFamily="Segoe UI" ResizeMode="CanResizeWithGrip">
@@ -63,20 +63,6 @@
                         <ComboBoxItem Content="🎨 False Color Composite — Infrared (NIR / Red / Green)" Tag="FALSE_COLOR"/>
                     </ComboBox>
 
-                    <!-- Formula & Mode Description Card -->
-                    <Border x:Name="CardFormulaInfo" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,12">
-                        <StackPanel>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="Formula: " FontWeight="Bold" FontSize="11" Foreground="#334155"/>
-                                <TextBlock x:Name="TxtFormula" Grid.Column="1" Text="(NIR - Red) / (NIR + Red)" FontFamily="Consolas" FontWeight="SemiBold" FontSize="11" Foreground="#059669"/>
-                            </Grid>
-                            <TextBlock x:Name="TxtModeDesc" Text="Measures vegetation density and health by quantifying the difference between near-infrared (which vegetation strongly reflects) and red light (which vegetation absorbs). Typical values: -1.0 to +1.0." FontSize="10.5" Foreground="#475569" Margin="0,4,0,0" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </Border>
 
                     <!-- Sensor Preset -->
                     <TextBlock Text="Satellite / Sensor Band Preset:" Style="{StaticResource DialogParamLabel}"/>
