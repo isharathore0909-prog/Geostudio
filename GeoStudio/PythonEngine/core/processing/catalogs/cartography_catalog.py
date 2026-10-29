@@ -24,18 +24,7 @@ CARTOGRAPHY_CATALOG: Dict[str, Any] = {
                             "carto_swipe",
                             supports_gpu=False,
                         ),
-                        AlgorithmDefinition(
-                            "Cloud & XYZ Basemap Integrator",
-                            "carto:cloud_basemaps",
-                            "Cartography & Interactive Tools",
-                            "Interactive Canvas Tools",
-                            (
-                                "One-click addition of OpenStreetMap, Google Satellite, Mapbox,"
-                                "and ESRI World Imagery basemaps."
-                            ),
-                            "carto_basemap",
-                            supports_gpu=False,
-                        ),
+
                         AlgorithmDefinition(
                             "Measure Distance & Bearing",
                             "native:measure_dist",

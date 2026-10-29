@@ -113,7 +113,7 @@
         </StackPanel>
 
         <!-- 11. SATELLITE TAB PANEL -->
-        <StackPanel x:Name="PanelRibbonSatellite" Orientation="Horizontal" Visibility="Collapsed">
+        <StackPanel x:Name="PanelRibbonSatellite" Orientation="Horizontal" Visibility="Collapsed" IsEnabled="True">
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Height="68" VerticalAlignment="Center">
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="NDVI" Tag="/Resources/Icons/ndvi.png" ToolTip="Normalized Difference Vegetation Index (Photosynthetic Canopy)" Click="MenuNdvi_Click"/>
@@ -172,7 +172,7 @@
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Landsat" Tag="/Resources/Icons/elevation.png" ToolTip="🌈 Hyperspectral, Landsat &amp; Thermal LST" Click="BtnPluginLandsat_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Routing" Tag="/Resources/Icons/select_radius.png" ToolTip="🛣️ Road Routing &amp; Network Analysis" Click="BtnPluginRouting_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="3D View" Tag="/Resources/Icons/view_3d.png" ToolTip="🌐 3D Mapping &amp; Terrain Viewport" Click="BtnPlugin3D_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Satellite" Tag="/Resources/Icons/false_color.png" ToolTip="🛰️ Satellite View &amp; Offline Basemaps" Click="BtnPluginSatellite_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Satellite" Tag="/Resources/Icons/false_color.png" ToolTip="🛰️ Satellite View &amp; Offline Storage" Click="BtnPluginSatellite_Click"/>
                 </StackPanel>
                 <TextBlock Text="Extension Cards (Install / Uninstall)" Style="{StaticResource RustGisGroupLabel}"/>
             </StackPanel>

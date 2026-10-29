@@ -41,10 +41,10 @@ class LayerControllerMixin:
             self.layer_panel.load_point_cloud(path)
 
     def add_wms(self):
-        self.layer_panel.load_osm_basemap()
+        pass
 
     def add_xyz_basemap(self):
-        self.layer_panel.load_osm_basemap()
+        pass
 
     def remove_layer(self):
         self.layer_panel.remove_active_layer()

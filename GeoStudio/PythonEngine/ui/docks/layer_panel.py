@@ -106,11 +106,8 @@ class LayerPanelWidget(QWidget):
         btn_v.clicked.connect(self._quick_add_vector)
         btn_r = QPushButton("🏔 Raster / DEM")
         btn_r.clicked.connect(self._quick_add_raster)
-        btn_osm = QPushButton("🌐 OSM")
-        btn_osm.clicked.connect(self.load_osm_basemap)
         btn_row.addWidget(btn_v)
         btn_row.addWidget(btn_r)
-        btn_row.addWidget(btn_osm)
         layout.addLayout(btn_row)
 
         self.setLayout(layout)
@@ -241,7 +238,7 @@ class LayerPanelWidget(QWidget):
         LayerLoader.load_point_cloud(self, path)
 
     def load_osm_basemap(self):
-        LayerLoader.load_osm_basemap(self)
+        pass
 
     def load_csv(self, path, x_field="longitude", y_field="latitude"):
         LayerLoader.load_csv(self, path, x_field, y_field)

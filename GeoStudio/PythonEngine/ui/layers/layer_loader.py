@@ -368,32 +368,7 @@ class LayerLoader:
 
     @staticmethod
     def load_osm_basemap(panel):
-        status = _get_status_bar(panel)
-        t0 = time.perf_counter()
-
-        if status and hasattr(status, "start_file_loading"):
-            status.start_file_loading("OpenStreetMap Basemap", "", "Connecting to OSM XYZ tile server...")
-
-        try:
-            from qgis.core import QgsRasterLayer, QgsProject
-            url = "type=xyz&url=https://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=0"
-            layer = QgsRasterLayer(url, "OpenStreetMap Basemap", "wms")
-            if layer and layer.isValid():
-                QgsProject.instance().addMapLayer(layer)
-                panel.map_canvas.set_crs(layer.crs())
-                t_elapsed = time.perf_counter() - t0
-                if status and hasattr(status, "finish_file_loading"):
-                    status.finish_file_loading("OpenStreetMap Basemap", t_elapsed, "", "XYZ Basemap")
-            else:
-                t_elapsed = time.perf_counter() - t0
-                if status and hasattr(status, "fail_file_loading"):
-                    status.fail_file_loading("OpenStreetMap Basemap", t_elapsed, "Could not load OSM basemap")
-                QMessageBox.critical(panel, "Error", "Failed to load OpenStreetMap basemap.")
-        except Exception as e:
-            t_elapsed = time.perf_counter() - t0
-            if status and hasattr(status, "fail_file_loading"):
-                status.fail_file_loading("OpenStreetMap Basemap", t_elapsed, str(e))
-            QMessageBox.critical(panel, "Error", f"Failed to load OpenStreetMap basemap:\n{e}")
+        pass
 
     @staticmethod
     def load_csv(panel, path: str, x_field: str = "longitude", y_field: str = "latitude"):

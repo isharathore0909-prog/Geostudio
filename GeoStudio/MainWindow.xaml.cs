@@ -91,7 +91,11 @@ namespace GeoStudio
             if (PanelRibbonPlugins != null) PanelRibbonPlugins.Visibility = tabName == "Plugins" ? Visibility.Visible : Visibility.Collapsed;
             if (PanelRibbonVector != null) PanelRibbonVector.Visibility = tabName == "Vector" ? Visibility.Visible : Visibility.Collapsed;
             if (PanelRibbonRaster != null) PanelRibbonRaster.Visibility = tabName == "Raster" ? Visibility.Visible : Visibility.Collapsed;
-            if (PanelRibbonSatellite != null) PanelRibbonSatellite.Visibility = tabName == "Satellite" ? Visibility.Visible : Visibility.Collapsed;
+            if (PanelRibbonSatellite != null)
+            {
+                PanelRibbonSatellite.Visibility = tabName == "Satellite" ? Visibility.Visible : Visibility.Collapsed;
+                if (tabName == "Satellite") PanelRibbonSatellite.IsEnabled = true;
+            }
             if (PanelRibbonTerrain != null) PanelRibbonTerrain.Visibility = tabName == "Terrain" ? Visibility.Visible : Visibility.Collapsed;
             if (PanelRibbonLidar != null) PanelRibbonLidar.Visibility = tabName == "LiDAR" ? Visibility.Visible : Visibility.Collapsed;
             if (PanelRibbonProcessing != null) PanelRibbonProcessing.Visibility = tabName == "Processing" ? Visibility.Visible : Visibility.Collapsed;

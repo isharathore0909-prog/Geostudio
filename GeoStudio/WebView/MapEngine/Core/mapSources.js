@@ -1,36 +1,8 @@
-// Base Map Sources & Map Layers Definitions
-const cartoSource = new ol.source.XYZ({
-  url: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  maxZoom: 20,
-  crossOrigin: 'anonymous'
-});
-const cartoLayer = new ol.layer.Tile({
-  properties: { id: 'osm_basemap', name: 'Global Basemap' },
-  source: cartoSource,
-  visible: false
-});
-
-const esriSatelliteSource = new ol.source.XYZ({
-  url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-  maxZoom: 19,
-  crossOrigin: 'anonymous'
-});
-const satelliteLayer = new ol.layer.Tile({
-  properties: { id: 'satellite_basemap', name: 'Esri Satellite' },
-  source: esriSatelliteSource,
-  visible: false
-});
-
-cartoSource.on('tileloaderror', function () { if (!navigator.onLine) cartoLayer.setVisible(false); });
-esriSatelliteSource.on('tileloaderror', function () { if (!navigator.onLine) satelliteLayer.setVisible(false); });
-if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-  cartoLayer.setVisible(false);
-  satelliteLayer.setVisible(false);
-}
-window.addEventListener('offline', function () {
-  cartoLayer.setVisible(false);
-  satelliteLayer.setVisible(false);
-});
+// Base Map Sources & Map Layers Definitions (Removed)
+const cartoSource = null;
+const cartoLayer = null;
+const esriSatelliteSource = null;
+const satelliteLayer = null;
 
 const rasterSource = new ol.source.Vector({ wrapX: false });
 const rasterLayer = new ol.layer.Vector({

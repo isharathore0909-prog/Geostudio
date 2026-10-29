@@ -130,11 +130,10 @@
                 <ItemsControl x:Name="LayersListControl" ItemTemplate="{StaticResource LayerItemDataTemplate}"/>
             </ScrollViewer>
 
-            <!-- Bottom Quick-Add Buttons: Vector, Raster / DEM, OSM -->
+            <!-- Bottom Quick-Add Buttons: Vector, Raster / DEM -->
             <Border Grid.Row="3" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Background="#F8FAFC" Padding="4,6">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
@@ -150,13 +149,6 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="⛰️" FontSize="12" Margin="0,0,4,0"/>
                             <TextBlock Text="Raster / DEM" FontSize="10" FontWeight="SemiBold"/>
-                        </StackPanel>
-                    </Button>
-
-                    <Button Grid.Column="2" Style="{StaticResource SidebarQuickButtonStyle}" Click="BtnAddOsm_Click" ToolTip="Toggle OpenStreetMap Basemap">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🌐" FontSize="12" Margin="0,0,4,0"/>
-                            <TextBlock Text="OSM" FontSize="11" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
                 </Grid>

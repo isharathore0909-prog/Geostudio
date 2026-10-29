@@ -32,8 +32,6 @@ class DataSourcesToolBar(QToolBar):
             ("add_vector", "Add Vector", self.mw.add_vector, "Add Vector Layer (Ctrl+Shift+V)", "Ctrl+Shift+V"),
             ("add_raster", "Add Raster", self.mw.add_raster, "Add Raster Layer (Ctrl+Shift+R)", "Ctrl+Shift+R"),
             ("add_csv", "Add CSV", self.mw.add_csv, "Add Delimited Text (CSV as Points)", None),
-            ("add_wms", "Add WMS", self.mw.add_wms, "Add WMS / WMTS Basemap Layer", None),
-            ("add_xyz", "Add XYZ", self.mw.add_xyz_basemap, "Add XYZ OpenStreetMap Basemap", None),
             ("browser_panel", "Browser Panel", self.mw.toggle_layer_dock, "Toggle Layers & Browser Panel", None),
         ]
         for icon_key, text, slot, tip, shortcut in items:

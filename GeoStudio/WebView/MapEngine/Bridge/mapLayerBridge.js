@@ -57,8 +57,6 @@ function handleClearAllLayers() {
   vectorSource.clear();
   measureSource.clear();
   document.querySelectorAll('.ol-tooltip-static').forEach(el => el.remove());
-  cartoLayer.setVisible(true);
-  satelliteLayer.setVisible(true);
   if (typeof hideShaderScaleWidget === 'function') hideShaderScaleWidget();
   const lWidget = document.getElementById('lidarLegendWidget');
   if (lWidget) lWidget.style.display = 'none';
@@ -94,8 +92,8 @@ function handleRemoveLayer(msg) {
 function handleToggleLayer(msg) {
   const isVis = !!msg.visible;
   if (msg.id === 'osm_basemap' || msg.type === 'Basemap') {
-    cartoLayer.setVisible(isVis);
-    satelliteLayer.setVisible(isVis);
+    if (typeof cartoLayer !== 'undefined' && cartoLayer) cartoLayer.setVisible(isVis);
+    if (typeof satelliteLayer !== 'undefined' && satelliteLayer) satelliteLayer.setVisible(isVis);
   } else if (msg.id === activePointCloudId || msg.type === 'PointCloud' || (msg.id && msg.id.startsWith('pc_'))) {
     isPointCloudVisible = isVis;
     const lWidget = document.getElementById('lidarLegendWidget');
@@ -157,8 +155,7 @@ function handleSetLayerOpacity(msg) {
   }
 
   if (msg.id === 'osm_basemap' || msg.id === 'satellite_basemap' || msg.type === 'Basemap') {
-    if (typeof cartoLayer !== 'undefined' && cartoLayer) cartoLayer.setOpacity(clampedOpacity);
-    if (typeof satelliteLayer !== 'undefined' && satelliteLayer) satelliteLayer.setOpacity(clampedOpacity);
+    return;
   } else if (msg.id === activePointCloudId || msg.type === 'PointCloud' || (msg.id && msg.id.startsWith('pc_'))) {
     if (typeof pcCanvas !== 'undefined' && pcCanvas) {
       pcCanvas.style.opacity = String(clampedOpacity);

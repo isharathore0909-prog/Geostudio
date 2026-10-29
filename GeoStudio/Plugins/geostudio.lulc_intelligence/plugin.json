@@ -12,7 +12,5 @@
     "scipy",
     "numpy"
   ],
-  "associatedRibbonPanels": [
-    "PanelRibbonSatellite"
-  ]
+  "associatedRibbonPanels": []
 }

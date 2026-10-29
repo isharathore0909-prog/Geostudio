@@ -47,7 +47,7 @@ if (typeof window.GeoStudioWebGLVector !== 'undefined' && typeof window.GeoStudi
 
 const map = new ol.Map({
   target: 'map',
-  layers: [satelliteLayer, cartoLayer, rasterLayer, vectorLayer, ...(webGlVectorLayer ? [webGlVectorLayer] : []), measureLayer, profileLayer, clipMaskLayer, selectionLayer, markerLayer],
+  layers: [rasterLayer, vectorLayer, ...(webGlVectorLayer ? [webGlVectorLayer] : []), measureLayer, profileLayer, clipMaskLayer, selectionLayer, markerLayer],
   overlays: mapPopupOverlay ? [mapPopupOverlay] : [],
   view: mapView,
   controls: ol.control.defaults.defaults().extend([

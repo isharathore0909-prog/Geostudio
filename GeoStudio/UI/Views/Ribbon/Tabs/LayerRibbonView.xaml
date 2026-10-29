@@ -10,7 +10,6 @@
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Raster / DEM" Tag="/Resources/Icons/add_raster.png" ToolTip="Load 100GB+ BigTIFF, GeoTIFF, DEM" Click="BtnAddRaster_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="LiDAR / LAS" Tag="/Resources/Icons/load_las.png" ToolTip="Load ASPRS LiDAR Point Cloud (LAS / LAZ)" Click="BtnAddLidar_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="CSV Points" Tag="/Resources/Icons/add_csv.png" ToolTip="Load Delimited Text (CSV Points)" Click="BtnAddVector_Click"/>
-                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Basemap" Tag="/Resources/Icons/add_xyz.png" ToolTip="OpenStreetMap Global Basemap" Click="BtnAddOsm_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Database" Tag="/Resources/Icons/add_wms.png" ToolTip="Spatial Database Connection" Click="BtnDatabase_Click"/>
                 </StackPanel>
                 <TextBlock Text="Layers" Style="{StaticResource RustGisGroupLabel}"/>

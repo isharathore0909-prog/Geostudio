@@ -77,8 +77,6 @@ def build_main_menus(mw):
     m_layer.addAction(_act(mw, "Add Vector Layer...", mw.add_vector, "Ctrl+Shift+V", icon_key="add_vector"))
     m_layer.addAction(_act(mw, "Add Raster Layer...", mw.add_raster, "Ctrl+Shift+R", icon_key="add_raster"))
     m_layer.addAction(_act(mw, "Add Delimited Text (CSV)...", mw.add_csv, icon_key="add_csv"))
-    m_layer.addAction(_act(mw, "Add WMS/WMTS Basemap...", mw.add_wms, icon_key="add_wms"))
-    m_layer.addAction(_act(mw, "Add XYZ OpenStreetMap...", mw.add_xyz_basemap, icon_key="add_xyz"))
     m_layer.addSeparator()
     m_layer.addAction(_act(mw, "Remove Selected Layer", mw.remove_layer, "Ctrl+D", icon_key="delete"))
     m_layer.addSeparator()

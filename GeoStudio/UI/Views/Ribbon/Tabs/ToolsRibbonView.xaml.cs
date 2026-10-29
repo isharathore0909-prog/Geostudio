@@ -22,7 +22,10 @@ namespace GeoStudio.UI.Views.Ribbon
             if (PanelRibbonRaster != null)
                 PanelRibbonRaster.Visibility = tabName == "Raster" ? Visibility.Visible : Visibility.Collapsed;
             if (PanelRibbonSatellite != null)
+            {
                 PanelRibbonSatellite.Visibility = tabName == "Satellite" ? Visibility.Visible : Visibility.Collapsed;
+                if (tabName == "Satellite") PanelRibbonSatellite.IsEnabled = true;
+            }
             if (PanelRibbonProcessing != null)
                 PanelRibbonProcessing.Visibility = tabName == "Processing" ? Visibility.Visible : Visibility.Collapsed;
             if (PanelRibbonSettings != null)
