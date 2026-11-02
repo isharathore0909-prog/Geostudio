@@ -6,8 +6,10 @@ Controls page presets, custom paper dimensions, grid spacing, snapping, and layo
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
-    QComboBox, QDoubleSpinBox, QSpinBox, QCheckBox, QPushButton, QLabel
+    QComboBox, QDoubleSpinBox, QSpinBox, QCheckBox, QPushButton, QLabel,
+    QScrollArea, QFrame
 )
+from PyQt5.QtCore import Qt
 from qgis.core import (
     QgsLayoutSize, QgsUnitTypes, QgsLayoutMeasurement, QgsLayoutPoint,
     QgsLayoutItemMap
@@ -26,9 +28,21 @@ class LayoutSettingsTab(QWidget):
         self._load_current_settings()
 
     def _build_ui(self):
-        vbox = QVBoxLayout(self)
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+
+        self.scroll = QScrollArea(self)
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.NoFrame)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scroll.setStyleSheet("QScrollArea { border: none; background: #ffffff; }")
+
+        container = QWidget()
+        vbox = QVBoxLayout(container)
         vbox.setContentsMargins(8, 8, 8, 8)
-        vbox.setSpacing(10)
+        vbox.setSpacing(8)
 
         # 1. Page & General Settings
         grp_gen = QGroupBox("Page & General Settings")
@@ -153,6 +167,9 @@ class LayoutSettingsTab(QWidget):
 
         vbox.addWidget(grp_export)
         vbox.addStretch()
+
+        self.scroll.setWidget(container)
+        root_layout.addWidget(self.scroll)
 
     def _load_current_settings(self):
         if not self.designer.layout:

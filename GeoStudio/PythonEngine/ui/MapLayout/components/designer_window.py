@@ -28,7 +28,7 @@ from PyQt5.QtGui import QIcon, QFont, QColor, QPolygonF, QPainter
 from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog
 
 from qgis.core import (
-    QgsProject, QgsPrintLayout, QgsLayoutItemMap, QgsLayoutItemLabel,
+    QgsProject, QgsPrintLayout, QgsLayoutItem, QgsLayoutItemPage, QgsLayoutItemMap, QgsLayoutItemLabel,
     QgsLayoutItemLegend, QgsLayoutItemScaleBar, QgsLayoutItemPicture,
     QgsLayoutItemShape, QgsLayoutItemPolyline, QgsLayoutItemPolygon,
     QgsLayoutItemHtml, QgsLayoutItemAttributeTable, QgsLayoutSize,
@@ -190,6 +190,13 @@ class GeoStudioLayoutDesignerWindow(QMainWindow):
         self.lower_dock.setWidget(self.tab_lower)
         self.addDockWidget(Qt.RightDockWidgetArea, self.lower_dock)
 
+        # Allocate optimal vertical proportion for right dock panels:
+        # upper dock (Items list) gets ~180px, lower dock (Properties & Settings) gets ~550px
+        try:
+            self.resizeDocks([self.upper_dock, self.lower_dock], [180, 550], Qt.Vertical)
+        except Exception:
+            pass
+
         # Default tabs selection
         self.tab_upper.setCurrentIndex(0)
         self.tab_lower.setCurrentIndex(1)  # Default to Item Properties
@@ -229,6 +236,18 @@ class GeoStudioLayoutDesignerWindow(QMainWindow):
                 self.tool_select.setLayout(layout)
             except Exception:
                 pass
+        if layout:
+            try:
+                layout.itemAdded.connect(self._on_layout_item_added)
+            except Exception:
+                pass
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        try:
+            self.resizeDocks([self.upper_dock, self.lower_dock], [180, 550], Qt.Vertical)
+        except Exception:
+            pass
 
     def closeEvent(self, event):
         """Safely deactivate interactive tools and terminate cleanly when window is closed."""
@@ -300,6 +319,10 @@ class GeoStudioLayoutDesignerWindow(QMainWindow):
         self.items_dock.item_selected.connect(self._on_item_selected)
         if self.layout:
             self.layout.selectedItemChanged.connect(self._on_item_selected)
+            try:
+                self.layout.itemAdded.connect(self._on_layout_item_added)
+            except Exception:
+                pass
 
     def _on_item_selected(self, item):
         self.props_dock.set_item(item)
@@ -331,6 +354,107 @@ class GeoStudioLayoutDesignerWindow(QMainWindow):
         self.view.setTool(self.tool_add_node)
         self.lbl_status_tool.setText(f"Tool: Add {tool_type.capitalize()} (click points, right-click to finish)")
 
+    def _calculate_nice_segment_size(self, val: float) -> float:
+        if val <= 0:
+            return 50.0
+        import math
+        exponent = math.floor(math.log10(val))
+        fraction = val / (10 ** exponent)
+        if fraction < 1.5:
+            nice = 1.0
+        elif fraction < 3.5:
+            nice = 2.0
+        elif fraction < 7.5:
+            nice = 5.0
+        else:
+            nice = 10.0
+        return round(float(nice * (10 ** exponent)), 2)
+
+    def _configure_scalebar_item(self, item: QgsLayoutItemScaleBar):
+        """Ensures scale bar is linked to map, has realistic metric units, and renders clearly."""
+        if not item or not isinstance(item, QgsLayoutItemScaleBar):
+            return
+
+        if not item.id():
+            item.setId("Scale Bar")
+
+        main_map = self.get_main_map_item()
+        if main_map:
+            item.setLinkedMap(main_map)
+
+        item.setStyle("Single Box")
+        item.setNumberOfSegmentsLeft(0)
+
+        # Let PyQGIS try default calculation first if map has valid extent
+        if main_map and hasattr(main_map, "extent") and not main_map.extent().isEmpty():
+            if hasattr(item, "guessUnits"):
+                try:
+                    item.guessUnits()
+                except Exception:
+                    pass
+            try:
+                item.applyDefaultSize()
+            except Exception:
+                pass
+
+        # Robust calculation if unitsPerSegment is still 0 or invalid
+        if item.unitsPerSegment() <= 0:
+            item.setUnits(QgsUnitTypes.DistanceMeters)
+            item.setUnitLabel("m")
+            if main_map and hasattr(main_map, "extent") and not main_map.extent().isEmpty():
+                ground_w = main_map.extent().width()
+                seg = self._calculate_nice_segment_size(ground_w / 4.0)
+                item.setUnitsPerSegment(seg)
+            else:
+                item.setUnitsPerSegment(50.0)
+
+        if item.numberOfSegments() < 2:
+            item.setNumberOfSegments(2)
+
+        # Style & geometry: ensure scalebar is at least 45mm x 14mm so it is never squished/clipped
+        item.setBackgroundEnabled(True)
+        item.setBackgroundColor(QColor(255, 255, 255, 220))
+        item.resizeToMinimumWidth()
+
+        rect = item.rect()
+        if rect.width() < 40 or rect.height() < 12:
+            item.attemptResize(QgsLayoutSize(max(rect.width(), 48.0), max(rect.height(), 14.0), QgsUnitTypes.LayoutMillimeters))
+
+        item.update()
+        if hasattr(self, "view") and self.view:
+            self.view.update()
+
+    def _link_unlinked_items_to_map(self, map_item: QgsLayoutItemMap):
+        """Automatically links existing scalebars, north arrows, and legends to the map."""
+        if not self.layout or not map_item:
+            return
+        for it in self.layout.items():
+            if isinstance(it, QgsLayoutItemScaleBar):
+                if not it.linkedMap() or it.unitsPerSegment() <= 0:
+                    self._configure_scalebar_item(it)
+            elif isinstance(it, QgsLayoutItemPicture):
+                if hasattr(it, "linkedMap") and not it.linkedMap():
+                    it.setLinkedMap(map_item)
+            elif isinstance(it, QgsLayoutItemLegend):
+                if hasattr(it, "linkedMap") and not it.linkedMap():
+                    it.setLinkedMap(map_item)
+
+    def _on_layout_item_added(self, item):
+        """Called automatically by PyQGIS layout.itemAdded signal whenever an item is added."""
+        try:
+            if not item or not isinstance(item, QgsLayoutItem):
+                return
+            if getattr(item, "_gs_configured", False):
+                return
+            item._gs_configured = True
+
+            if isinstance(item, QgsLayoutItemScaleBar):
+                self._configure_scalebar_item(item)
+            elif isinstance(item, QgsLayoutItemMap):
+                self._configure_map_item_settings(item)
+        except Exception as e:
+            print(f"[MapLayout] Error configuring added item: {e}")
+
     def _on_item_created_interactive(self, item=None, *args):
         """Called automatically by PyQGIS QgsLayoutViewToolAddItem when rectangle is drawn."""
         if not self.layout:
@@ -340,22 +464,27 @@ class GeoStudioLayoutDesignerWindow(QMainWindow):
             selected = self.layout.selectedLayoutItems()
             if selected:
                 item = selected[0]
-            elif self.layout.items():
-                item = self.layout.items()[0]
+            else:
+                layout_items = [i for i in self.layout.items() if isinstance(i, QgsLayoutItem) and not isinstance(i, QgsLayoutItemPage)]
+                if layout_items:
+                    item = layout_items[0]
 
-        if not item:
+        if not item or not isinstance(item, QgsLayoutItem):
             return
 
         tt = self._pending_tool_type or ""
 
-        if tt == "map" or isinstance(item, QgsLayoutItemMap):
+        if isinstance(item, QgsLayoutItemMap):
             map_count = len([i for i in self.layout.items() if isinstance(i, QgsLayoutItemMap)])
             item.setId(f"Map {map_count}")
             item.setFrameEnabled(True)
             item.setBackgroundColor(QColor("#ffffff"))
             self._configure_map_item_settings(item)
 
-        elif tt == "label" or isinstance(item, QgsLayoutItemLabel):
+        elif isinstance(item, QgsLayoutItemScaleBar):
+            self._configure_scalebar_item(item)
+
+        elif isinstance(item, QgsLayoutItemLabel):
             label_count = len([i for i in self.layout.items() if isinstance(i, QgsLayoutItemLabel)])
             item.setId(f"Title {label_count}")
             item.setText("Map Title")
@@ -365,23 +494,15 @@ class GeoStudioLayoutDesignerWindow(QMainWindow):
             f.setBold(True)
             item.setFont(f)
 
-        elif tt == "legend" or isinstance(item, QgsLayoutItemLegend):
+        elif isinstance(item, QgsLayoutItemLegend):
             item.setId("Legend")
             item.setTitle("Legend")
             item.setLinkedMap(self.get_main_map_item())
             item.setFrameEnabled(True)
             item.setBackgroundColor(QColor(255, 255, 255, 230))
 
-        elif tt == "scalebar" or isinstance(item, QgsLayoutItemScaleBar):
-            item.setId("Scale Bar")
-            item.setLinkedMap(self.get_main_map_item())
-            item.setStyle("Single Box")
-            item.setUnits(QgsUnitTypes.DistanceKilometers)
-            item.setBackgroundEnabled(True)
-            item.setBackgroundColor(QColor(255, 255, 255, 220))
-
-        elif tt == "north_arrow":
-            if isinstance(item, QgsLayoutItemPicture):
+        elif isinstance(item, QgsLayoutItemPicture):
+            if tt == "north_arrow":
                 item.setId("North Arrow")
                 item.setLinkedMap(self.get_main_map_item())
                 svg_path = self._find_north_arrow_svg()
@@ -389,41 +510,34 @@ class GeoStudioLayoutDesignerWindow(QMainWindow):
                     item.setPicturePath(svg_path)
                 item.setBackgroundEnabled(True)
                 item.setBackgroundColor(QColor(255, 255, 255, 200))
-
-        elif tt == "image":
-            if isinstance(item, QgsLayoutItemPicture):
+            else:
                 item.setId("Logo / Image")
                 path, _ = QFileDialog.getOpenFileName(self, "Choose Image", "", "Images (*.png *.jpg *.jpeg *.svg *.webp)")
                 if path:
                     item.setPicturePath(path)
 
-        elif tt == "rectangle":
-            if isinstance(item, QgsLayoutItemShape):
-                item.setId(f"Rectangle {len([i for i in self.layout.items() if isinstance(i, QgsLayoutItemShape)])}")
-                item.setShapeType(QgsLayoutItemShape.Rectangle)
-                item.setFrameEnabled(True)
-
-        elif tt == "ellipse":
-            if isinstance(item, QgsLayoutItemShape):
-                item.setId(f"Ellipse {len([i for i in self.layout.items() if isinstance(i, QgsLayoutItemShape)])}")
+        elif isinstance(item, QgsLayoutItemShape):
+            shape_count = len([i for i in self.layout.items() if isinstance(i, QgsLayoutItemShape)])
+            if tt == "ellipse":
+                item.setId(f"Ellipse {shape_count}")
                 item.setShapeType(QgsLayoutItemShape.Ellipse)
-                item.setFrameEnabled(True)
+            else:
+                item.setId(f"Rectangle {shape_count}")
+                item.setShapeType(QgsLayoutItemShape.Rectangle)
+            item.setFrameEnabled(True)
 
-        elif tt == "arrow":
-            if isinstance(item, QgsLayoutItemPolyline):
+        elif isinstance(item, QgsLayoutItemPolyline):
+            if tt == "arrow":
                 item.setId("Arrow")
                 item.setEndMarker(QgsLayoutItemPolyline.ArrowHead)
-
-        elif tt == "line":
-            if isinstance(item, QgsLayoutItemPolyline):
+            else:
                 item.setId("Line")
 
-        elif tt == "table":
-            if isinstance(item, QgsLayoutItemAttributeTable):
-                item.setId("Attribute Table")
-                main_canvas = getattr(self.mw, "map_canvas", None)
-                if main_canvas and main_canvas.canvas and main_canvas.canvas.layers():
-                    item.setVectorLayer(main_canvas.canvas.layers()[0])
+        elif isinstance(item, QgsLayoutItemAttributeTable):
+            item.setId("Attribute Table")
+            main_canvas = getattr(self.mw, "map_canvas", None)
+            if main_canvas and main_canvas.canvas and main_canvas.canvas.layers():
+                item.setVectorLayer(main_canvas.canvas.layers()[0])
 
         # Reset tool to select
         self.view.setTool(self.tool_select)
@@ -682,6 +796,7 @@ class GeoStudioLayoutDesignerWindow(QMainWindow):
             item.setCrs(main_canvas.canvas.mapSettings().destinationCrs())
             item.setLayers(canvas_layers)
             item.setExtent(main_canvas.canvas.extent())
+            self._link_unlinked_items_to_map(item)
             return
 
         valid_layers = [l for l in prj.mapLayers().values() if l.isValid()]
@@ -733,6 +848,8 @@ class GeoStudioLayoutDesignerWindow(QMainWindow):
             default_ext = QgsRectangle(-180.0, -90.0, 180.0, 90.0) if crs.isGeographic() else QgsRectangle(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
             item.zoomToExtent(default_ext)
 
+        self._link_unlinked_items_to_map(item)
+
     def add_map_item(self):
         page = self.layout.pageCollection().pages()[0]
         pw = page.pageSize().width()
@@ -781,14 +898,14 @@ class GeoStudioLayoutDesignerWindow(QMainWindow):
     def add_scalebar_item(self):
         item = QgsLayoutItemScaleBar(self.layout)
         item.setId("Scale Bar")
-        item.setLinkedMap(self.get_main_map_item())
-        item.setStyle("Single Box")
-        item.setUnits(QgsUnitTypes.DistanceKilometers)
-        item.attemptResize(QgsLayoutSize(45, 10, QgsUnitTypes.LayoutMillimeters))
-        item.attemptMove(QgsLayoutPoint(25, 180, QgsUnitTypes.LayoutMillimeters))
-        item.setBackgroundEnabled(True)
-        item.setBackgroundColor(QColor(255, 255, 255, 220))
+
+        page = self.layout.pageCollection().pages()[0] if self.layout else None
+        ph = page.pageSize().height() if page else 210
+        item.attemptResize(QgsLayoutSize(50, 14, QgsUnitTypes.LayoutMillimeters))
+        item.attemptMove(QgsLayoutPoint(25, ph - 30, QgsUnitTypes.LayoutMillimeters))
+
         self.layout.addLayoutItem(item)
+        self._configure_scalebar_item(item)
         self.layout.setSelectedItem(item)
         self.items_dock.refresh_items()
 

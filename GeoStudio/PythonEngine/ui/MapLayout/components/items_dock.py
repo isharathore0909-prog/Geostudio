@@ -111,8 +111,16 @@ class LayoutItemsDock(QDockWidget):
         self.tree.blockSignals(True)
         self.tree.clear()
 
-        # Sort by z-value descending so topmost item appears first in tree
-        items = list(self.designer.layout.items())
+        # Sort by z-value descending so topmost item appears first in tree.
+        # Filter strictly to QgsLayoutItem items, ignoring page borders / Qt graphics rects.
+        try:
+            from qgis.core import QgsLayoutItem, QgsLayoutItemPage
+            items = [
+                it for it in self.designer.layout.items()
+                if isinstance(it, QgsLayoutItem) and not isinstance(it, QgsLayoutItemPage)
+            ]
+        except Exception:
+            items = [it for it in self.designer.layout.items() if hasattr(it, "type")]
         items.sort(key=lambda it: it.zValue() if hasattr(it, "zValue") else 0, reverse=True)
 
         for item in items:

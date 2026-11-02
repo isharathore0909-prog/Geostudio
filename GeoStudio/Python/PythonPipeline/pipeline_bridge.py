@@ -30,6 +30,17 @@ import argparse
 import traceback
 import importlib
 
+# Ensure PythonEngine is on sys.path for UI modules (MapLayout, etc.)
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+for _cand in [
+    os.path.abspath(os.path.join(_script_dir, "..", "..", "PythonEngine")),
+    os.path.abspath(os.path.join(_script_dir, "..", "PythonEngine")),
+    os.path.abspath(os.path.join(_script_dir, "PythonEngine")),
+    r"D:\GEO MAP\GeoStudio\PythonEngine"
+]:
+    if os.path.isdir(_cand) and _cand not in sys.path:
+        sys.path.insert(0, _cand)
+
 import common
 from common import report_progress, report_result
 

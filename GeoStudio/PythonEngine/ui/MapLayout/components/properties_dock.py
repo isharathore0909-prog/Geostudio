@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
     QDockWidget, QWidget, QVBoxLayout, QFormLayout, QGroupBox,
     QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox, QComboBox,
     QPushButton, QLabel, QTextEdit, QColorDialog, QFontDialog,
-    QScrollArea, QHBoxLayout, QSlider, QFileDialog
+    QScrollArea, QHBoxLayout, QSlider, QFileDialog, QFrame, QSizePolicy
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont, QIcon
@@ -42,9 +42,13 @@ class LayoutPropertiesDock(QDockWidget):
     def _build_ui(self):
         self.scroll = QScrollArea(self)
         self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.NoFrame)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll.setStyleSheet("QScrollArea { border: none; background: #ffffff; }")
 
         self.container = QWidget()
+        self.container.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
         self.layout_v = QVBoxLayout(self.container)
         self.layout_v.setContentsMargins(6, 6, 6, 6)
         self.layout_v.setSpacing(6)
@@ -206,11 +210,22 @@ class LayoutPropertiesDock(QDockWidget):
         except Exception as e:
             print(f"[LayoutPropertiesDock] Warning loading properties: {e}")
 
+        # Recalculate layout geometry so QScrollArea immediately recognizes new total content height
+        try:
+            self.element_layout.activate()
+            self.layout_v.activate()
+            self.container.adjustSize()
+            self.scroll.updateGeometry()
+        except Exception:
+            pass
+
     def _clear_element_ui(self):
         while self.element_layout.count() > 0:
             it = self.element_layout.takeAt(0)
             if it.widget():
-                it.widget().deleteLater()
+                w = it.widget()
+                w.setParent(None)
+                w.deleteLater()
 
     # ── Map Item Editor ──────────────────────────────────────────
     # ── Map Item Editor ──────────────────────────────────────────
@@ -543,33 +558,139 @@ class LayoutPropertiesDock(QDockWidget):
         form.setSpacing(5)
 
         combo_style = QComboBox()
-        combo_style.addItems(["Single Box", "Double Box", "Line Ticks Up", "Line Ticks Down", "Numeric"])
+        combo_style.blockSignals(True)
+        combo_style.addItems(["Single Box", "Double Box", "Line Ticks Up", "Line Ticks Down", "Line Ticks Middle", "Numeric"])
         combo_style.setCurrentText(sb_item.style())
-        combo_style.currentTextChanged.connect(lambda st: (sb_item.setStyle(st), self.designer.view.update()))
+        combo_style.blockSignals(False)
+        combo_style.currentTextChanged.connect(lambda st: (sb_item.setStyle(st), sb_item.resizeToMinimumWidth(), sb_item.update(), self.designer.view.update()))
         form.addRow("Style:", combo_style)
 
+        # Linked map selector
+        combo_map = QComboBox()
+        combo_map.blockSignals(True)
+        maps = [i for i in self.designer.layout.items() if isinstance(i, QgsLayoutItemMap)]
+        for m in maps:
+            combo_map.addItem(m.id() or "Map Frame", m)
+        linked = sb_item.linkedMap()
+        if linked:
+            idx = combo_map.findData(linked)
+            if idx >= 0:
+                combo_map.setCurrentIndex(idx)
+        elif maps:
+            sb_item.setLinkedMap(maps[0])
+            if hasattr(self.designer, "_configure_scalebar_item"):
+                self.designer._configure_scalebar_item(sb_item)
+            combo_map.setCurrentIndex(0)
+        combo_map.blockSignals(False)
+        combo_map.currentIndexChanged.connect(lambda idx: (
+            sb_item.setLinkedMap(combo_map.itemData(idx)),
+            self.designer._configure_scalebar_item(sb_item) if hasattr(self.designer, "_configure_scalebar_item") else None,
+            sb_item.update(),
+            self.designer.view.update(),
+            self.set_item(sb_item)
+        ))
+        form.addRow("Linked Map:", combo_map)
+
+        # Ensure units and segment size are valid
+        if sb_item.unitsPerSegment() <= 0:
+            if hasattr(self.designer, "_configure_scalebar_item"):
+                self.designer._configure_scalebar_item(sb_item)
+
+        # Units dropdown with current active unit selected
         combo_units = QComboBox()
-        combo_units.addItems(["Kilometers", "Meters", "Miles", "Feet"])
+        combo_units.blockSignals(True)
+        combo_units.addItems(["Meters", "Kilometers", "Feet", "Miles"])
+        unit_map_rev = {
+            QgsUnitTypes.DistanceMeters: "Meters",
+            QgsUnitTypes.DistanceKilometers: "Kilometers",
+            QgsUnitTypes.DistanceFeet: "Feet",
+            QgsUnitTypes.DistanceMiles: "Miles"
+        }
+        combo_units.setCurrentText(unit_map_rev.get(sb_item.units(), "Meters"))
+        combo_units.blockSignals(False)
         combo_units.currentTextChanged.connect(lambda u: self._set_scalebar_units(sb_item, u))
         form.addRow("Units:", combo_units)
+
+        # Segment Width (Units per segment)
+        spn_width = QDoubleSpinBox()
+        spn_width.blockSignals(True)
+        spn_width.setRange(0.01, 10_000_000)
+        spn_width.setDecimals(2 if sb_item.unitsPerSegment() < 10 else 1)
+        spn_width.setValue(max(0.01, sb_item.unitsPerSegment()))
+        spn_width.blockSignals(False)
+        spn_width.valueChanged.connect(lambda v: (
+            sb_item.setUnitsPerSegment(v),
+            sb_item.resizeToMinimumWidth(),
+            sb_item.update(),
+            self.designer.view.update()
+        ))
+        form.addRow("Segment Size:", spn_width)
 
         spn_seg = QSpinBox()
         spn_seg.setRange(1, 10)
         spn_seg.setValue(sb_item.numberOfSegments())
-        spn_seg.valueChanged.connect(lambda v: (sb_item.setNumberOfSegments(v), self.designer.view.update()))
+        spn_seg.valueChanged.connect(lambda v: (
+            sb_item.setNumberOfSegments(v),
+            sb_item.resizeToMinimumWidth(),
+            sb_item.update(),
+            self.designer.view.update()
+        ))
         form.addRow("Segments (Right):", spn_seg)
+
+        spn_seg_l = QSpinBox()
+        spn_seg_l.setRange(0, 5)
+        spn_seg_l.setValue(sb_item.numberOfSegmentsLeft())
+        spn_seg_l.valueChanged.connect(lambda v: (
+            sb_item.setNumberOfSegmentsLeft(v),
+            sb_item.resizeToMinimumWidth(),
+            sb_item.update(),
+            self.designer.view.update()
+        ))
+        form.addRow("Segments (Left):", spn_seg_l)
 
         self.element_layout.addWidget(grp)
 
     def _set_scalebar_units(self, sb_item, unit_str):
         unit_map = {
-            "Kilometers": QgsUnitTypes.DistanceKilometers,
-            "Meters": QgsUnitTypes.DistanceMeters,
-            "Miles": QgsUnitTypes.DistanceMiles,
-            "Feet": QgsUnitTypes.DistanceFeet
+            "Meters": (QgsUnitTypes.DistanceMeters, "m"),
+            "Kilometers": (QgsUnitTypes.DistanceKilometers, "km"),
+            "Feet": (QgsUnitTypes.DistanceFeet, "ft"),
+            "Miles": (QgsUnitTypes.DistanceMiles, "mi")
         }
-        sb_item.setUnits(unit_map.get(unit_str, QgsUnitTypes.DistanceKilometers))
-        self.designer.view.update()
+        unit_type, unit_label = unit_map.get(unit_str, (QgsUnitTypes.DistanceMeters, "m"))
+        sb_item.setUnits(unit_type)
+        sb_item.setUnitLabel(unit_label)
+
+        # Calculate a smart segment size for the selected unit based on ground width
+        map_item = sb_item.linkedMap() or (self.designer.get_main_map_item() if self.designer else None)
+        if map_item and hasattr(map_item, "extent") and not map_item.extent().isEmpty():
+            ground_w = map_item.extent().width()
+            if unit_type == QgsUnitTypes.DistanceKilometers:
+                ground_val = (ground_w / 1000.0) / 4.0
+            elif unit_type == QgsUnitTypes.DistanceMiles:
+                ground_val = (ground_w / 1609.344) / 4.0
+            elif unit_type == QgsUnitTypes.DistanceFeet:
+                ground_val = (ground_w * 3.28084) / 4.0
+            else:
+                ground_val = ground_w / 4.0
+
+            calc_fn = getattr(self.designer, "_calculate_nice_segment_size", None)
+            nice_seg = calc_fn(ground_val) if calc_fn else 50.0
+            sb_item.setUnitsPerSegment(nice_seg)
+        else:
+            default_segs = {
+                QgsUnitTypes.DistanceMeters: 50.0,
+                QgsUnitTypes.DistanceKilometers: 1.0,
+                QgsUnitTypes.DistanceFeet: 200.0,
+                QgsUnitTypes.DistanceMiles: 1.0
+            }
+            sb_item.setUnitsPerSegment(default_segs.get(unit_type, 50.0))
+
+        sb_item.resizeToMinimumWidth()
+        sb_item.update()
+        if self.designer and hasattr(self.designer, "view") and self.designer.view:
+            self.designer.view.update()
+        self.set_item(sb_item)
 
     # ── Legend Editor ────────────────────────────────────────────
     def _build_legend_editor(self, leg_item):
