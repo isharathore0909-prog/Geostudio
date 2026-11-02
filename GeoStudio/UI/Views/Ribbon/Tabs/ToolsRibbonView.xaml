@@ -43,6 +43,7 @@
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Ground" Tag="/Resources/Icons/classify_ground.png" ToolTip="Classify Ground Points" Click="BtnLidarClassifyGround_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Vegetation" Tag="/Resources/Icons/classify_veg.png" ToolTip="Classify Vegetation Points" Click="BtnLidarClassifyVeg_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Buildings" Tag="/Resources/Icons/classify_buildings.png" ToolTip="Classify Building Footprints" Click="BtnLidarClassifyBuildings_Click"/>
+                    <Button Style="{StaticResource RustGisLargeBtn}" Content="Filter &amp; Export" Tag="/Resources/Icons/classify_ground.png" ToolTip="Interactive Classification Visibility Filter &amp; Export (.LAS)" Click="BtnLidarFilterClasses_Click"/>
                 </StackPanel>
                 <TextBlock Text="Classification" Style="{StaticResource RustGisGroupLabel}"/>
             </StackPanel>

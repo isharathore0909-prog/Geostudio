@@ -65,5 +65,101 @@ namespace GeoStudio.UI.Views.Sidebar
         private void BtnAddOsm_Click(object s, RoutedEventArgs e) => Main?.BtnAddOsm_Click(s, e);
         private void BtnToggleTelemetry_Click(object s, RoutedEventArgs e) => Main?.BtnToggleTelemetry_Click(s, e);
         private void MenuToggleGpu_Click(object s, RoutedEventArgs e) => Main?.MenuToggleGpu_Click(s, e);
+
+        private void LidarClassItem_Click(object sender, RoutedEventArgs e)
+        {
+            // The CheckBox.Tag is bound to the parent LayerItem via RelativeSource.
+            // Fall back to visual-tree search if Tag is not set (design-time or fallback).
+            LayerItem? layer = null;
+            if (sender is FrameworkElement fe)
+            {
+                layer = fe.Tag as LayerItem
+                     ?? FindVisualParent<Border>(fe)?.DataContext as LayerItem;
+            }
+            if (layer == null) return;
+
+            var activeClasses = System.Linq.Enumerable.ToList(
+                System.Linq.Enumerable.Select(
+                    System.Linq.Enumerable.Where(layer.LidarClasses, c => c.IsSelected),
+                    c => c.ClassId));
+            Main?.FilterLidarClasses(activeClasses);
+        }
+
+        private void BtnLidarTreeAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.Tag is LayerItem layer)
+            {
+                foreach (var c in layer.LidarClasses) c.IsSelected = true;
+                Main?.FilterLidarClasses(System.Linq.Enumerable.Select(layer.LidarClasses, c => c.ClassId));
+            }
+        }
+
+        private void BtnLidarTreeGround_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.Tag is LayerItem layer)
+            {
+                foreach (var c in layer.LidarClasses) c.IsSelected = (c.ClassId == 2 || c.ClassId == 8);
+                Main?.FilterLidarClasses(new byte[] { 2, 8 });
+            }
+        }
+
+        private void BtnLidarTreeVeg_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.Tag is LayerItem layer)
+            {
+                foreach (var c in layer.LidarClasses) c.IsSelected = (c.ClassId >= 3 && c.ClassId <= 5);
+                Main?.FilterLidarClasses(new byte[] { 3, 4, 5 });
+            }
+        }
+
+        private void BtnLidarTreeBuildings_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.Tag is LayerItem layer)
+            {
+                foreach (var c in layer.LidarClasses) c.IsSelected = (c.ClassId == 6);
+                Main?.FilterLidarClasses(new byte[] { 6 });
+            }
+        }
+
+        private void BtnLidarTreeNone_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.Tag is LayerItem layer)
+            {
+                foreach (var c in layer.LidarClasses) c.IsSelected = false;
+                Main?.FilterLidarClasses(System.Array.Empty<byte>());
+            }
+        }
+
+        private void BtnMenuLidarExport_Click(object sender, RoutedEventArgs e)
+        {
+            LayerItem? layer = (sender as FrameworkElement)?.DataContext as LayerItem
+                            ?? (sender as FrameworkElement)?.Tag as LayerItem
+                            ?? Main?.Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud);
+            if (layer != null)
+            {
+                layer.IsClassificationActive = true;
+                layer.IsLidarTreeExpanded = true;
+                var sel = System.Linq.Enumerable.ToList(
+                    System.Linq.Enumerable.Select(
+                        System.Linq.Enumerable.Where(layer.LidarClasses, c => c.IsSelected),
+                        c => c.ClassId));
+                Main?.OpenLidarFilterDialog(sel);
+            }
+        }
+
+        private void BtnLidarTreeExport_Click(object sender, RoutedEventArgs e)
+        {
+            LayerItem? layer = (sender as FrameworkElement)?.DataContext as LayerItem
+                            ?? (sender as FrameworkElement)?.Tag as LayerItem
+                            ?? Main?.Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud);
+            if (layer != null)
+            {
+                var sel = System.Linq.Enumerable.ToList(
+                    System.Linq.Enumerable.Select(
+                        System.Linq.Enumerable.Where(layer.LidarClasses, c => c.IsSelected),
+                        c => c.ClassId));
+                Main?.OpenLidarFilterDialog(sel);
+            }
+        }
     }
 }

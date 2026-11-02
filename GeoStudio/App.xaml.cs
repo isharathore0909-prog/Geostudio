@@ -61,5 +61,15 @@ public partial class App : Application
         }
         base.OnStartup(e);
     }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        try
+        {
+            Python.PythonPipelineService.ShutdownMapLayout();
+        }
+        catch { }
+        base.OnExit(e);
+    }
 }
 

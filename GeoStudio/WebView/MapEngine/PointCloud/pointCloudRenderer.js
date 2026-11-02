@@ -86,6 +86,7 @@ function renderPointCloud() {
       const x = hasBatch ? xs[i] : (pts[i].x !== undefined ? pts[i].x : pts[i].X);
       const y = hasBatch ? ys[i] : (pts[i].y !== undefined ? pts[i].y : pts[i].Y);
       if (x === undefined || y === undefined) continue;
+      if (window.activeLidarClasses && cBytes && !window.activeLidarClasses.has(cBytes[i])) continue;
       let mx, my;
       if (isDegree) {
         mx = x * toMercX;
@@ -129,6 +130,11 @@ function renderPointCloud() {
     }
 
     if (x === undefined || y === undefined) continue;
+
+    // Filter points by active classification visibility
+    if (window.activeLidarClasses && !window.activeLidarClasses.has(classification)) {
+      continue;
+    }
 
     let mercX, mercY;
     if (isDegree) {

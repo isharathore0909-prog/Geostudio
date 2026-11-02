@@ -57,6 +57,24 @@ namespace GeoStudio
 
                 PostMessageToMap(new { action = "setLidarColorBy", colorBy = colorBy });
                 TxtStatus.Text = $"LiDAR Display: {text}";
+
+                if (colorBy == "classification")
+                {
+                    var ptLayer = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud);
+                    if (ptLayer != null)
+                    {
+                        ptLayer.IsClassificationActive = true;
+                        ptLayer.IsLidarTreeExpanded = true;
+                    }
+                }
+                else
+                {
+                    var ptLayer = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud);
+                    if (ptLayer != null)
+                    {
+                        ptLayer.IsClassificationActive = false;
+                    }
+                }
             }
         }
 
@@ -251,6 +269,45 @@ namespace GeoStudio
             });
         }
 
+        internal void BtnLidarFilterClasses_Click(object sender, RoutedEventArgs e)
+        {
+            var ptLayer = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud);
+            if (ptLayer != null)
+            {
+                ptLayer.IsClassificationActive = true;
+                ptLayer.IsLidarTreeExpanded = true;
+            }
+            OpenLidarFilterDialog();
+        }
+
+        public void OpenLidarFilterDialog(IEnumerable<byte>? initialSelection = null)
+        {
+            var ptLayer = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud);
+            if (ptLayer == null || string.IsNullOrEmpty(ptLayer.FilePath) || !File.Exists(ptLayer.FilePath))
+            {
+                MessageBox.Show("Please load a LAS/LAZ point cloud first.", "Classification Filter", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (ActiveLidarClassFilterWindow != null && ActiveLidarClassFilterWindow.IsLoaded)
+            {
+                ActiveLidarClassFilterWindow.WindowState = WindowState.Normal;
+                ActiveLidarClassFilterWindow.Activate();
+                if (initialSelection != null)
+                {
+                    ActiveLidarClassFilterWindow.SyncFromMap(initialSelection);
+                }
+                return;
+            }
+
+            ActiveLidarClassFilterWindow = new UI.Dialogs.PointCloud.LidarClassFilterWindow(this, initialSelection)
+            {
+                Owner = this
+            };
+            ActiveLidarClassFilterWindow.Closed += (s, args) => ActiveLidarClassFilterWindow = null;
+            ActiveLidarClassFilterWindow.Show();
+        }
+
         internal async void BtnLidarThin_Click(object sender, RoutedEventArgs e)
         {
             var ptLayer = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud);
@@ -415,6 +472,12 @@ namespace GeoStudio
         {
             PostMessageToMap(new { action = "setLidarColorBy", colorBy = "classification" });
             TxtStatus.Text = "LiDAR Color Ramp: ASPRS Classification (Ground, Veg, Buildings)";
+            var ptLayer = Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud);
+            if (ptLayer != null)
+            {
+                ptLayer.IsClassificationActive = true;
+                ptLayer.IsLidarTreeExpanded = true;
+            }
         }
 
         internal void BtnLidarFilter_Click(object sender, RoutedEventArgs e) =>

@@ -350,7 +350,31 @@ namespace GeoStudio.PointCloud
             ulong total = header.TotalPointCount;
             ulong step = Math.Max(1, total / 20_000_000UL);
 
-            progress?.Invoke(30, "Filtering & interpolating ground terrain elevation cells...");
+            // Pre-scan a sample to detect if the point cloud contains ASPRS Ground (Class 2 / Class 8)
+            bool hasGroundClass = false;
+            ulong checkCount = Math.Min(total, 50_000UL);
+            ulong checkStep = Math.Max(1, total / checkCount);
+            using (var fsCheck = new FileStream(actualPath, FileMode.Open, FileAccess.Read, FileShare.Read, 1048576))
+            {
+                byte[] checkBuf = new byte[recordLen];
+                long startPos = (long)header.OffsetToPointData;
+                int groundCount = 0;
+                for (ulong i = 0; i < total && groundCount < 30; i += checkStep)
+                {
+                    long pos = startPos + ((long)i * recordLen);
+                    if (pos + recordLen > fsCheck.Length) break;
+                    fsCheck.Seek(pos, SeekOrigin.Begin);
+                    if (fsCheck.Read(checkBuf, 0, recordLen) < recordLen) break;
+                    byte c = header.PointDataRecordFormat >= 6 ? checkBuf[16] : (byte)(checkBuf[15] & 0x1F);
+                    if (c == 2 || c == 8) groundCount++;
+                }
+                hasGroundClass = groundCount >= 10;
+            }
+
+            progress?.Invoke(30, hasGroundClass
+                ? "Extracting ASPRS Class 2 Ground returns for bare-earth DTM..."
+                : "Filtering minimum returns for bare-earth terrain surface...");
+
             using (var fs = new FileStream(actualPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4194304))
             {
                 byte[] buf = new byte[recordLen];
@@ -365,8 +389,21 @@ namespace GeoStudio.PointCloud
                     if (fs.Read(buf, 0, recordLen) < recordLen) break;
 
                     byte cls = header.PointDataRecordFormat >= 6 ? buf[16] : (byte)(buf[15] & 0x1F);
-                    // Accept ASPRS Class 2 (Ground) or unclassified minimum
-                    if (cls != 2 && cls != 8 && cls > 1) continue;
+
+                    // Reject noise (ASPRS Class 7 = Low Noise, Class 18 = High Noise)
+                    if (cls == 7 || cls == 18) continue;
+
+                    if (hasGroundClass)
+                    {
+                        // STRICT ASPRS Ground filtering: only Class 2 (Ground) and Class 8 (Model Key Point)
+                        // This prevents canopy, bushes, roofs (Class 1, 3, 4, 5, 6) from inflating the DTM!
+                        if (cls != 2 && cls != 8) continue;
+                    }
+                    else
+                    {
+                        // Unclassified: skip vegetation and building classes if labeled
+                        if (cls > 1 && cls != 2 && cls != 8) continue;
+                    }
 
                     int rawX = BitConverter.ToInt32(buf, 0);
                     int rawY = BitConverter.ToInt32(buf, 4);
@@ -396,36 +433,79 @@ namespace GeoStudio.PointCloud
                 }
             }
 
-            // Infill void holes in DTM terrain surface
-            progress?.Invoke(70, "Infilling bare-earth terrain surface gaps...");
-            float avgElev = (float)header.MinZ;
-            for (int pass = 0; pass < 3; pass++)
+            // 1. Establish interior bounding envelope of measured ground points (prevents bleeding into outer blank corners)
+            int[] minX_row = new int[gridH];
+            int[] maxX_row = new int[gridH];
+            Array.Fill(minX_row, gridW);
+            Array.Fill(maxX_row, -1);
+
+            int[] minY_col = new int[gridW];
+            int[] maxY_col = new int[gridW];
+            Array.Fill(minY_col, gridH);
+            Array.Fill(maxY_col, -1);
+
+            for (int y = 0; y < gridH; y++)
             {
+                int row = y * gridW;
+                for (int x = 0; x < gridW; x++)
+                {
+                    if (validGrid[row + x])
+                    {
+                        if (x < minX_row[y]) minX_row[y] = x;
+                        if (x > maxX_row[y]) maxX_row[y] = x;
+                        if (y < minY_col[x]) minY_col[x] = y;
+                        if (y > maxY_col[x]) maxY_col[x] = y;
+                    }
+                }
+            }
+
+            // 2. Infill void holes strictly bounded inside the surveyed footprint using double-buffered interpolation.
+            // Double-buffering prevents in-place directional cascading (which causes diagonal streaks and border smears).
+            progress?.Invoke(70, "Infilling bare-earth gaps under canopy and buildings...");
+            for (int pass = 0; pass < 25; pass++)
+            {
+                bool filledAny = false;
+                bool[] readValid = (bool[])validGrid.Clone();
+                float[] readDtm = (float[])dtmGrid.Clone();
+
                 for (int y = 1; y < gridH - 1; y++)
                 {
+                    int rowMinX = Math.Max(1, minX_row[y]);
+                    int rowMaxX = Math.Min(gridW - 2, maxX_row[y]);
+                    if (rowMinX > rowMaxX) continue;
+
                     int row = y * gridW;
-                    for (int x = 1; x < gridW - 1; x++)
+                    for (int x = rowMinX; x <= rowMaxX; x++)
                     {
+                        if (y < minY_col[x] || y > maxY_col[x]) continue;
+
                         int idx = row + x;
-                        if (!validGrid[idx])
+                        if (!readValid[idx])
                         {
                             float sumZ = 0; int count = 0;
-                            if (validGrid[idx - 1]) { sumZ += dtmGrid[idx - 1]; count++; }
-                            if (validGrid[idx + 1]) { sumZ += dtmGrid[idx + 1]; count++; }
-                            if (validGrid[idx - gridW]) { sumZ += dtmGrid[idx - gridW]; count++; }
-                            if (validGrid[idx + gridW]) { sumZ += dtmGrid[idx + gridW]; count++; }
+                            if (readValid[idx - 1]) { sumZ += readDtm[idx - 1]; count++; }
+                            if (readValid[idx + 1]) { sumZ += readDtm[idx + 1]; count++; }
+                            if (readValid[idx - gridW]) { sumZ += readDtm[idx - gridW]; count++; }
+                            if (readValid[idx + gridW]) { sumZ += readDtm[idx + gridW]; count++; }
+
+                            // Require at least 2 neighbors to smoothly bridge interior gaps without expanding outward
                             if (count >= 2)
                             {
                                 dtmGrid[idx] = sumZ / count;
                                 validGrid[idx] = true;
+                                filledAny = true;
                             }
                         }
                     }
                 }
+                if (!filledAny) break;
             }
+
+            // CRITICAL: Out-of-bounds / unmeasured cells MUST be set to NoData (-9999.0f), NEVER header.MinZ!
+            // Setting this to NoData keeps the background 100% transparent and preserves accurate terrain elevation stretch.
             for (int i = 0; i < totalPixels; i++)
             {
-                if (!validGrid[i]) dtmGrid[i] = avgElev;
+                if (!validGrid[i]) dtmGrid[i] = -9999.0f;
             }
 
             progress?.Invoke(85, "Writing high-resolution Bare-Earth DTM GeoTIFF...");
@@ -614,7 +694,7 @@ namespace GeoStudio.PointCloud
                 }
                 else
                 {
-                    chmGrid[i] = 0f;
+                    chmGrid[i] = -9999.0f;
                 }
             }
 
@@ -703,6 +783,312 @@ namespace GeoStudio.PointCloud
             fsOut.Flush();
             progress?.Invoke(100, $"Point cloud decimation complete: {written:N0} points written.");
             return outFilePath;
+        }
+
+        public static (string outPath, ulong writtenCount) ExportClassifiedLas(
+            string lasFilePath,
+            string outFilePath,
+            ISet<byte> allowedClasses,
+            Action<int, string>? progress = null)
+        {
+            if (!File.Exists(lasFilePath)) throw new FileNotFoundException("Point cloud file not found", lasFilePath);
+            if (allowedClasses == null || allowedClasses.Count == 0)
+                throw new InvalidOperationException("At least one classification must be selected for export.");
+
+            progress?.Invoke(5, "Preparing point cloud for class filtering...");
+            string actualPath = LasPointCloudService.EnsureUncompressedLas(lasFilePath, (p, m) => progress?.Invoke(p, m));
+            var header = LasPointCloudService.InspectLasHeader(actualPath);
+
+            string ext = Path.GetExtension(outFilePath).ToLowerInvariant();
+            bool isCsv = ext == ".csv" || ext == ".txt" || ext == ".xyz";
+
+            int recLen = header.PointDataRecordLength;
+            ulong origTotal = header.TotalPointCount;
+            long startPos = (long)header.OffsetToPointData;
+            int fmt = header.PointDataRecordFormat;
+
+            using var fsIn = new FileStream(actualPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4194304);
+
+            if (isCsv)
+            {
+                using var sw = new StreamWriter(outFilePath, false, System.Text.Encoding.UTF8, 65536);
+                sw.WriteLine("X,Y,Z,Intensity,Classification,ReturnNumber");
+                byte[] recBuf = new byte[recLen];
+                ulong written = 0;
+
+                for (ulong i = 0; i < origTotal; i++)
+                {
+                    long pos = startPos + ((long)i * recLen);
+                    if (pos + recLen > fsIn.Length) break;
+                    fsIn.Seek(pos, SeekOrigin.Begin);
+                    if (fsIn.Read(recBuf, 0, recLen) < recLen) break;
+
+                    byte cls = fmt >= 6 ? recBuf[16] : (byte)(recBuf[15] & 0x1F);
+                    if (!allowedClasses.Contains(cls)) continue;
+
+                    int rawX = BitConverter.ToInt32(recBuf, 0);
+                    int rawY = BitConverter.ToInt32(recBuf, 4);
+                    int rawZ = BitConverter.ToInt32(recBuf, 8);
+                    ushort intensity = BitConverter.ToUInt16(recBuf, 12);
+                    byte retByte = recBuf[14];
+                    byte rn = fmt >= 6 ? (byte)(retByte & 0x0F) : (byte)(retByte & 0x07);
+
+                    double x = (rawX * header.ScaleX) + header.OffsetX;
+                    double y = (rawY * header.ScaleY) + header.OffsetY;
+                    double z = (rawZ * header.ScaleZ) + header.OffsetZ;
+
+                    sw.WriteLine($"{x:F3},{y:F3},{z:F3},{intensity},{cls},{rn}");
+                    written++;
+                    if (written % 50000 == 0 && origTotal > 0)
+                    {
+                        progress?.Invoke(10 + (int)((i * 85) / origTotal), $"Exporting points ({written:N0} selected)...");
+                    }
+                }
+                progress?.Invoke(100, $"Export complete: {written:N0} points saved to text file.");
+                return (outFilePath, written);
+            }
+            else
+            {
+                // Standard ASPRS Binary LAS Export
+                using var fsOut = new FileStream(outFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4194304);
+
+                // Copy original header buffer & all VLRs
+                byte[] headerBuf = new byte[header.OffsetToPointData];
+                fsIn.Seek(0, SeekOrigin.Begin);
+                fsIn.Read(headerBuf, 0, headerBuf.Length);
+                fsOut.Write(headerBuf, 0, headerBuf.Length);
+
+                byte[] recBuf = new byte[recLen];
+                ulong written = 0;
+
+                double minX = double.MaxValue, maxX = double.MinValue;
+                double minY = double.MaxValue, maxY = double.MinValue;
+                double minZ = double.MaxValue, maxZ = double.MinValue;
+
+                for (ulong i = 0; i < origTotal; i++)
+                {
+                    long pos = startPos + ((long)i * recLen);
+                    if (pos + recLen > fsIn.Length) break;
+                    fsIn.Seek(pos, SeekOrigin.Begin);
+                    if (fsIn.Read(recBuf, 0, recLen) < recLen) break;
+
+                    byte cls = fmt >= 6 ? recBuf[16] : (byte)(recBuf[15] & 0x1F);
+                    if (!allowedClasses.Contains(cls)) continue;
+
+                    int rawX = BitConverter.ToInt32(recBuf, 0);
+                    int rawY = BitConverter.ToInt32(recBuf, 4);
+                    int rawZ = BitConverter.ToInt32(recBuf, 8);
+                    double x = (rawX * header.ScaleX) + header.OffsetX;
+                    double y = (rawY * header.ScaleY) + header.OffsetY;
+                    double z = (rawZ * header.ScaleZ) + header.OffsetZ;
+
+                    if (x < minX) minX = x; if (x > maxX) maxX = x;
+                    if (y < minY) minY = y; if (y > maxY) maxY = y;
+                    if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+
+                    fsOut.Write(recBuf, 0, recLen);
+                    written++;
+
+                    if (written % 50000 == 0 && origTotal > 0)
+                    {
+                        progress?.Invoke(10 + (int)((i * 80) / origTotal), $"Filtering & writing ASPRS points ({written:N0} selected)...");
+                    }
+                }
+
+                // Update point count in LAS header
+                fsOut.Seek(107, SeekOrigin.Begin);
+                fsOut.Write(BitConverter.GetBytes((uint)Math.Min((ulong)uint.MaxValue, written)), 0, 4);
+
+                if (header.VersionMajor == 1 && header.VersionMinor >= 4 && fsOut.Length >= 255)
+                {
+                    fsOut.Seek(247, SeekOrigin.Begin);
+                    fsOut.Write(BitConverter.GetBytes(written), 0, 8);
+                }
+
+                if (written > 0)
+                {
+                    fsOut.Seek(179, SeekOrigin.Begin);
+                    fsOut.Write(BitConverter.GetBytes(maxX), 0, 8);
+                    fsOut.Write(BitConverter.GetBytes(minX), 0, 8);
+                    fsOut.Write(BitConverter.GetBytes(maxY), 0, 8);
+                    fsOut.Write(BitConverter.GetBytes(minY), 0, 8);
+                    fsOut.Write(BitConverter.GetBytes(maxZ), 0, 8);
+                    fsOut.Write(BitConverter.GetBytes(minZ), 0, 8);
+                }
+
+                fsOut.Flush();
+                progress?.Invoke(100, $"ASPRS LAS export complete: {written:N0} points written.");
+                return (outFilePath, written);
+            }
+        }
+
+        public static (string outPath, ulong writtenCount) ExportClassifiedRaster(
+            string lasFilePath,
+            string outFilePath,
+            ISet<byte> allowedClasses,
+            string format,
+            Action<int, string>? progress = null)
+        {
+            if (!File.Exists(lasFilePath)) throw new FileNotFoundException("Point cloud file not found", lasFilePath);
+            if (allowedClasses == null || allowedClasses.Count == 0)
+                throw new InvalidOperationException("At least one classification must be selected for export.");
+
+            GdalRasterService.Initialize();
+            progress?.Invoke(5, "Preparing point cloud for raster export...");
+            string actualPath = LasPointCloudService.EnsureUncompressedLas(lasFilePath, (p, m) => progress?.Invoke(p, m));
+            var header = LasPointCloudService.InspectLasHeader(actualPath);
+
+            double minX = header.MinX;
+            double maxX = header.MaxX;
+            double minY = header.MinY;
+            double maxY = header.MaxY;
+
+            SpatialReference? srcSrs = null;
+            try
+            {
+                if (!string.IsNullOrEmpty(header.CrsWkt))
+                {
+                    srcSrs = new SpatialReference(header.CrsWkt);
+                    srcSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+                }
+                else if (header.EpsgCode.HasValue && header.EpsgCode.Value > 0)
+                {
+                    srcSrs = new SpatialReference("");
+                    srcSrs.ImportFromEPSG(header.EpsgCode.Value);
+                    srcSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+                }
+                else if (header.IsProjected || Math.Abs(minX) > 180 || Math.Abs(maxY) > 90)
+                {
+                    srcSrs = new SpatialReference("");
+                    srcSrs.ImportFromEPSG(32643);
+                    srcSrs.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+                }
+            }
+            catch { }
+
+            double spanX = Math.Max(1e-9, maxX - minX);
+            double spanY = Math.Max(1e-9, maxY - minY);
+            double aspect = spanX / spanY;
+
+            int targetResolution = 2048;
+            int gridW = aspect >= 1.0 ? targetResolution : Math.Max(256, (int)(targetResolution * aspect));
+            int gridH = aspect >= 1.0 ? Math.Max(256, (int)(targetResolution / aspect)) : targetResolution;
+            gridW = Math.Min(4096, Math.Max(256, gridW));
+            gridH = Math.Min(4096, Math.Max(256, gridH));
+
+            double cellX = spanX / gridW;
+            double cellY = spanY / gridH;
+
+            int totalPixels = gridW * gridH;
+            bool isTiff = format.ToLowerInvariant().Contains("tif");
+
+            float[] elevGrid = isTiff ? new float[totalPixels] : Array.Empty<float>();
+            if (isTiff) Array.Fill(elevGrid, -9999.0f);
+
+            byte[] rgba = !isTiff ? new byte[totalPixels * 4] : Array.Empty<byte>();
+
+            int recLen = header.PointDataRecordLength;
+            ulong origTotal = header.TotalPointCount;
+            long startPos = (long)header.OffsetToPointData;
+            int fmt = header.PointDataRecordFormat;
+
+            using var fsIn = new FileStream(actualPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4194304);
+            byte[] recBuf = new byte[recLen];
+            ulong written = 0;
+
+            progress?.Invoke(20, "Rasterizing selected LiDAR classes...");
+
+            for (ulong i = 0; i < origTotal; i++)
+            {
+                long pos = startPos + ((long)i * recLen);
+                if (pos + recLen > fsIn.Length) break;
+                fsIn.Seek(pos, SeekOrigin.Begin);
+                if (fsIn.Read(recBuf, 0, recLen) < recLen) break;
+
+                byte cls = fmt >= 6 ? recBuf[16] : (byte)(recBuf[15] & 0x1F);
+                if (!allowedClasses.Contains(cls)) continue;
+
+                int rawX = BitConverter.ToInt32(recBuf, 0);
+                int rawY = BitConverter.ToInt32(recBuf, 4);
+                int rawZ = BitConverter.ToInt32(recBuf, 8);
+                double x = (rawX * header.ScaleX) + header.OffsetX;
+                double y = (rawY * header.ScaleY) + header.OffsetY;
+                double z = (rawZ * header.ScaleZ) + header.OffsetZ;
+
+                int col = (int)((x - minX) / cellX);
+                int row = (int)((maxY - y) / cellY);
+
+                if (col >= 0 && col < gridW && row >= 0 && row < gridH)
+                {
+                    int idx = row * gridW + col;
+                    if (isTiff)
+                    {
+                        if (elevGrid[idx] == -9999.0f || (float)z > elevGrid[idx])
+                        {
+                            elevGrid[idx] = (float)z;
+                        }
+                    }
+                    else
+                    {
+                        var meta = LasPointCloudService.GetClassMeta(cls);
+                        byte r = 128, g = 128, b = 128;
+                        try
+                        {
+                            var c = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(meta.ColorHex);
+                            r = c.R; g = c.G; b = c.B;
+                        }
+                        catch { }
+
+                        int pixelOffset = idx * 4;
+                        rgba[pixelOffset + 0] = b; // Blue
+                        rgba[pixelOffset + 1] = g; // Green
+                        rgba[pixelOffset + 2] = r; // Red
+                        rgba[pixelOffset + 3] = 255; // Alpha
+                    }
+                }
+
+                written++;
+                if (written % 100000 == 0 && origTotal > 0)
+                {
+                    progress?.Invoke(20 + (int)((i * 65) / origTotal), $"Rasterizing points ({written:N0} processed)...");
+                }
+            }
+
+            progress?.Invoke(88, $"Encoding {format.ToUpperInvariant()} raster file...");
+
+            if (isTiff)
+            {
+                var drv = Gdal.GetDriverByName("GTiff");
+                string[] options = new string[] { "COMPRESS=DEFLATE", "TILED=YES", "PREDICTOR=3" };
+                using var ds = drv.Create(outFilePath, gridW, gridH, 1, DataType.GDT_Float32, options);
+                double[] gt = new double[] { minX, cellX, 0, maxY, 0, -cellY };
+                ds.SetGeoTransform(gt);
+                if (srcSrs != null)
+                {
+                    srcSrs.ExportToWkt(out string wkt, null);
+                    ds.SetProjection(wkt);
+                }
+                var band = ds.GetRasterBand(1);
+                band.SetNoDataValue(-9999.0);
+                band.WriteRaster(0, 0, gridW, gridH, elevGrid, gridW, gridH, 0, 0);
+                band.FlushCache();
+                ds.FlushCache();
+            }
+            else
+            {
+                var bmp = System.Windows.Media.Imaging.BitmapSource.Create(
+                    gridW, gridH, 96, 96,
+                    System.Windows.Media.PixelFormats.Bgra32,
+                    null, rgba, gridW * 4);
+
+                using var fsOut = new FileStream(outFilePath, FileMode.Create, FileAccess.Write);
+                var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+                encoder.Save(fsOut);
+            }
+
+            progress?.Invoke(100, $"Raster export complete: {Path.GetFileName(outFilePath)} saved ({written:N0} points).");
+            return (outFilePath, written);
         }
     }
 }

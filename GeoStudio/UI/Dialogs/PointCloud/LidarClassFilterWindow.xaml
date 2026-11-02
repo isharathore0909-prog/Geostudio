@@ -1,0 +1,128 @@
+<Window x:Class="GeoStudio.UI.Dialogs.PointCloud.LidarClassFilterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:GeoStudio.UI.Components"
+        Title="LiDAR Classification Filter &amp; Export"
+        Height="540" Width="680" MinHeight="440" MinWidth="600"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC" Foreground="#0F172A"
+        FontFamily="Segoe UI" ResizeMode="CanResizeWithGrip">
+
+    <Grid Margin="18,16,18,16">
+        <Grid.RowDefinitions>
+            <!-- 0: Header -->
+            <RowDefinition Height="Auto"/>
+            <!-- 1: Body (Scrollable) -->
+            <RowDefinition Height="*"/>
+            <!-- 2: Footer / Actions -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Component -->
+        <components:DialogHeader Grid.Row="0" Margin="0,0,0,12"
+            Icon="🏷" IconBrush="#D97706" IconBg="#FEF3C7"
+            Title="LiDAR Classification Filter &amp; Export"
+            Description="Filter point cloud visibility by ASPRS classification, and export selected classes to LAS, GeoTIFF, or PNG."/>
+
+        <!-- 2. Content -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,12">
+            <!-- Classification Selection Card -->
+            <Border Style="{StaticResource DialogCard}" Margin="0,0,0,10" Padding="12">
+                    <StackPanel>
+                        <TextBlock Text="Point Classes in Dataset:" FontWeight="SemiBold" FontSize="12" Foreground="#334155" Margin="0,0,0,8"/>
+
+                        <!-- Classes List -->
+                        <Border BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Background="#FFFFFF" MaxHeight="220">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsControl x:Name="ListClasses">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="10,6" Background="Transparent">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <!-- CheckBox -->
+                                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0,0,8,0" Click="ClassCheckbox_Click"/>
+
+                                                    <!-- Color Swatch -->
+                                                    <Border Grid.Column="1" Width="12" Height="12" CornerRadius="2" BorderBrush="#94A3B8" BorderThickness="0.5" Margin="0,0,10,0" VerticalAlignment="Center" Background="{Binding ColorBrush}"/>
+
+                                                    <!-- Class Name -->
+                                                    <TextBlock Grid.Column="2" Text="{Binding Label}" FontSize="11" Foreground="#1E293B" VerticalAlignment="Center"/>
+
+                                                    <!-- Point Count -->
+                                                    <TextBlock Grid.Column="3" Text="{Binding BadgeText}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+
+                        <CheckBox x:Name="ChkLiveUpdate" Content="Apply filter immediately to live map canvas" IsChecked="True" FontSize="11" Margin="2,8,0,0" Foreground="#475569" Checked="ChkLiveUpdate_Changed" Unchecked="ChkLiveUpdate_Changed"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Export / Download Card -->
+                <Border Style="{StaticResource DialogCard}" Margin="0,0,0,0" Padding="12">
+                    <StackPanel>
+                        <TextBlock Text="Download / Export Filtered Points:" FontWeight="SemiBold" FontSize="12" Foreground="#334155" Margin="0,0,0,8"/>
+
+                        <!-- Format Selector (LAS, TIFF, PNG) -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Format:" FontSize="11" Foreground="#475569" FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <ComboBox x:Name="ComboExportFormat" Grid.Column="1" Height="28" FontSize="11" VerticalContentAlignment="Center" SelectionChanged="ComboExportFormat_SelectionChanged">
+                                <ComboBoxItem Content="ASPRS LiDAR Point Cloud (*.las)" IsSelected="True" Tag="las"/>
+                                <ComboBoxItem Content="GeoTIFF Surface / Elevation Model (*.tif)" Tag="tiff"/>
+                                <ComboBoxItem Content="High-Resolution Ortho Image (*.png)" Tag="png"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtExportPath" Grid.Column="0" Height="28" FontSize="11" VerticalContentAlignment="Center" Padding="6,0" BorderBrush="#CBD5E1" Background="#FFFFFF" Text="Filtered_PointCloud.las"/>
+                            <Button Grid.Column="1" Content="Browse..." Width="80" Height="28" Margin="6,0,0,0" Style="{StaticResource DialogSecondaryButton}" Click="BtnBrowseExport_Click"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,4">
+                            <CheckBox x:Name="ChkAddLayerOnComplete" Content="Load exported file into map as a new layer when finished" IsChecked="True" FontSize="11" Foreground="#475569" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- Progress indicator -->
+                        <ProgressBar x:Name="ProgressExport" Height="6" Minimum="0" Maximum="100" Value="0" Visibility="Collapsed" Margin="0,8,0,4"/>
+                        <TextBlock x:Name="TxtProgressStatus" Text="" FontSize="10.5" Foreground="#64748B" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Border>
+        </StackPanel>
+
+        <!-- 3. Footer Action Buttons -->
+        <Border Grid.Row="2" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="0,10,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="TxtFooterStatus" Grid.Column="0" Text="Select classes above to filter or export." FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Close" Width="90" Height="32" Margin="0,0,8,0" Style="{StaticResource DialogSecondaryButton}" Click="BtnClose_Click"/>
+                    <Button x:Name="BtnExport" Content="Export Selected" Width="150" Height="32" Style="{StaticResource DialogActionButton}" Click="BtnExport_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

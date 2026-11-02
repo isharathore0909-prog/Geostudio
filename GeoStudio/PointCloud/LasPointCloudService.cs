@@ -208,5 +208,75 @@ namespace GeoStudio.PointCloud
 
             return points;
         }
+
+        public static readonly Dictionary<byte, (string Name, string ColorHex)> AsprsStandardClasses = new()
+        {
+            { 0, ("Created, Never Classified", "#94A3B8") },
+            { 1, ("Unassigned", "#CBD5E1") },
+            { 2, ("Ground", "#D4A373") },
+            { 3, ("Low Vegetation", "#86EFAC") },
+            { 4, ("Medium Vegetation", "#22C55E") },
+            { 5, ("High Vegetation (Canopy)", "#15803D") },
+            { 6, ("Building", "#EF4444") },
+            { 7, ("Low Point / Noise", "#8B7464") },
+            { 8, ("Model Key Point", "#F59E0B") },
+            { 9, ("Water", "#0284C7") },
+            { 10, ("Rail", "#A855F7") },
+            { 11, ("Road Surface", "#475569") },
+            { 12, ("Overlap / Reserved", "#EC4899") },
+            { 13, ("Wire - Guard", "#EAB308") },
+            { 14, ("Wire - Conductor", "#F97316") },
+            { 15, ("Transmission Tower", "#84CC16") },
+            { 17, ("Bridge Deck", "#78716C") },
+            { 18, ("High Noise", "#06B6D4") }
+        };
+
+        public static (string Name, string ColorHex) GetClassMeta(byte classId)
+        {
+            if (AsprsStandardClasses.TryGetValue(classId, out var meta)) return meta;
+            return ($"Class {classId}", "#64748B");
+        }
+
+        public static Dictionary<byte, long> ScanClassificationCounts(string filePath, byte[]? activeBatch = null)
+        {
+            var counts = new Dictionary<byte, long>();
+            if (activeBatch != null && activeBatch.Length > 0)
+            {
+                for (int i = 0; i < activeBatch.Length; i++)
+                {
+                    byte c = activeBatch[i];
+                    if (counts.TryGetValue(c, out long cnt)) counts[c] = cnt + 1;
+                    else counts[c] = 1;
+                }
+                return counts;
+            }
+
+            if (!File.Exists(filePath)) return counts;
+            string actualPath = EnsureUncompressedLas(filePath);
+            var header = InspectLasHeader(actualPath);
+            if (header.TotalPointCount == 0) return counts;
+
+            using var fs = new FileStream(actualPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4194304);
+            int recLen = header.PointDataRecordLength;
+            long startPos = (long)header.OffsetToPointData;
+            ulong total = header.TotalPointCount;
+            int fmt = header.PointDataRecordFormat;
+
+            ulong step = Math.Max(1, total / 2_000_000UL);
+            byte[] buf = new byte[recLen];
+
+            for (ulong i = 0; i < total; i += step)
+            {
+                long pos = startPos + ((long)i * recLen);
+                if (pos + recLen > fs.Length) break;
+                fs.Seek(pos, SeekOrigin.Begin);
+                if (fs.Read(buf, 0, recLen) < recLen) break;
+                byte cls = fmt >= 6 ? buf[16] : (byte)(buf[15] & 0x1F);
+                if (counts.TryGetValue(cls, out long cnt)) counts[cls] = cnt + (long)step;
+                else counts[cls] = (long)step;
+            }
+
+            return counts;
+        }
     }
 }

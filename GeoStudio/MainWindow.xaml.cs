@@ -26,9 +26,24 @@ namespace GeoStudio
         public UI.Dialogs.GeoprocessingWindow? ActiveClipVectorWindow { get; set; }
         public UI.Dialogs.SpectralIndicesWindow? ActiveSpectralIndicesWindow { get; set; }
         public UI.Dialogs.Routing.RoutingWindow? ActiveRoutingWindow { get; set; }
+        public UI.Dialogs.PointCloud.LidarClassFilterWindow? ActiveLidarClassFilterWindow { get; set; }
         private PointCloud.PointCloudBatch? _activePointCloudBatch = null;
+        public PointCloud.PointCloudBatch? ActivePointCloudBatch => _activePointCloudBatch;
         private bool _lidarClassifiedWithSmrf = false;
         private string? _activeLidarClassificationState = null;
+
+        public void FilterLidarClasses(IEnumerable<byte>? classes)
+        {
+            if (classes == null)
+            {
+                PostMessageToMap(new { action = "filterLidarClasses", classes = (object?)null });
+            }
+            else
+            {
+                var list = classes.Select(c => (int)c).ToList();
+                PostMessageToMap(new { action = "filterLidarClasses", classes = list });
+            }
+        }
 
         public void StartOriginPicker(UI.Dialogs.Routing.RoutingWindow window)
         {

@@ -28,61 +28,54 @@ for proj_dir in [
 import sys
 import argparse
 import traceback
+import importlib
 
 import common
 from common import report_progress, report_result
 
-from tasks import (
-    task_launch_3d,
-    task_classify_ground,
-    task_classify_buildings,
-    task_classify_veg,
-    task_thin_pointcloud,
-    task_terrain_analysis,
-    task_elevation_relief,
-    task_cut_fill,
-    task_watershed,
-    task_satellite_index,
-    task_clip_raster,
-    task_raster_stats,
-    task_viewshed,
-    task_landsat_lst,
-    task_lulc_intelligence,
-    task_transpose_fields,
-    task_vector_geoprocessing,
-)
+# Task mapping for lazy dynamic importing (avoids loading unneeded heavy ML/3D modules)
+TASK_MODULE_MAP = {
+    # Layout & Cartography Tasks
+    "launch_map_layout": ("layout_tasks", "task_launch_map_layout"),
 
-TASK_REGISTRY = {
     # 3D & LiDAR Tasks
-    "launch_3d": task_launch_3d,
-    "classify_ground": task_classify_ground,
-    "classify_buildings": task_classify_buildings,
-    "classify_veg": task_classify_veg,
-    "thin": task_thin_pointcloud,
+    "launch_3d": ("lidar_tasks", "task_launch_3d"),
+    "classify_ground": ("lidar_tasks", "task_classify_ground"),
+    "classify_buildings": ("lidar_tasks", "task_classify_buildings"),
+    "classify_veg": ("lidar_tasks", "task_classify_veg"),
+    "thin": ("lidar_tasks", "task_thin_pointcloud"),
 
     # Terrain & Earthwork Tasks
-    "terrain": task_terrain_analysis,
-    "elevation_relief": task_elevation_relief,
-    "cut_fill": task_cut_fill,
-    "viewshed": task_viewshed,
+    "terrain": ("terrain_tasks", "task_terrain_analysis"),
+    "elevation_relief": ("terrain_tasks", "task_elevation_relief"),
+    "cut_fill": ("terrain_tasks", "task_cut_fill"),
+    "viewshed": ("raster_tasks", "task_viewshed"),
 
     # Hydrological Modeling Tasks
-    "watershed": task_watershed,
-    "hydrology": task_watershed,
+    "watershed": ("hydrology_tasks", "task_watershed"),
+    "hydrology": ("hydrology_tasks", "task_watershed"),
 
     # Raster & Satellite Remote Sensing Tasks
-    "satellite": task_satellite_index,
-    "clip_raster": task_clip_raster,
-    "raster_stats": task_raster_stats,
-    "landsat_lst": task_landsat_lst,
-    "split_window_lst": task_landsat_lst,
-    "lulc": task_lulc_intelligence,
-    "lulc_intelligence": task_lulc_intelligence,
+    "satellite": ("raster_tasks", "task_satellite_index"),
+    "clip_raster": ("raster_tasks", "task_clip_raster"),
+    "raster_stats": ("raster_tasks", "task_raster_stats"),
+    "landsat_lst": ("landsat_tasks", "task_landsat_lst"),
+    "split_window_lst": ("landsat_tasks", "task_landsat_lst"),
+    "lulc": ("lulc_tasks", "task_lulc_intelligence"),
+    "lulc_intelligence": ("lulc_tasks", "task_lulc_intelligence"),
 
     # Vector & Attribute Geoprocessing Tasks
-    "transpose_fields": task_transpose_fields,
-    "vector_geoprocessing": task_vector_geoprocessing,
+    "transpose_fields": ("vector_tasks", "task_transpose_fields"),
+    "vector_geoprocessing": ("vector_tasks", "task_vector_geoprocessing"),
 }
+
+
+def _get_task_runner(task_name):
+    if task_name not in TASK_MODULE_MAP:
+        return None
+    mod_name, func_name = TASK_MODULE_MAP[task_name]
+    mod = importlib.import_module(f"tasks.{mod_name}")
+    return getattr(mod, func_name)
 
 
 def main():
@@ -96,7 +89,7 @@ def main():
 
     args = parser.parse_args()
 
-    runner = TASK_REGISTRY.get(args.task)
+    runner = _get_task_runner(args.task)
     if not runner:
         report_result(False, {}, f"Unknown task: {args.task}")
         sys.exit(1)

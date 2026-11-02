@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Sockets;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -205,6 +207,111 @@ namespace GeoStudio.Python
                 inputFile: demPath,
                 param1: presetKey,
                 onProgress: onProgress);
+        }
+
+        public const int MapLayoutPort = 48199;
+
+        /// <summary>
+        /// Attempts to communicate with an already running warm Map Layout instance.
+        /// Returns true if the message was sent and acknowledged.
+        /// </summary>
+        public static bool TrySendToWarmLayout(string? filePath, string cmd = "open", int timeoutMs = 250)
+        {
+            try
+            {
+                using var client = new TcpClient();
+                var connectTask = client.ConnectAsync("127.0.0.1", MapLayoutPort);
+                if (!connectTask.Wait(timeoutMs)) return false;
+
+                using var stream = client.GetStream();
+                using var writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+                using var reader = new StreamReader(stream, Encoding.UTF8);
+
+                var payload = JsonSerializer.Serialize(new { cmd, file = filePath ?? "" });
+                writer.WriteLine(payload);
+
+                var readTask = reader.ReadLineAsync();
+                if (!readTask.Wait(timeoutMs)) return false;
+
+                return !string.IsNullOrEmpty(readTask.Result);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Prewarms the QGIS Map Layout process in the background at application start
+        /// so that first-click launch is instantaneous.
+        /// </summary>
+        public static void PrewarmMapLayout()
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    if (TrySendToWarmLayout(null, "ping", 150)) return;
+
+                    string qgisBat = @"C:\Program Files\QGIS 3.40.14\bin\python-qgis-ltr.bat";
+                    string pythonExe = File.Exists(qgisBat) ? qgisBat : ResolvePythonExecutable();
+                    string bridgeScript = ResolveBridgeScriptPath();
+                    string args = $"\"{bridgeScript}\" --task launch_map_layout --mode prewarm";
+
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = pythonExe.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) ? "cmd.exe" : pythonExe,
+                        Arguments = pythonExe.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) ? $"/c \"\"{pythonExe}\" {args}\"" : args,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                    Process.Start(startInfo);
+                }
+                catch { }
+            });
+        }
+
+        /// <summary>
+        /// Gracefully shuts down the background warm Map Layout process on application exit.
+        /// </summary>
+        public static void ShutdownMapLayout()
+        {
+            try
+            {
+                TrySendToWarmLayout(null, "shutdown", 150);
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Spawns or brings to front the standalone QGIS Map Layout & Cartography Designer workstation.
+        /// Uses ultra-fast IPC if the instance is already resident in RAM.
+        /// </summary>
+        public static void LaunchMapLayout(string? filePath = null)
+        {
+            try
+            {
+                string qgisBat = @"C:\Program Files\QGIS 3.40.14\bin\python-qgis-ltr.bat";
+                string pythonExe = File.Exists(qgisBat) ? qgisBat : ResolvePythonExecutable();
+                string bridgeScript = ResolveBridgeScriptPath();
+                string args = $"\"{bridgeScript}\" --task launch_map_layout";
+                if (!string.IsNullOrEmpty(filePath)) args += $" --input \"{filePath}\"";
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = pythonExe.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) ? "cmd.exe" : pythonExe,
+                    Arguments = pythonExe.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) ? $"/c \"\"{pythonExe}\" {args}\"" : args,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                Process.Start(startInfo);
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Failed to launch Map Layout Workstation:\n{ex.Message}", "Map Layout Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         /// <summary>

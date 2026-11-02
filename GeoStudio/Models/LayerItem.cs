@@ -44,6 +44,53 @@ namespace GeoStudio.Models
         private System.Collections.Generic.List<string> _attributeFields = new();
         private string _vectorRenderType = "single";
         private string? _geoJsonCachePath;
+        private System.Collections.ObjectModel.ObservableCollection<GeoStudio.PointCloud.LidarClassItemViewModel> _lidarClasses = new();
+        private bool _isLidarTreeExpanded = false;
+        private bool _isClassificationActive = false;
+
+        public System.Collections.ObjectModel.ObservableCollection<GeoStudio.PointCloud.LidarClassItemViewModel> LidarClasses
+        {
+            get => _lidarClasses;
+            set
+            {
+                _lidarClasses = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasLidarClasses));
+                OnPropertyChanged(nameof(IsLidarClassificationVisible));
+            }
+        }
+
+        public bool HasLidarClasses => Type == LayerType.PointCloud && _lidarClasses != null && _lidarClasses.Count > 0;
+
+        public bool IsClassificationActive
+        {
+            get => _isClassificationActive;
+            set
+            {
+                if (_isClassificationActive != value)
+                {
+                    _isClassificationActive = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsLidarClassificationVisible));
+                }
+            }
+        }
+
+        public bool IsLidarClassificationVisible => IsClassificationActive && _isLidarTreeExpanded;
+
+        public bool IsLidarTreeExpanded
+        {
+            get => _isLidarTreeExpanded;
+            set
+            {
+                if (_isLidarTreeExpanded != value)
+                {
+                    _isLidarTreeExpanded = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsLidarClassificationVisible));
+                }
+            }
+        }
 
         public bool UseGpuAcceleration
         {
@@ -162,7 +209,23 @@ namespace GeoStudio.Models
         public string ColorHex
         {
             get => _colorHex;
-            set { _colorHex = value; OnPropertyChanged(); }
+            set { _colorHex = value; OnPropertyChanged(); OnPropertyChanged(nameof(ColorBrush)); }
+        }
+
+        public System.Windows.Media.SolidColorBrush ColorBrush
+        {
+            get
+            {
+                try
+                {
+                    var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_colorHex);
+                    return new System.Windows.Media.SolidColorBrush(color);
+                }
+                catch
+                {
+                    return System.Windows.Media.Brushes.Gray;
+                }
+            }
         }
 
         public string FillColorHex

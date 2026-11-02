@@ -85,6 +85,17 @@ function handleHostMessage(msg) {
         updateLidarLegendWidget(lidarColorMode);
       }
       break;
+    case 'filterLidarClasses':
+      if (Array.isArray(msg.classes)) {
+        window.activeLidarClasses = new Set(msg.classes.map(c => Number(c)));
+      } else {
+        window.activeLidarClasses = null;
+      }
+      renderPointCloud();
+      if (typeof updateLidarLegendWidget === 'function') {
+        updateLidarLegendWidget(lidarColorMode);
+      }
+      break;
     case 'updateClassification':
       const decodedClasses = decodeBuffer(msg.classes);
       if (pointCloudBatch && decodedClasses) {

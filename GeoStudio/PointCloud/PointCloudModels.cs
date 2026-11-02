@@ -78,4 +78,58 @@ namespace GeoStudio.PointCloud
         public byte[]? t { get; set; }
         public bool hasRgb { get; set; }
     }
+
+    public class LidarClassItemViewModel : System.ComponentModel.INotifyPropertyChanged
+    {
+        private bool _isSelected = true;
+        private System.Windows.Media.SolidColorBrush? _brush;
+
+        public byte ClassId { get; set; }
+        public string Name { get; set; } = "";
+        public string ColorHex { get; set; } = "#888888";
+        public long PointCount { get; set; }
+        public double Percentage { get; set; }
+
+        public System.Windows.Media.SolidColorBrush ColorBrush
+        {
+            get
+            {
+                if (_brush == null)
+                {
+                    try
+                    {
+                        var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(ColorHex);
+                        _brush = new System.Windows.Media.SolidColorBrush(color);
+                        _brush.Freeze();
+                    }
+                    catch
+                    {
+                        _brush = System.Windows.Media.Brushes.Gray;
+                    }
+                }
+                return _brush;
+            }
+        }
+
+        public string Label => $"Class {ClassId}: {Name}";
+        public string BadgeText => $"{PointCount:N0} pts ({Percentage:F1}%)";
+        public string ShortBadgeText => PointCount >= 1_000_000 
+            ? $"{PointCount / 1_000_000.0:F1}M" 
+            : (PointCount >= 1_000 ? $"{PointCount / 1000.0:F0}K" : $"{PointCount}");
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                if (_isSelected != value)
+                {
+                    _isSelected = value;
+                    PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsSelected)));
+                }
+            }
+        }
+
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+    }
 }

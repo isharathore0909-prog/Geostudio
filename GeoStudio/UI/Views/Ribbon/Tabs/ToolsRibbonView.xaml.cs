@@ -41,6 +41,7 @@ namespace GeoStudio.UI.Views.Ribbon
         private void BtnLidarClassifyGround_Click(object s, RoutedEventArgs e) => Main?.BtnLidarClassifyGround_Click(s, e);
         private void BtnLidarClassifyVeg_Click(object s, RoutedEventArgs e) => Main?.BtnLidarClassifyVeg_Click(s, e);
         private void BtnLidarClassifyBuildings_Click(object s, RoutedEventArgs e) => Main?.BtnLidarClassifyBuildings_Click(s, e);
+        private void BtnLidarFilterClasses_Click(object s, RoutedEventArgs e) => Main?.BtnLidarFilterClasses_Click(s, e);
         private void MenuLidarDtm_Click(object s, RoutedEventArgs e) => Main?.MenuLidarDtm_Click(s, e);
         private void MenuLidarChm_Click(object s, RoutedEventArgs e) => Main?.MenuLidarChm_Click(s, e);
         private void BtnLidarThin_Click(object s, RoutedEventArgs e) => Main?.BtnLidarThin_Click(s, e);

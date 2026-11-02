@@ -65,8 +65,13 @@ namespace GeoStudio
             MessageBox.Show("All disk tile caches and in-memory spatial databases have been purged. The next file load will measure raw cold-start disk time.", "Cache Purged", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        internal void BtnPrint_Click(object sender, RoutedEventArgs e) =>
-            MessageBox.Show("Export Map Layout: Generating high-resolution 300 DPI print layout (PDF / PNG)...", "Print Layout", MessageBoxButton.OK, MessageBoxImage.Information);
+        internal void BtnPrint_Click(object sender, RoutedEventArgs e)
+        {
+            TxtStatus.Text = "Launching Map Layout & Cartography Workstation...";
+            string? targetFile = Layers.FirstOrDefault(l => l.FilePath == _activeRasterFilePath)?.FilePath
+                ?? Layers.FirstOrDefault(l => l.Type == LayerType.Raster || l.Type == LayerType.Vector)?.FilePath;
+            PythonPipelineService.LaunchMapLayout(targetFile);
+        }
 
         internal void BtnUndo_Click(object sender, RoutedEventArgs e) => BtnPreviousExtent_Click(sender, e);
         internal void BtnRedo_Click(object sender, RoutedEventArgs e) => BtnNextExtent_Click(sender, e);

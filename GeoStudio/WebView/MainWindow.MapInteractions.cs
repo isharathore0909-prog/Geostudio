@@ -29,6 +29,26 @@ namespace GeoStudio
                     MapLoadingOverlay.Visibility = Visibility.Collapsed;
                     TxtStatus.Text = "Map Engine Ready (GPU WebGL Accelerated)";
                 }
+                else if (action == "openLidarExportDialog")
+                {
+                    List<byte>? classes = null;
+                    if (root.TryGetProperty("selectedClasses", out var sc) && sc.ValueKind == JsonValueKind.Array)
+                    {
+                        classes = sc.EnumerateArray().Select(el => (byte)el.GetInt32()).ToList();
+                    }
+                    OpenLidarFilterDialog(classes);
+                }
+                else if (action == "lidarClassesChanged")
+                {
+                    if (ActiveLidarClassFilterWindow != null && ActiveLidarClassFilterWindow.IsLoaded)
+                    {
+                        if (root.TryGetProperty("classes", out var clsArr) && clsArr.ValueKind == JsonValueKind.Array)
+                        {
+                            var list = clsArr.EnumerateArray().Select(el => (byte)el.GetInt32()).ToList();
+                            ActiveLidarClassFilterWindow.SyncFromMap(list);
+                        }
+                    }
+                }
                 else if (action == "pointerMove")
                 {
                     string lon = root.GetProperty("lon").GetString() ?? "0.0";

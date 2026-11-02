@@ -3,10 +3,17 @@ const LIDAR_LEGENDS = {
   classification: {
     icon: '🏷️', title: 'LiDAR: Classification', type: 'swatches', subtext: 'ASPRS Standard Classes',
     items: [
-      { color: '#94A3B8', label: '0: Unclassified' }, { color: '#D2A373', label: '2: Ground' },
-      { color: '#84F0AB', label: '3: Low Veg' }, { color: '#22C55E', label: '4: Med Veg' },
-      { color: '#15803D', label: '5: High Veg' }, { color: '#EF4444', label: '6: Building' },
-      { color: '#0284C7', label: '9: Water' }, { color: '#F97316', label: '14: Conductor' }
+      { color: '#94A3B8', label: '0: Unclassified', classId: 0 },
+      { color: '#D2A373', label: '2: Ground', classId: 2 },
+      { color: '#84F0AB', label: '3: Low Veg', classId: 3 },
+      { color: '#22C55E', label: '4: Med Veg', classId: 4 },
+      { color: '#15803D', label: '5: High Veg', classId: 5 },
+      { color: '#EF4444', label: '6: Building', classId: 6 },
+      { color: '#8B7464', label: '7: Noise', classId: 7 },
+      { color: '#F59E0B', label: '8: Key Point', classId: 8 },
+      { color: '#0284C7', label: '9: Water', classId: 9 },
+      { color: '#F97316', label: '14: Conductor', classId: 14 },
+      { color: '#06B6D4', label: '18: High Noise', classId: 18 }
     ]
   },
   elevation: {
@@ -170,6 +177,8 @@ function updateLidarLegendWidget(mode) {
 
   if (contentEl) {
     if (cfg.type === 'swatches') {
+      // Always render read-only color swatches in the legend overlay.
+      // Interactive class checkboxes live in the Layers sidebar panel only.
       let html = '<div class="lidar-swatch-grid">';
       for (const item of cfg.items) {
         html += `<div class="lidar-swatch-item">
