@@ -24,9 +24,6 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="🧩" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
                         <TextBlock Text="Extension &amp; Plugin Hub" FontSize="16" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
-                        <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="10,0,0,0">
-                            <TextBlock Text="100% Offline Native" FontSize="9.5" FontWeight="SemiBold" Foreground="#15803D"/>
-                        </Border>
                     </StackPanel>
                     <TextBlock Text="Install or remove specialized GIS modules on demand to keep GeoStudio lightweight." 
                                FontSize="11.5" Foreground="#64748B" Margin="0,4,0,0"/>
@@ -71,17 +68,8 @@
 
         <!-- 4. Footer Bar -->
         <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="20,12">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtSummary" Text="Loading plugins..." FontSize="11" Foreground="#64748B"/>
-                </StackPanel>
-                <Button Grid.Column="1" Content="Done" Width="85" Height="30" Click="BtnClose_Click"
-                        Background="#F1F5F9" Foreground="#334155" FontWeight="SemiBold" FontSize="11.5" BorderThickness="1" BorderBrush="#CBD5E1" Cursor="Hand"/>
-            </Grid>
+            <Button HorizontalAlignment="Right" Content="Done" Width="85" Height="30" Click="BtnClose_Click"
+                    Background="#F1F5F9" Foreground="#334155" FontWeight="SemiBold" FontSize="11.5" BorderThickness="1" BorderBrush="#CBD5E1" Cursor="Hand"/>
         </Border>
     </Grid>
 </Window>

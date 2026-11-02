@@ -60,6 +60,7 @@ namespace GeoStudio.UI.Dialogs
                 var item = new ComboBoxItem
                 {
                     Content = label,
+                    ToolTip = label,
                     Tag = l.Id,
                     DataContext = l
                 };

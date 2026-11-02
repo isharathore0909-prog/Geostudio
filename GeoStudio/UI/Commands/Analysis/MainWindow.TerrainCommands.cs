@@ -73,7 +73,8 @@ namespace GeoStudio
                         palette = paletteName,
                         minElev = activeLayer.MinElevation,
                         maxElev = activeLayer.MaxElevation,
-                        isElevation = true
+                        isElevation = true,
+                        visible = activeLayer.IsVisible
                     });
                     TxtStatus.Text = $"Applied {shaderMode.ToUpperInvariant()} to {activeLayer.Name} in {calcMs}ms • Real-time elevation engine ready";
                 }

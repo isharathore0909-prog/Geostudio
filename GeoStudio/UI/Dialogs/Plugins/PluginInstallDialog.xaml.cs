@@ -27,17 +27,11 @@ namespace GeoStudio.UI.Dialogs.Plugins
 
             if (_plugin.IsInstalled)
             {
-                TxtBadge.Text = "INSTALLED & ACTIVE";
-                TxtBadge.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D"));
-                BadgeStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DCFCE7"));
                 BtnInstall.Visibility = Visibility.Collapsed;
                 BtnUninstall.Visibility = Visibility.Visible;
             }
             else
             {
-                TxtBadge.Text = "NOT INSTALLED";
-                TxtBadge.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#475569"));
-                BadgeStatus.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"));
                 BtnInstall.Visibility = Visibility.Visible;
                 BtnUninstall.Visibility = Visibility.Collapsed;
             }

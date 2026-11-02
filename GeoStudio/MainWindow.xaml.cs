@@ -250,7 +250,8 @@ namespace GeoStudio
                                     palette = _activeRasterPalette,
                                     minElev = activeLyr?.MinElevation ?? 0,
                                     maxElev = activeLyr?.MaxElevation ?? 0,
-                                    isElevation = activeLyr?.IsElevation ?? false
+                                    isElevation = activeLyr?.IsElevation ?? false,
+                                    visible = activeLyr?.IsVisible ?? true
                                 });
                             }
                         });

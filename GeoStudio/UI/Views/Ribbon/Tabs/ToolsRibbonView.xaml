@@ -175,7 +175,7 @@
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="3D View" Tag="/Resources/Icons/view_3d.png" ToolTip="🌐 3D Mapping &amp; Terrain Viewport" Click="BtnPlugin3D_Click"/>
                     <Button Style="{StaticResource RustGisLargeBtn}" Content="Satellite" Tag="/Resources/Icons/false_color.png" ToolTip="🛰️ Satellite View &amp; Offline Storage" Click="BtnPluginSatellite_Click"/>
                 </StackPanel>
-                <TextBlock Text="Extension Cards (Install / Uninstall)" Style="{StaticResource RustGisGroupLabel}"/>
+                <TextBlock Text="Extensions" Style="{StaticResource RustGisGroupLabel}"/>
             </StackPanel>
         </StackPanel>
 

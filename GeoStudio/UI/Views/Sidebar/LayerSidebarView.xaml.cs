@@ -82,7 +82,15 @@ namespace GeoStudio.UI.Views.Sidebar
                 System.Linq.Enumerable.Select(
                     System.Linq.Enumerable.Where(layer.LidarClasses, c => c.IsSelected),
                     c => c.ClassId));
-            Main?.FilterLidarClasses(activeClasses);
+
+            if (activeClasses.Count == layer.LidarClasses.Count)
+            {
+                Main?.FilterLidarClasses(null);
+            }
+            else
+            {
+                Main?.FilterLidarClasses(activeClasses);
+            }
         }
 
         private void BtnLidarTreeAll_Click(object sender, RoutedEventArgs e)
@@ -90,7 +98,7 @@ namespace GeoStudio.UI.Views.Sidebar
             if (sender is FrameworkElement fe && fe.Tag is LayerItem layer)
             {
                 foreach (var c in layer.LidarClasses) c.IsSelected = true;
-                Main?.FilterLidarClasses(System.Linq.Enumerable.Select(layer.LidarClasses, c => c.ClassId));
+                Main?.FilterLidarClasses(null);
             }
         }
 

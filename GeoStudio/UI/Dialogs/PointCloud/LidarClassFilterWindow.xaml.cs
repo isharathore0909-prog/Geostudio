@@ -19,15 +19,23 @@ namespace GeoStudio.UI.Dialogs.PointCloud
         private readonly MainWindow _main;
         private string? _activeFilePath;
         private long _totalPoints = 0;
+        private bool _isInitializing = false;
         public ObservableCollection<LidarClassItemViewModel> Classes { get; set; } = new();
 
         public LidarClassFilterWindow(MainWindow main, IEnumerable<byte>? initialSelection = null)
         {
+            _isInitializing = true;
             _main = main;
             InitializeComponent();
             Owner = main;
             ListClasses.ItemsSource = Classes;
             LoadCurrentPointCloud(initialSelection);
+            _isInitializing = false;
+
+            if (ChkLiveUpdate?.IsChecked == true)
+            {
+                ApplyFilterToMap();
+            }
         }
 
         private void LoadCurrentPointCloud(IEnumerable<byte>? initialSelection = null)
@@ -51,6 +59,16 @@ namespace GeoStudio.UI.Dialogs.PointCloud
 
             _totalPoints = counts.Values.Sum();
             if (_totalPoints == 0 && ptLayer.FeatureCount > 0) _totalPoints = ptLayer.FeatureCount;
+
+            // If initialSelection was not provided, check if layer already has active selections in sidebar
+            if (initialSelection == null && ptLayer.LidarClasses != null && ptLayer.LidarClasses.Count > 0)
+            {
+                var selInSidebar = ptLayer.LidarClasses.Where(c => c.IsSelected).Select(c => c.ClassId).ToList();
+                if (selInSidebar.Count < ptLayer.LidarClasses.Count)
+                {
+                    initialSelection = selInSidebar;
+                }
+            }
 
             HashSet<byte>? initSet = initialSelection != null ? new HashSet<byte>(initialSelection) : null;
 
@@ -80,12 +98,20 @@ namespace GeoStudio.UI.Dialogs.PointCloud
 
         public void SyncFromMap(IEnumerable<byte> activeClasses)
         {
-            var set = new HashSet<byte>(activeClasses);
-            foreach (var item in Classes)
+            _isInitializing = true;
+            try
             {
-                item.IsSelected = set.Contains(item.ClassId);
+                var set = new HashSet<byte>(activeClasses);
+                foreach (var item in Classes)
+                {
+                    item.IsSelected = set.Contains(item.ClassId);
+                }
+                UpdateVisibleSummary();
             }
-            UpdateVisibleSummary();
+            finally
+            {
+                _isInitializing = false;
+            }
         }
 
         private void UpdateVisibleSummary()
@@ -95,10 +121,35 @@ namespace GeoStudio.UI.Dialogs.PointCloud
 
         private void ApplyFilterToMap()
         {
-            if (_main == null) return;
+            if (_isInitializing || _main == null) return;
             if (ChkLiveUpdate?.IsChecked != true) return;
+            if (Classes.Count == 0) return;
+
             var selectedIds = Classes.Where(c => c.IsSelected).Select(c => c.ClassId).ToList();
-            _main.FilterLidarClasses(selectedIds);
+
+            if (selectedIds.Count == Classes.Count)
+            {
+                // All classes are selected -> disable filter restriction completely so all points render
+                _main.FilterLidarClasses(null);
+            }
+            else
+            {
+                _main.FilterLidarClasses(selectedIds);
+            }
+
+            SyncToSidebar(selectedIds);
+        }
+
+        private void SyncToSidebar(List<byte> selectedIds)
+        {
+            var ptLayer = _main?.Layers.FirstOrDefault(l => l.Type == LayerType.PointCloud);
+            if (ptLayer?.LidarClasses == null || ptLayer.LidarClasses.Count == 0) return;
+
+            var selSet = new HashSet<byte>(selectedIds);
+            foreach (var item in ptLayer.LidarClasses)
+            {
+                item.IsSelected = selSet.Contains(item.ClassId);
+            }
         }
 
         private void ClassCheckbox_Click(object sender, RoutedEventArgs e)
@@ -144,7 +195,7 @@ namespace GeoStudio.UI.Dialogs.PointCloud
 
         private void ChkLiveUpdate_Changed(object sender, RoutedEventArgs e)
         {
-            if (_main == null) return;
+            if (_isInitializing || _main == null) return;
             if (ChkLiveUpdate?.IsChecked == true)
             {
                 ApplyFilterToMap();

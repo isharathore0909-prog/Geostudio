@@ -29,7 +29,20 @@
             <!-- Classification Selection Card -->
             <Border Style="{StaticResource DialogCard}" Margin="0,0,0,10" Padding="12">
                     <StackPanel>
-                        <TextBlock Text="Point Classes in Dataset:" FontWeight="SemiBold" FontSize="12" Foreground="#334155" Margin="0,0,0,8"/>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Point Classes in Dataset:" FontWeight="SemiBold" FontSize="12" Foreground="#334155" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button Content="All" Padding="6,2" Margin="0,0,4,0" FontSize="10.5" Style="{StaticResource DialogSecondaryButton}" Click="BtnPresetAll_Click"/>
+                                <Button Content="Ground" Padding="6,2" Margin="0,0,4,0" FontSize="10.5" Style="{StaticResource DialogSecondaryButton}" Click="BtnPresetGround_Click"/>
+                                <Button Content="Vegetation" Padding="6,2" Margin="0,0,4,0" FontSize="10.5" Style="{StaticResource DialogSecondaryButton}" Click="BtnPresetVeg_Click"/>
+                                <Button Content="Buildings" Padding="6,2" Margin="0,0,4,0" FontSize="10.5" Style="{StaticResource DialogSecondaryButton}" Click="BtnPresetBuildings_Click"/>
+                                <Button Content="None" Padding="6,2" FontSize="10.5" Style="{StaticResource DialogSecondaryButton}" Click="BtnPresetNone_Click"/>
+                            </StackPanel>
+                        </Grid>
 
                         <!-- Classes List -->
                         <Border BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Background="#FFFFFF" MaxHeight="220">

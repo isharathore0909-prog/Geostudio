@@ -197,6 +197,11 @@ namespace GeoStudio
                         string reqPalette = root.TryGetProperty("palette", out var pal) ? pal.GetString() ?? "" : "";
 
                         var layer = Layers.FirstOrDefault(l => l.Id == layerId || l.FilePath == filePath);
+                        if (layer != null && !layer.IsVisible)
+                        {
+                            return;
+                        }
+
                         string effectiveShader = !string.IsNullOrEmpty(reqShader) 
                             ? reqShader 
                             : (layer?.ShaderMode ?? _activeRasterShaderMode ?? "");
@@ -217,6 +222,7 @@ namespace GeoStudio
                             Dispatcher.InvokeAsync(() =>
                             {
                                 if (token.IsCancellationRequested) return;
+                                if (layer != null && !layer.IsVisible) return;
                                 PostMessageToMap(new
                                 {
                                     action = "updateRasterWindow",

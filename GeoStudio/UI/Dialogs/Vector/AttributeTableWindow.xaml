@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:components="clr-namespace:GeoStudio.UI.Components"
         Title="Attribute Table Inspector"
-        Height="540" Width="720" MinHeight="400" MinWidth="550"
+        Height="560" Width="820" MinHeight="420" MinWidth="600"
         WindowStartupLocation="CenterOwner"
         Background="#F8FAFC" Foreground="#0F172A"
         FontFamily="Segoe UI">
@@ -18,22 +18,41 @@
 
         <!-- 1. Header Row -->
         <Grid Grid.Row="0" Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Line 1: Title, Layer Selector, Spacer, and Action Buttons (all on identical baseline) -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Title on Left -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="📋" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
                     <TextBlock Text="Vector Attribute Table" FontSize="16" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="CmbTargetLayer" Height="28" MinWidth="180" Margin="14,0,0,0" VerticalContentAlignment="Center" Background="#FFFFFF" BorderBrush="#CBD5E1" SelectionChanged="CmbTargetLayer_SelectionChanged"/>
                 </StackPanel>
-                <TextBlock x:Name="TxtLayerSummary" Text="Showing attribute records for active vector layers" FontSize="11.5" Foreground="#64748B" Margin="0,3,0,0"/>
-            </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="💾 Export CSV" Style="{StaticResource DialogSecondaryButton}" Height="30" Margin="0,0,6,0" Click="BtnExportCsv_Click"/>
-                <Button Content="Zoom to Row" Style="{StaticResource DialogActionButton}" Height="30" Background="#0284C7" Click="BtnZoomToSelectedRow_Click"/>
-            </StackPanel>
+
+                <!-- Layer Selector Dropdown -->
+                <ComboBox x:Name="CmbTargetLayer" Grid.Column="1" Height="28" MinWidth="180" MaxWidth="320"
+                          Margin="12,0,8,0" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                          Background="#FFFFFF" BorderBrush="#CBD5E1"
+                          SelectionChanged="CmbTargetLayer_SelectionChanged"/>
+
+                <!-- Action Buttons on Far Right -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="💾 Export CSV" Style="{StaticResource DialogSecondaryButton}" Height="28" Margin="0,0,6,0" Click="BtnExportCsv_Click"/>
+                    <Button Content="Zoom to Row" Style="{StaticResource DialogActionButton}" Height="28" Background="#0284C7" Click="BtnZoomToSelectedRow_Click"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Line 2: Subtitle Summary -->
+            <TextBlock x:Name="TxtLayerSummary" Grid.Row="1" Text="Showing attribute records for active vector layers" FontSize="11.5" Foreground="#64748B" Margin="26,4,0,0"/>
         </Grid>
 
         <!-- 2. Search Filter Component -->

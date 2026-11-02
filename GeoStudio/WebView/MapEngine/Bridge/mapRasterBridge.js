@@ -18,7 +18,7 @@ function handleUpdateRasterOverview(msg) {
     const lid = l.get('id');
     return lid === 'raster_img_' + targetId || lid === targetId;
   });
-  const isVis = existingLayer ? existingLayer.getVisible() : (activeRasterInfo ? (activeRasterInfo.visible !== false) : true);
+  const isVis = msg.visible !== undefined ? !!msg.visible : (existingLayer ? existingLayer.getVisible() : (activeRasterInfo ? (activeRasterInfo.visible !== false) : true));
 
   if (activeRasterInfo) {
     activeRasterInfo.hasOverview = true;
@@ -88,14 +88,24 @@ function handleUpdateRasterOverview(msg) {
 
 function handleUpdateRasterWindow(msg) {
   if (!msg.imageUrl || !msg.bounds) return;
-  if (activeRasterInfo && activeRasterInfo.visible === false) return;
+  if (activeRasterInfo && activeRasterInfo.visible === false) {
+    if (hiresRasterLayer) {
+      hiresRasterLayer.setVisible(false);
+      hiresRasterLayer.setSource(null);
+    }
+    return;
+  }
+  if (msg.layerId && activeRasterInfo && activeRasterInfo.id && msg.layerId !== activeRasterInfo.id) {
+    return;
+  }
   const currentOpacity = (msg.opacity !== undefined && msg.opacity !== null)
     ? parseFloat(msg.opacity)
     : ((activeRasterInfo && activeRasterInfo.opacity !== undefined) ? activeRasterInfo.opacity : 1.0);
 
   if (!hiresRasterLayer) {
-    hiresRasterLayer = new ol.layer.Image({ properties: { id: 'raster_hires_layer' }, zIndex: 10, opacity: currentOpacity });
+    hiresRasterLayer = new ol.layer.Image({ properties: { id: 'raster_hires_layer' }, zIndex: 8, opacity: currentOpacity });
     hiresRasterLayer.set('id', 'raster_hires_layer');
+    hiresRasterLayer.set('name', 'High-Res Dynamic Viewport');
     hiresRasterLayer.set('type', 'Raster');
     map.addLayer(hiresRasterLayer);
   } else {
@@ -118,7 +128,8 @@ function handleUpdateRasterWindow(msg) {
     map.render();
   });
   hiresRasterLayer.setSource(hiresSource);
-  hiresRasterLayer.setVisible(true);
+  const isVis = activeRasterInfo ? (activeRasterInfo.visible !== false) : true;
+  hiresRasterLayer.setVisible(isVis);
   hiresRasterLayer.setOpacity(currentOpacity);
   map.render();
 }

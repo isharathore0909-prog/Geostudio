@@ -7,12 +7,21 @@ function requestHighResRasterWindow() {
   if (typeof isSwipeActive !== 'undefined' && isSwipeActive) return;
   if (!activeRasterInfo || !activeRasterInfo.filePath || !activeRasterInfo.bounds) return;
 
+  // Never request or show hires raster if the layer is hidden
+  if (activeRasterInfo.visible === false) {
+    if (hiresRasterLayer) {
+      hiresRasterLayer.setVisible(false);
+      hiresRasterLayer.setSource(null);
+    }
+    return;
+  }
+
   const currentZoom = mapView.getZoom();
   if (currentZoom < 12) {
     if (hiresRasterLayer) hiresRasterLayer.setVisible(false);
     return;
   }
-  if (hiresRasterLayer) {
+  if (hiresRasterLayer && activeRasterInfo.visible !== false) {
     hiresRasterLayer.setVisible(true);
     if (activeRasterInfo && activeRasterInfo.opacity !== undefined) {
       hiresRasterLayer.setOpacity(activeRasterInfo.opacity);
@@ -62,6 +71,7 @@ function addRasterLayer(data) {
   const renderStart = performance.now();
   const imgUrl = data.imageUrl || data.imageUri;
   const initOpacity = (data.opacity !== undefined && data.opacity !== null) ? Number(data.opacity) : 1.0;
+  const initVisible = (data.visible !== undefined && data.visible !== null) ? !!data.visible : true;
 
   activeRasterInfo = {
     id: data.id,
@@ -78,7 +88,8 @@ function addRasterLayer(data) {
     minElev: (data.minElev !== undefined && data.minElev !== null) ? Number(data.minElev) : null,
     maxElev: (data.maxElev !== undefined && data.maxElev !== null) ? Number(data.maxElev) : null,
     isElevation: !!data.isElevation,
-    opacity: initOpacity
+    opacity: initOpacity,
+    visible: initVisible
   };
 
   if (data.isElevation || data.shaderMode || (data.minElev !== undefined && data.minElev !== null)) {
@@ -140,25 +151,30 @@ function addRasterLayer(data) {
     const overviewLayer = new ol.layer.Image({
       source: overviewSource,
       opacity: initOpacity,
+      visible: initVisible,
       zIndex: 7
     });
     overviewLayer.set('id', 'raster_img_' + data.id);
     overviewLayer.set('name', data.name);
     overviewLayer.set('type', 'Raster');
+    overviewLayer.setVisible(initVisible);
     map.addLayer(overviewLayer);
   }
 
   if (!hiresRasterLayer) {
     hiresRasterLayer = new ol.layer.Image({
       zIndex: 8,
-      opacity: initOpacity
+      opacity: initOpacity,
+      visible: initVisible
     });
-    hiresRasterLayer.set('id', 'hires_viewport_layer');
+    hiresRasterLayer.set('id', 'raster_hires_layer');
     hiresRasterLayer.set('name', 'High-Res Dynamic Viewport');
     hiresRasterLayer.set('type', 'Raster');
+    hiresRasterLayer.setVisible(initVisible);
     map.addLayer(hiresRasterLayer);
   } else {
     hiresRasterLayer.setOpacity(initOpacity);
+    hiresRasterLayer.setVisible(initVisible);
   }
 
   map.on('moveend', function () {
@@ -196,7 +212,7 @@ function updateRasterLayerStyle(data) {
   if (activeRasterInfo && activeRasterInfo.id === data.id) {
     activeRasterInfo.shaderMode = data.shaderMode;
     activeRasterInfo.palette = data.palette;
-    if (hiresRasterLayer) {
+    if (hiresRasterLayer && activeRasterInfo.visible !== false) {
       requestHighResRasterWindow();
     }
   }

@@ -112,6 +112,7 @@ namespace GeoStudio
             if (sender is CheckBox cb && cb.Tag is string layerId)
             {
                 var layer = FindLayer(layerId);
+                if (layer != null) layer.IsVisible = true;
                 PostMessageToMap(new { action = "toggleLayer", id = layerId, visible = true, type = layer?.Type.ToString() });
             }
         }
@@ -121,6 +122,11 @@ namespace GeoStudio
             if (sender is CheckBox cb && cb.Tag is string layerId)
             {
                 var layer = FindLayer(layerId);
+                if (layer != null) layer.IsVisible = false;
+                if (_activeRasterLayerId == layerId)
+                {
+                    _rasterCts?.Cancel();
+                }
                 PostMessageToMap(new { action = "toggleLayer", id = layerId, visible = false, type = layer?.Type.ToString() });
             }
         }

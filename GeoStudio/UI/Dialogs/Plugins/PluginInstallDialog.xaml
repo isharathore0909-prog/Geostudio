@@ -19,7 +19,6 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="54"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10" Background="#F1F5F9" VerticalAlignment="Center">
                     <TextBlock x:Name="TxtIcon" Text="🧩" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -28,9 +27,6 @@
                     <TextBlock x:Name="TxtName" Text="Plugin Name" FontWeight="Bold" FontSize="14" Foreground="#0F172A"/>
                     <TextBlock x:Name="TxtCategory" Text="Category" FontSize="11" Foreground="#64748B" Margin="0,2,0,0"/>
                 </StackPanel>
-                <Border Grid.Column="2" x:Name="BadgeStatus" CornerRadius="4" Padding="8,4" VerticalAlignment="Center" Background="#F1F5F9">
-                    <TextBlock x:Name="TxtBadge" Text="AVAILABLE" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
-                </Border>
             </Grid>
         </Border>
 

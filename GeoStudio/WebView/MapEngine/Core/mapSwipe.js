@@ -133,7 +133,8 @@ function toggleSwipe(forceState) {
   if (badge) badge.style.display = isSwipeActive ? 'flex' : 'none';
 
   if (typeof hiresRasterLayer !== 'undefined' && hiresRasterLayer) {
-    hiresRasterLayer.setVisible(!isSwipeActive);
+    const isVis = !isSwipeActive && (!activeRasterInfo || activeRasterInfo.visible !== false);
+    hiresRasterLayer.setVisible(isVis);
   }
 
   const rasterLayers = map.getLayers().getArray().filter(l => (l.get('id') || '').startsWith('raster_img_'));

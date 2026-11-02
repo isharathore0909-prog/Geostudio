@@ -112,23 +112,39 @@ function handleToggleLayer(msg) {
     if (window.GeoStudioWebGLVector) window.GeoStudioWebGLVector.setLayerVisibility(msg.id, isVis);
   } else {
     if (window.GeoStudioWebGLVector) window.GeoStudioWebGLVector.setLayerVisibility(msg.id, isVis);
+    const isRasterTarget = activeRasterInfo && (msg.id === activeRasterInfo.id || msg.type === 'Raster');
+
     // Raster / DEM / DSM layers
-    if (activeRasterInfo && (msg.id === activeRasterInfo.id || msg.type === 'Raster')) {
+    if (isRasterTarget) {
       activeRasterInfo.visible = isVis;
-      if (hiresRasterLayer) hiresRasterLayer.setVisible(isVis);
+      clearTimeout(rasterDebounceTimer);
+      if (hiresRasterLayer) {
+        hiresRasterLayer.setVisible(isVis);
+        if (!isVis) {
+          hiresRasterLayer.setSource(null);
+        }
+      }
     }
 
     map.getLayers().getArray().forEach(l => {
       const lid = l.get('id') || '';
-      if (lid === msg.id || lid === 'raster_img_' + msg.id || lid === 'hires_viewport_layer' || lid === 'raster_hires_layer') {
+      if (lid === msg.id || lid === 'raster_img_' + msg.id) {
+        l.setVisible(isVis);
+      } else if (isRasterTarget && (lid === 'hires_viewport_layer' || lid === 'raster_hires_layer')) {
         l.setVisible(isVis);
       }
     });
 
     if (!isVis) {
-      if (typeof hideShaderScaleWidget === 'function') hideShaderScaleWidget();
+      if (isRasterTarget && typeof hideShaderScaleWidget === 'function') hideShaderScaleWidget();
     } else {
-      if (typeof updateShaderScaleWidget === 'function') updateShaderScaleWidget();
+      if (isRasterTarget) {
+        if (typeof updateShaderScaleWidget === 'function') updateShaderScaleWidget();
+        if (mapView.getZoom() >= 12) {
+          clearTimeout(rasterDebounceTimer);
+          rasterDebounceTimer = setTimeout(requestHighResRasterWindow, 60);
+        }
+      }
     }
 
     // Refresh LiDAR legend position if both or one are visible

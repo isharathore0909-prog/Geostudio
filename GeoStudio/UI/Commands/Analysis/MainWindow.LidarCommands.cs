@@ -289,6 +289,15 @@ namespace GeoStudio
                 return;
             }
 
+            if (initialSelection == null && ptLayer.LidarClasses != null && ptLayer.LidarClasses.Count > 0)
+            {
+                var sel = ptLayer.LidarClasses.Where(c => c.IsSelected).Select(c => c.ClassId).ToList();
+                if (sel.Count < ptLayer.LidarClasses.Count)
+                {
+                    initialSelection = sel;
+                }
+            }
+
             if (ActiveLidarClassFilterWindow != null && ActiveLidarClassFilterWindow.IsLoaded)
             {
                 ActiveLidarClassFilterWindow.WindowState = WindowState.Normal;

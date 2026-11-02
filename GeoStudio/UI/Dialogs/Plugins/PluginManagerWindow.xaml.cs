@@ -39,7 +39,7 @@ namespace GeoStudio.UI.Dialogs.Plugins
 
         private void OnPluginStatusChanged(PluginManifest plugin)
         {
-            Dispatcher.Invoke(UpdateSummary);
+            Dispatcher.Invoke(ApplyFilter);
         }
 
         private void Filter_Changed(object sender, RoutedEventArgs e)
@@ -77,15 +77,6 @@ namespace GeoStudio.UI.Dialogs.Plugins
             }).ToList();
 
             PluginsItemsControl.ItemsSource = filtered;
-            UpdateSummary();
-        }
-
-        private void UpdateSummary()
-        {
-            if (TxtSummary == null || _allPlugins == null) return;
-            int total = _allPlugins.Count;
-            int installed = _allPlugins.Count(p => p.IsInstalled);
-            TxtSummary.Text = $"Active Extensions: {installed} of {total} installed  •  100% Offline Air-Gapped";
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();

@@ -20,10 +20,11 @@
 6. [Vector Digitizing, Snapping & Measurement](#-vector-digitizing-snapping--measurement)
 7. [Inter-Process Communication (IPC) Protocol](#-inter-process-communication-ipc-protocol)
 8. [Data, Cache & Memory Lifecycle Management](#-data-cache--memory-lifecycle-management)
-9. [Project Structure](#-project-structure)
-10. [Prerequisites & Build Instructions](#-prerequisites--build-instructions)
-11. [Performance Benchmarks & Optimizations](#-performance-benchmarks--optimizations)
-12. [Troubleshooting Guide](#-troubleshooting-guide)
+9. [Scientific, Hydrological & Rule-Based Formulas](#-scientific-hydrological--rule-based-formulas)
+10. [Project Structure](#-project-structure)
+11. [Prerequisites & Build Instructions](#-prerequisites--build-instructions)
+12. [Performance Benchmarks & Optimizations](#-performance-benchmarks--optimizations)
+13. [Troubleshooting Guide](#-troubleshooting-guide)
 
 ---
 
@@ -390,6 +391,513 @@ When a user removes a raster or point cloud layer from the `Layers` panel:
 1. `MainWindow.xaml.cs` cancels all active asynchronous decoding tasks (`_rasterCts?.Cancel()`).
 2. Dispatches `removeLayer` IPC message to the map engine to release GPU WebGL textures and vertex buffers.
 3. If all data layers are closed, calls `GdalRasterService.ClearCache()` and `DuckDbPointCloudService.Clear()`, flushing unmanaged RAM and releasing dataset file locks.
+
+---
+
+## 📐 Scientific, Hydrological & Rule-Based Formulas
+
+GeoStudio implements calibrated, peer-reviewed mathematical formulations, decision-tree rules, and physical models across all analysis pipelines:
+
+```
+                               GEOSTUDIO ANALYTICAL FORMULA MATRIX
++------------------------------------+------------------------------------+------------------------------------+
+|   REMOTE SENSING & THERMAL         |   HYDROLOGY & ARTIFICIAL RECHARGE  |   TERRAIN, EARTHWORKS & LIDAR      |
+| • NDVI, NDWI, MNDWI, EVI, NDBI     | • Barnes Priority-Flood Sink Fill  | • Central Difference 3D Gradients  |
+| • Sobrino & Du Split-Window LST    | • D8 Flow Routing (Garbrecht-Martz)| • Multi-Source Lambertian Hillshade|
+| • Planck Brightness Temperature    | • CGWB 2007/2020 Recharge Siting   | • Factored Cut & Fill & Bisection  |
+| • Fractional Vegetation Cover (FVC)| • Strange's Table Catchment Yield  | • SMRF Filter & HAG Delaunay TIN   |
+| • 22-Class LULC Decision Engine    | • FAO-56 Crop Water Planner (WAI)  | • Geodesic Haversine & A* Routing  |
++------------------------------------+------------------------------------+------------------------------------+
+```
+
+---
+
+### 1. Remote Sensing & Multispectral Indices
+
+Calculated across multispectral rasters (Landsat 8/9 OLI, Sentinel-2 MSI) via [raster_tasks.py](file:///d:/GEO%20MAP/GeoStudio/Python/PythonPipeline/tasks/raster_tasks.py) and [spectral_helpers.py](file:///d:/GEO%20MAP/GeoStudio/Python/PythonPipeline/tasks/spectral_helpers.py):
+
+#### A. Normalized Difference Vegetation Index (NDVI)
+$$
+\text{NDVI} = \frac{\rho_{\text{NIR}} - \rho_{\text{Red}}}{\rho_{\text{NIR}} + \rho_{\text{Red}} + \epsilon}
+$$
+- **Bands**: Sentinel-2 ($B_8, B_4$), Landsat 8/9 ($B_5, B_4$).
+- **Range**: $[-1.0, 1.0]$. Dense green canopy $\ge 0.45$, sparse/scrub $0.20 - 0.40$, barren rock/soil $< 0.20$, water $< 0$.
+- $\epsilon = 10^{-6}$ prevents zero-division singularities over masked/nodata water pixels.
+
+#### B. Normalized Difference Water Index (NDWI — McFeeters 1996)
+$$
+\text{NDWI} = \frac{\rho_{\text{Green}} - \rho_{\text{NIR}}}{\rho_{\text{Green}} + \rho_{\text{NIR}} + \epsilon}
+$$
+- **Bands**: Sentinel-2 ($B_3, B_8$), Landsat 8/9 ($B_3, B_5$).
+- Pure open water features yield $\text{NDWI} > 0.0$; terrestrial vegetation and bare earth yield negative values.
+
+#### C. Modified Normalized Difference Water Index (MNDWI — Xu 2006)
+$$
+\text{MNDWI} = \frac{\rho_{\text{Green}} - \rho_{\text{SWIR1}}}{\rho_{\text{Green}} + \rho_{\text{SWIR1}} + \epsilon}
+$$
+- **Bands**: Sentinel-2 ($B_3, B_{11}$), Landsat 8/9 ($B_3, B_6$).
+- Replaces NIR with SWIR1 to suppress built-up urban noise and separate turbid water bodies from asphalt/concrete.
+
+#### D. Enhanced Vegetation Index (EVI — Huete et al. 2002)
+$$
+\text{EVI} = 2.5 \cdot \frac{\rho_{\text{NIR}} - \rho_{\text{Red}}}{\rho_{\text{NIR}} + 6.0 \cdot \rho_{\text{Red}} - 7.5 \cdot \rho_{\text{Blue}} + 1.0}
+$$
+- Corrects for atmospheric aerosol scattering and soil background reflectance. Clamped to $[-1.5, 1.5]$.
+
+#### E. Normalized Difference Built-Up Index (NDBI — Zha et al. 2003)
+$$
+\text{NDBI} = \frac{\rho_{\text{SWIR1}} - \rho_{\text{NIR}}}{\rho_{\text{SWIR1}} + \rho_{\text{NIR}} + \epsilon}
+$$
+- Highlights urban settlements, impervious roads, and industrial structures ($\text{NDBI} > 0$).
+
+#### F. Normalized Burn Ratio (NBR — Key & Benson 2006)
+$$
+\text{NBR} = \frac{\rho_{\text{NIR}} - \rho_{\text{SWIR2}}}{\rho_{\text{NIR}} + \rho_{\text{SWIR2}} + \epsilon}
+$$
+- **Bands**: Sentinel-2 ($B_8, B_{12}$), Landsat 8/9 ($B_5, B_7$). Used for wildfire burn severity and fire scar perimeter delineation.
+
+#### G. Bare Soil Index (BSI — Rikimaru et al. 2002)
+$$
+\text{BSI} = \frac{(\rho_{\text{SWIR1}} + \rho_{\text{Red}}) - (\rho_{\text{NIR}} + \rho_{\text{Blue}})}{(\rho_{\text{SWIR1}} + \rho_{\text{Red}}) + (\rho_{\text{NIR}} + \rho_{\text{Blue}}) + \epsilon}
+$$
+
+#### H. Tasseled Cap Wetness (TCW — Sentinel-2 MSI Crist Orthogonal Transform)
+$$
+\text{TCW} = 0.1509 B_2 + 0.1973 B_3 + 0.3279 B_4 + 0.3406 B_8 - 0.7112 B_{11} - 0.4572 B_{12}
+$$
+
+#### I. False-Color Infrared Dynamic Range Stretch
+False-Color composites map $R \leftarrow \text{NIR}$, $G \leftarrow \text{Red}$, $B \leftarrow \text{Green}$ using a cumulative 2%–98% percentile linear contrast stretch:
+$$
+\text{DN}_{\text{out}} = \text{clip}\left(\frac{\text{DN} - P_{2\%}}{P_{98\%} - P_{2\%}} \cdot 255.0,\, 0,\, 255\right)
+$$
+
+---
+
+### 2. Thermal Remote Sensing & Land Surface Temperature (LST)
+
+Implemented in [landsat_tasks.py](file:///d:/GEO%20MAP/GeoStudio/Python/PythonPipeline/tasks/landsat_tasks.py) following USGS Landsat Collection 2 Level 1 calibration:
+
+#### A. Top of Atmosphere (TOA) Spectral Radiance ($L_\lambda$)
+$$
+L_\lambda = M_L \cdot Q_{\text{cal}} + A_L
+$$
+- $Q_{\text{cal}}$: Calibrated digital number (DN).
+- $M_L, A_L$: Band-specific radiance multiplicative and additive rescaling factors from scene `*_MTL.txt` (typically $M_{L,10} = 0.000380$, $A_{L,10} = 0.1$).
+
+#### B. TOA Planetary Reflectance with Solar Angle Correction ($\rho_\lambda$)
+$$
+\rho_\lambda = \frac{M_\rho \cdot Q_{\text{cal}} + A_\rho}{\sin(\theta_{\text{SE}})} \cdot \frac{1}{\exp(-\tau_\lambda \cdot \text{Ozone})}
+$$
+- $\theta_{\text{SE}}$: Solar elevation angle in degrees ($\theta_{\text{SE}} = 90^\circ - \theta_{\text{SZA}}$).
+- $\tau_\lambda$: Atmospheric ozone optical depth correction ($0.1133$ for Band 4, $0.012$ for Band 5).
+
+#### C. At-Satellite Brightness Temperature ($T_B$)
+Inverted Planck radiation function:
+$$
+T_B = \frac{K_2}{\ln\left(\frac{K_1}{L_\lambda} + 1\right)} - 273.15 \quad [^\circ\text{C}]
+$$
+- **TIRS Band 10**: $K_1 = 774.8853\,\text{W}/(\text{m}^2\cdot\text{sr}\cdot\mu\text{m})$, $K_2 = 1321.0789\,\text{K}$ (USGS Collection 2: $799.0284$ / $1329.2482$).
+- **TIRS Band 11**: $K_1 = 480.8883\,\text{W}/(\text{m}^2\cdot\text{sr}\cdot\mu\text{m})$, $K_2 = 1201.1442\,\text{K}$ (USGS Collection 2: $497.6190$ / $1198.8194$).
+
+#### D. Fractional Vegetation Cover ($P_v$ / FVC — Carlson & Ripley 1997)
+$$
+P_v = \left[\frac{\text{NDVI} - \text{NDVI}_{\text{min}}}{\text{NDVI}_{\text{max}} - \text{NDVI}_{\text{min}}}\right]^2, \quad \text{clamped to } [0.0, 1.0]
+$$
+- $\text{NDVI}_{\text{min}}, \text{NDVI}_{\text{max}}$ are dynamically extracted from scene 5th and 95th percentiles (bounded: $\text{NDVI}_{\text{min}} \in [0.05, 0.20]$, $\text{NDVI}_{\text{max}} \in [0.50, 0.85]$).
+
+#### E. Land Surface Emissivity ($\varepsilon_\lambda$ — Sobrino et al. 2008)
+$$
+\varepsilon_\lambda = \varepsilon_{\text{veg}} \cdot P_v + \varepsilon_{\text{soil}} \cdot (1 - P_v) + C_\lambda
+$$
+- Cavity effect $C_\lambda = 0.005 \cdot (1 - \varepsilon_{\text{soil}}) \cdot \varepsilon_{\text{veg}} \cdot (1 - P_v)$.
+- Simplified dynamic formulation for TIRS 10 & 11:
+  $$
+  \varepsilon_{10} = 0.986 + 0.004 \cdot P_v, \quad \varepsilon_{11} = 0.989 + 0.003 \cdot P_v
+  $$
+- Mean emissivity $\bar{\varepsilon} = \frac{\varepsilon_{10} + \varepsilon_{11}}{2}$, Emissivity difference $\Delta\varepsilon = \varepsilon_{10} - \varepsilon_{11}$.
+
+#### F. Split-Window Land Surface Temperature (Du et al. 2015 / Sobrino 2008)
+$$
+T_s = T_{10} + c_1(T_{10} - T_{11}) + c_2(T_{10} - T_{11})^2 + c_0 + (c_3 + c_4 w)(1 - \bar{\varepsilon}) + (c_5 + c_6 w)\Delta\varepsilon - 273.15 \quad [^\circ\text{C}]
+$$
+Where $w$ is atmospheric precipitable water vapor ($\text{g}/\text{cm}^2$), and empirical coefficients switch according to atmospheric moisture regimes:
+
+| Coefficient | Dry Atmosphere ($w \le 3.0\,\text{g/cm}^2$) | Humid / Tropical Atmosphere ($w > 3.0\,\text{g/cm}^2$) |
+| :---: | :---: | :---: |
+| $c_0$ | $-0.268$ | $-1.274$ |
+| $c_1$ | $1.378$ | $1.832$ |
+| $c_2$ | $0.183$ | $0.312$ |
+| $c_3$ | $54.30$ | $68.20$ |
+| $c_4$ | $-2.238$ | $-3.451$ |
+| $c_5$ | $-129.20$ | $-145.40$ |
+| $c_6$ | $16.40$ | $22.10$ |
+
+#### G. Single-Channel LST Fallback (Artis & Carnahan 1982)
+When Band 11 is unavailable or heavily degraded by stray light artifacts:
+$$
+T_s = \frac{T_{10}}{1 + \left(\frac{\lambda \cdot T_{10}}{\rho_{\text{planck}}}\right) \cdot \ln(\bar{\varepsilon})} - 273.15 \quad [^\circ\text{C}]
+$$
+- Effective wavelength $\lambda = 10.895\,\mu\text{m} = 10.895 \times 10^{-6}\,\text{m}$.
+- Physical constant $\rho_{\text{planck}} = \frac{h \cdot c}{\sigma_B} = 1.438 \times 10^{-2}\,\text{m}\cdot\text{K}$.
+
+#### H. Bitwise Cloud & Shadow Masking (`QA_PIXEL`)
+Invalidates thermal pixels corrupted by atmospheric occlusion:
+$$
+\text{Masked} = (\text{QA} \gg 1)\,\&\,1 \quad (\text{Dilated Cloud}) \;\lor\; (\text{QA} \gg 3)\,\&\,1 \quad (\text{Cloud}) \;\lor\; (\text{QA} \gg 4)\,\&\,1 \quad (\text{Cloud Shadow})
+$$
+
+---
+
+### 3. LULC Intelligence Classification Engine (Rule-Based Decision Trees)
+
+Implemented in [lulc_tasks.py](file:///d:/GEO%20MAP/GeoStudio/Python/PythonPipeline/tasks/lulc_tasks.py). Applies physics-based, multi-sensor refinement across 22 hierarchical classes:
+
+```mermaid
+flowchart TD
+    Raw[Sentinel-2 / Landsat Multispectral] --> Indices[Compute NDVI, NDWI, MNDWI, BSI, TCW, Slope]
+    Indices --> Prior{Dynamic World Prior?}
+    Prior -->|Yes| BaseDW[Map DW Classes 0..8 to LULC Taxonomy]
+    Prior -->|No| BaseRules[Spectral Baseline: Forest, Crop, Water, Bare]
+    
+    BaseDW --> Refine
+    BaseRules --> Refine[Physics-Based Decision Refinement]
+    
+    Refine --> F1["Forest Refinement (10)<br/>• BSI > 0.10 & NDVI < 0.40 ➔ Degraded Forest (13)<br/>• NDVI >= 0.45 ➔ Dense Forest (11)<br/>• 0.30 <= NDVI < 0.45 ➔ Sparse Forest (12)"]
+    Refine --> C1["Cropland Refinement (40)<br/>• MNDWI > -0.05 & NDVI > 0.30 ➔ Irrigated (41)<br/>• NDVI < 0.25 & MNDWI <= -0.20 ➔ Fallow/Rainfed (42)<br/>• BSI > 0.08 & NDVI < 0.35 ➔ Degraded (13)"]
+    Refine --> W1["Water Refinement (80)<br/>• MNDWI > 0.20 ➔ Permanent Water (81)<br/>• 0.0 <= MNDWI <= 0.20 ➔ Seasonal Water (82)"]
+    Refine --> Wet1["Wetland Refinement (90)<br/>• NDVI > 0.20 & TCW > 0.0 ➔ Flooded Veg (91)<br/>• NDVI < 0.15 ➔ Mudflat / Bare Wetland (92)"]
+    Refine --> B1["Bare Ground Refinement (60)<br/>• Slope > 8° ➔ Rocky / Barren (61)<br/>• BSI > 0.10 & Slope <= 8° ➔ Sandy / Alluvial (62)"]
+    
+    F1 & C1 & W1 & Wet1 & B1 --> Modal[3x3 Modal Majority Filter]
+    Modal --> FinalLULC[Final 22-Class LULC GeoTIFF]
+```
+
+---
+
+### 4. Terrain Morphology, 3D Shading & Viewshed
+
+Implemented in [ElevationShadedRelief.cs](file:///d:/GEO%20MAP/GeoStudio/Raster/Rendering/ShadedRelief/ElevationShadedRelief.Renderer.cs), [relief_shading.py](file:///d:/GEO%20MAP/GeoStudio/PythonEngine/core/elevation/relief_shading.py), and [terrain_tasks.py](file:///d:/GEO%20MAP/GeoStudio/Python/PythonPipeline/tasks/terrain_tasks.py):
+
+#### A. Central Difference Surface Gradient
+$$
+\frac{\partial z}{\partial x} = \frac{z(x+1, y) - z(x-1, y)}{2 \cdot \Delta x_m}, \qquad \frac{\partial z}{\partial y} = \frac{z(x, y+1) - z(x, y-1)}{2 \cdot \Delta y_m}
+$$
+- When DEM is in Geographic Coordinates (WGS84 degrees):
+  $$
+  \Delta x_m = \Delta x_{\text{deg}} \cdot 111320.0 \cdot \cos(\phi_{\text{lat}}), \qquad \Delta y_m = \Delta y_{\text{deg}} \cdot 111320.0
+  $$
+
+#### B. Dynamic Vertical Exaggeration ($z_{\text{factor}}$)
+To prevent extreme flattening in lowlands and severe shadow blow-outs in rugged terrain, $z_{\text{factor}}$ adapts dynamically to localized elevation range $\Delta z = z_{\text{max}} - z_{\text{min}}$:
+$$
+z_{\text{factor}} = \begin{cases}
+8.0 & \text{if } \Delta z \le 10\,\text{m} \quad (\text{Coastal Plains / Floodplains}) \\
+5.0 & \text{if } 10 < \Delta z \le 30\,\text{m} \\
+3.5 & \text{if } 30 < \Delta z \le 100\,\text{m} \\
+2.0 & \text{if } 100 < \Delta z \le 300\,\text{m} \\
+1.2 & \text{if } \Delta z > 300\,\text{m} \quad (\text{High Alpine Ridges})
+\end{cases}
+$$
+
+#### C. Slope & Aspect
+$$
+\text{Slope} = \arctan\left(\sqrt{\left(\frac{\partial z}{\partial x}\right)^2 + \left(\frac{\partial z}{\partial y}\right)^2} \cdot z_{\text{factor}}\right) \quad [\text{radians}]
+$$
+$$
+\text{Slope}_{\text{deg}} = \text{Slope} \cdot \frac{180}{\pi}, \qquad \text{Slope}_{\%} = \tan(\text{Slope}) \cdot 100
+$$
+$$
+\text{Aspect} = \text{atan2}\left(-\frac{\partial z}{\partial x},\, \frac{\partial z}{\partial y}\right) \pmod{2\pi} \quad [0 \text{ to } 360^\circ]
+$$
+
+#### D. Multi-Directional Lambertian 3D Hillshading
+GeoStudio avoids single-light source shadow dropouts by combining three illumination vectors:
+1. **Primary Key Light**: Azimuth $\alpha_1 = 315^\circ$ (NW), Altitude $\beta = 45^\circ$, Weight $= 0.60$
+2. **Soft Fill Light**: Azimuth $\alpha_2 = 225^\circ$ (SW), Altitude $\beta = 45^\circ$, Weight $= 0.25$
+3. **Ambient Rim Light**: Azimuth $\alpha_3 = 45^\circ$ (NE), Altitude $\beta = 45^\circ$, Weight $= 0.15$
+
+$$
+\text{HS}_i = \max\left(0.0,\, \sin\beta\cos(\text{Slope}) + \cos\beta\sin(\text{Slope})\cos(\alpha_i - \text{Aspect})\right)
+$$
+$$
+\text{Illumination} = 0.22 + 0.78 \cdot \left(0.60 \cdot \text{HS}_{315^\circ} + 0.25 \cdot \text{HS}_{225^\circ} + 0.15 \cdot \text{HS}_{45^\circ}\right)
+$$
+
+#### E. Topographic Ruggedness Index (TRI — Riley et al. 1999)
+$$
+\text{TRI} = \sqrt{\frac{1}{8} \sum_{i=1}^8 \left(z_0 - z_i\right)^2}
+$$
+
+#### F. Topographic Position Index (TPI — Weiss 2001)
+$$
+\text{TPI} = z_0 - \bar{z}_{\text{neighborhood}}
+$$
+- Positive values indicate hilltops and ridges; negative values represent valley bottoms and drainage channels.
+
+#### G. 3D Viewshed with Earth Curvature & Atmospheric Refraction
+GDAL Viewshed line-of-sight elevation adjustment:
+$$
+\Delta h_{\text{curv}} = \frac{D^2}{2 \cdot R_{\text{earth}}} \cdot (1 - k)
+$$
+- $R_{\text{earth}} = 6,371,000\,\text{m}$.
+- Atmospheric refraction index $k = 0.14286 \implies (1 - k) = 0.85714$.
+
+---
+
+### 5. Earthwork Volumetrics & Cut/Fill Balance Engine
+
+Implemented in [cut_fill_engine.py](file:///d:/GEO%20MAP/GeoStudio/PythonEngine/core/earthworks/cut_fill_engine.py) and [VolumetricAnalysisWindow.xaml.cs](file:///d:/GEO%20MAP/GeoStudio/UI/Dialogs/Terrain/VolumetricAnalysisWindow.xaml.cs):
+
+#### A. Elevation Differential Matrix
+$$
+\Delta z(x, y) = z_{\text{comp}}(x, y) - z_{\text{base}}(x, y)
+$$
+- **Cut Condition**: $\Delta z < -0.005\,\text{m}$ (Material excavation required)
+- **Fill Condition**: $\Delta z > 0.005\,\text{m}$ (Material embankment required)
+- **Daylight Condition**: $|\Delta z| \le 0.005\,\text{m}$ (Zero-grade grade daylight line)
+
+#### B. Factored Volumetric Calculations
+$$
+V_{\text{cut,gross}} = \sum |\Delta z_{\text{cut}}| \cdot A_{\text{cell}}, \qquad V_{\text{fill,gross}} = \sum \Delta z_{\text{fill}} \cdot A_{\text{cell}}
+$$
+$$
+V_{\text{cut,factored}} = V_{\text{cut,gross}} \cdot S_{\text{swell}}, \qquad V_{\text{fill,factored}} = V_{\text{fill,gross}} \cdot S_{\text{shrinkage}}
+$$
+$$
+V_{\text{net}} = V_{\text{cut,factored}} - V_{\text{fill,factored}}, \qquad \text{Cut/Fill Ratio} = \frac{V_{\text{cut,factored}}}{V_{\text{fill,factored}}}
+$$
+- $S_{\text{swell}}$: Geotechnical bank-to-loose swell factor (default $1.00 - 1.25$).
+- $S_{\text{shrinkage}}$: Loose-to-compacted embankment shrinkage factor (default $1.00 - 0.90$).
+
+#### C. Optimal Neutral Balance Plane (Bisection Root-Finding)
+Solves for the horizontal grading datum $z^*$ where excavation equals embankment ($V_{\text{net}}(z^*) = 0$):
+$$
+f(z^*) = \sum_{z_i < z^*} (z^* - z_i) \cdot S_{\text{shrinkage}} - \sum_{z_i > z^*} (z_i - z^*) \cdot S_{\text{swell}} = 0
+$$
+- Converges in $\le 35$ bisection iterations with residual volume tolerance $\epsilon < 0.001\,\text{m}^3$.
+
+#### D. Reservoir Hypsometric Stage-Storage Curve
+$$
+V_{\text{storage}}(h) = \sum_{z_i < h} (h - z_i) \cdot A_{\text{cell}}, \qquad A_{\text{water}}(h) = N_{\text{submerged}} \cdot A_{\text{cell}}
+$$
+
+---
+
+### 6. Hydrological Modeling & Watershed Analysis
+
+Implemented in [hydrology_engine.py](file:///d:/GEO%20MAP/GeoStudio/PythonEngine/core/hydrology/hydrology_engine.py), [sink_filling.py](file:///d:/GEO%20MAP/GeoStudio/PythonEngine/core/hydrology/sink_filling.py), and [flow_routing.py](file:///d:/GEO%20MAP/GeoStudio/PythonEngine/core/hydrology/flow_routing.py):
+
+#### A. Barnes Priority-Flood Sink Filling
+Priority queue (min-heap) propagating elevations from DEM raster boundaries inwards:
+$$
+z_{\text{filled}}(u) = \max\left(z_{\text{raw}}(u),\, z_{\text{spill}}(v)\right)
+$$
+Guarantees strictly non-decreasing drainage networks without creating artificial plateaus or dams.
+
+#### B. D8 Steepest Slope Routing
+$$
+S_i = \frac{z_0 - z_i}{d_i}, \qquad d_i = \begin{cases} \Delta x_m \text{ or } \Delta y_m & \text{cardinal neighbors} \\ \sqrt{\Delta x_m^2 + \Delta y_m^2} & \text{diagonal neighbors} \end{cases}
+$$
+Flow direction code is assigned to the neighbor $i \in \{1, 2, 4, 8, 16, 32, 64, 128\}$ with $\max(S_i)$.
+
+#### C. Garbrecht & Martz Flat Area Resolution
+To prevent parallel raster artifacts in zero-slope valley floors and lake beds, flow vectors are routed across flat surfaces via Euclidean Distance Transform to the nearest lower spill point:
+$$
+D_{\text{spill}} = \text{EDT}(\text{FlatCells}) \implies \vec{v}_{\text{flow}} = -\nabla D_{\text{spill}}
+$$
+
+#### D. Kahn's Topological Flow Accumulation
+Cells are sorted into a Directed Acyclic Graph (DAG) by in-degree counts, propagating upstream cell contributions downstream in linear $O(N)$ time:
+$$
+A(u) = 1 + \sum_{v \in \text{Inflow}(u)} A(v)
+$$
+
+#### E. Strahler Stream Ordering
+Hierarchical stream orders assigned at channel confluences:
+$$
+S_{\text{confluence}} = \begin{cases}
+\max(S_1, S_2) + 1 & \text{if } S_1 = S_2 \\
+\max(S_1, S_2) & \text{if } S_1 \ne S_2
+\end{cases}
+$$
+
+#### F. Chaikin's Corner-Cutting Curve Smoothing
+Stream vectors are smoothed for cartographic display:
+$$
+Q_i = 0.75 P_i + 0.25 P_{i+1}, \qquad R_i = 0.25 P_i + 0.75 P_{i+1}
+$$
+
+---
+
+### 7. Central Ground Water Board (CGWB) Artificial Recharge Engineering
+
+Implemented in [CgwbMasterPlanService.cs](file:///d:/GEO%20MAP/GeoStudio/Hydrology/Services/CgwbMasterPlanService.cs) and [RechargeBoqService.cs](file:///d:/GEO%20MAP/GeoStudio/Hydrology/Services/RechargeBoqService.cs) following CGWB Master Plan (2007 & 2020) guidelines:
+
+#### A. Three Mandatory Screening Gates
+1. **Waterlogging Exclusion Gate**: Post-monsoon Depth to Water (DTW) $< 3.0\,\text{m bgl} \implies$ **REJECTED** (Recharge prohibited to prevent root-zone waterlogging and secondary soil salinization).
+2. **Groundwater Salinity Ceiling**: Native groundwater Electrical Conductivity (EC) $> 2,500\,\mu\text{S/cm} \implies$ **REJECTED** (Recharge prohibited to avoid mobilizing subterranean halite/gypsum).
+3. **Decline Trend Gate**: For moderate DTW ($3.0 - 9.0\,\text{m bgl}$), long-term post-monsoon declining trend must be $|\Delta h_{\text{trend}}| \ge 0.20\,\text{m/year}$.
+
+#### B. Subsurface Storage Capacity & Required Water
+$$
+T_{\text{unsat}} = \max\left(0,\, \text{DTW} - 3.0\right) \quad [\text{m}]
+$$
+$$
+V_u = \text{Area}_{\text{district}} \cdot T_{\text{unsat}} \quad [\text{MCM}]
+$$
+$$
+V_{\text{storage}} = V_u \cdot S_y \quad [\text{MCM}]
+$$
+$$
+W_{\text{gross\_required}} = \frac{V_{\text{storage}}}{0.75} \quad [\text{MCM}] \quad (\text{Accounting for 75\% recharge efficiency})
+$$
+$$
+W_{\text{feasible}} = \min\left(W_{\text{gross\_required}},\, \text{Surplus Runoff Available}\right)
+$$
+- $S_y$: Aquifer Specific Yield ($0.08 - 0.12$ for Alluvium, $0.02 - 0.04$ for Hard Rock / Schist / Granite).
+
+#### C. Catchment Runoff Yield ($Y_c$ — Strange's Table / SCS Proxy)
+$$
+Y_c = 10.0 \cdot C_{\text{catchment}} \cdot P_{75\%} \cdot A_{\text{catchment}} \quad [\text{m}^3]
+$$
+- $P_{75\%}$: 75% dependable annual rainfall in millimeters.
+- $A_{\text{catchment}}$: Micro-catchment area in hectares.
+- $C_{\text{catchment}}$: Catchment runoff coefficient ($0.22$ for Good/Rocky, $0.16$ for Average, $0.10$ for Bad/Sandy).
+
+#### D. Siting Multi-Criteria Scoring (0–100 Points)
+- **Check Dam / Anicut**:
+  - Slope: $0.5^\circ - 3.0^\circ$ ($+35$), $3.0^\circ - 5.0^\circ$ ($+20$), $5.0^\circ - 8.0^\circ$ ($+10$).
+  - Catchment: $25 - 250\,\text{ha}$ ($+30$), $10 - 500\,\text{ha}$ ($+15$).
+  - Water Depth: $5 - 25\,\text{m}$ ($+25$), $> 25\,\text{m}$ ($+15$).
+  - Stream Order: Strahler 1–3 ($+10$).
+- **Percolation Tank**: Slope $\le 2^\circ$ ($+40$), Catchment $40 - 400\,\text{ha}$ ($+30$), DTW $6 - 30\,\text{m}$ ($+30$).
+- **Farm Pond (Khet Talai)**: Slope $\le 3^\circ$ ($+50$), Catchment $2 - 50\,\text{ha}$ ($+50$).
+
+#### E. Bill of Quantities (BOQ) Standard Unit Rates (Rajasthan WRD/WDSC BSR)
+Calculated with $+3\%$ unforeseen contingencies and $+2\%$ quality control & supervision:
+$$
+\text{Total Estimate} = \left(\sum \text{Qty}_i \cdot \text{Rate}_i\right) \times 1.05
+$$
+
+| Item Description | BSR Schedule Reference | Unit | Base Rate (INR) |
+| :--- | :--- | :---: | :---: |
+| Earthwork excavation in pond basin / riverbed | Raj WRD Item 1.2 / 1.4 | $\text{m}^3$ | ₹ 165.00 – 240.00 |
+| Random Rubble Masonry (RRM) in Cement Mortar 1:5 | Raj WRD Item 4.3 | $\text{m}^3$ | ₹ 3,400.00 |
+| Cement Concrete M20 (1:2:4) Crest Cap / Weir Coping | Raj WRD Item 6.1 | $\text{m}^3$ | ₹ 6,200.00 |
+| Cement Concrete M15 (1:3:6) Downstream Stilling Basin | Raj WRD Item 5.2 | $\text{m}^3$ | ₹ 4,800.00 |
+| Dry Stone Pitching (1:2 slope protection) | Raj WRD Item 4.1 | $\text{m}^3$ | ₹ 2,800.00 |
+| Graded Gravel Filter Pack (3–7mm silica pea gravel) | Standard Special Item | $\text{m}^3$ | ₹ 1,850.00 |
+| 500-Micron Multi-layer HDPE Geomembrane Liner | BIS 15351 / WRD Spec | $\text{m}^2$ | ₹ 190.00 |
+| 450mm Rotary Borehole Drilling (Recharge Shaft) | GW Dept BSR Item 3 | $\text{m}$ | ₹ 850.00 |
+| 200mm Slotted High-Collapse PVC Well Casing | GW Dept BSR Item 5 | $\text{m}$ | ₹ 950.00 |
+
+---
+
+### 8. Agricultural Water Budget & Crop Water Planner
+
+Implemented in [recharge_tasks.py](file:///d:/GEO%20MAP/GeoStudio/Python/PythonPipeline/tasks/recharge_tasks.py):
+
+#### A. Water Availability Index (WAI)
+$$
+\text{WAI} = 0.40 \cdot S_{\text{gw}} + 0.25 \cdot S_{\text{depth}} + 0.20 \cdot S_{\text{rain}} + 0.15 \cdot S_{\text{aquifer}} + 15.0 \cdot \min(1.0,\, \text{Canal Index})
+$$
+- $S_{\text{gw}}$: Safe ($100$), Semi-Critical ($70$), Critical ($45$), Over-Exploited ($20$).
+- $S_{\text{depth}}$: DTW $\le 6\,\text{m}$ ($100$), $6-12\,\text{m}$ ($75$), $12-20\,\text{m}$ ($50$), $20-30\,\text{m}$ ($30$), $> 30\,\text{m}$ ($15$).
+- $S_{\text{rain}}$: Rain $\ge 800\,\text{mm}$ ($100$), $600-800\,\text{mm}$ ($90$), $450-600\,\text{mm}$ ($65$), $300-450\,\text{mm}$ ($40$), $< 300\,\text{mm}$ ($20$).
+- $S_{\text{aquifer}}$: Alluvium ($100$), Dune Sand ($70$), Sandstone/Limestone ($60$), Hard Rock/Basalt ($40$).
+- **Hydrological Safety Cap**: If block is Over-Exploited (OE), $\text{WAI} \le 38.0$ (or $35.0 + 20.0 \cdot \text{Canal Index}$).
+
+#### B. 4-Tier Crop Planning Matrix & Water Conservation
+
+| Tier | WAI Score | Classification | Target Saving | Recommended Kharif | Recommended Rabi | Horticulture |
+| :---: | :---: | :--- | :---: | :--- | :--- | :--- |
+| **Tier 1** | $< 40$ | Extreme Deficit | **40%** | Moth Bean, Guar, Bajra | Isabgol, Barley, Gram | Date Palm, Ber, Kair |
+| **Tier 2** | $40 - 54$ | Moderate Deficit | **25%** | Moong, Groundnut, Bajra | Cumin, Mustard, Chickpea | Pomegranate, Aonla |
+| **Tier 3** | $55 - 69$ | Moderate Availability | **10%** | Soybean, Maize, Cotton | Mustard, Wheat, Chickpea | Guava, Mandarin, Kinnow |
+| **Tier 4** | $\ge 70$ | High Availability | **0%** | Soybean, Maize, Groundnut | High-Yield Wheat, Mustard | Kinnow, Mango, Guava |
+
+#### C. Applied Water Savings & Farmer Profit Estimations
+$$
+\text{Water Saved} = \text{Baseline Water} \cdot \left(\frac{\text{Target Saving \%}}{100}\right) \quad [\text{mm}], \qquad \text{Volume Saved} = \text{Water Saved} \cdot 10.0 \quad [\text{m}^3/\text{ha}]
+$$
+$$
+\Delta \text{Profit} = \left(\text{Volume Saved} \cdot 2.0\,\text{INR}\right) + \text{Intervention Bonus} \quad [\text{₹/ha}]
+$$
+
+---
+
+### 9. LiDAR & Point Cloud Spatial Processing
+
+Implemented in [LasSurfaceRasterizerService.cs](file:///d:/GEO%20MAP/GeoStudio/PointCloud/LasSurfaceRasterizerService.cs) and [lidar_tasks.py](file:///d:/GEO%20MAP/GeoStudio/Python/PythonPipeline/tasks/lidar_tasks.py):
+
+#### A. Inverse Distance Weighting (IDW) Surface Interpolation
+$$
+z(x, y) = \frac{\sum_{i=1}^k w_i \cdot z_i}{\sum_{i=1}^k w_i}, \qquad w_i = \frac{1}{d_i^p} \quad (\text{Power parameter } p = 2.0)
+$$
+
+#### B. Simple Morphological Filter (SMRF — Pingel et al. 2013)
+Progressive morphological opening with linearly expanding structuring element window $w_k$:
+$$
+T_k = s \cdot w_k \cdot c_s + t_{\text{base}}
+$$
+- Slope tolerance $s = 0.15$, Window scaling step $c_s = 1.25$, Elevation base threshold $t_{\text{base}} = 0.45\,\text{m}$.
+- Points where $z_i - \text{Open}(z)_i \le T_k$ are classified as ASPRS Class 2 (Ground).
+
+#### C. Delaunay TIN Height Above Ground (HAG) & Canopy Stratification
+Normalized height above bare earth TIN: $z_{\text{HAG}} = z_i - z_{\text{TIN\_ground}}(x_i, y_i)$.
+- **ASPRS Class 2 (Ground)**: $z_{\text{HAG}} < 0.3\,\text{m}$
+- **ASPRS Class 3 (Low Veg)**: $0.3\,\text{m} \le z_{\text{HAG}} < 1.8\,\text{m}$
+- **ASPRS Class 4 (Medium Veg)**: $1.8\,\text{m} \le z_{\text{HAG}} < 4.0\,\text{m}$
+- **ASPRS Class 5 (High Veg / Tree Canopy)**: $z_{\text{HAG}} \ge 4.0\,\text{m}$
+
+#### D. Planar Rooftop Building Extraction (ASPRS Class 6)
+Point candidates must satisfy three criteria:
+1. **Pulse Return Filter**: Single return only ($N_{\text{returns}} \le 1$ or $R_{\text{num}} = N_{\text{returns}}$) to reject multi-bounce canopy.
+2. **Height & Planarity**: $2.2\,\text{m} \le z_{\text{HAG}} \le 65.0\,\text{m}$, Local $k$-NN elevation standard deviation $\sigma_z < 0.22\,\text{m}$.
+3. **Connected-Component Footprint**: Ball-tree spatial clustering ($r = 2.2\,\text{m}$) requiring $\ge 50$ points and footprint area $\Delta x \cdot \Delta y \ge 15.0\,\text{m}^2$.
+
+---
+
+### 10. Geodesics, Snapping & Road Network Routing
+
+Implemented in [ShortestPathSolver.cs](file:///d:/GEO%20MAP/GeoStudio/Routing/Services/ShortestPathSolver.cs) and [RoadRoutingService.cs](file:///d:/GEO%20MAP/GeoStudio/Routing/Services/RoadRoutingService.cs):
+
+#### A. Great-Circle Haversine Geodesic Distance
+$$
+a = \sin^2\left(\frac{\Delta\phi}{2}\right) + \cos(\phi_1)\cos(\phi_2)\sin^2\left(\frac{\Delta\lambda}{2}\right)
+$$
+$$
+d = 2 \cdot R_{\text{earth}} \cdot \arcsin\left(\sqrt{a}\right) \quad [\text{meters}] \qquad (R_{\text{earth}} = 6,371,000\,\text{m})
+$$
+
+#### B. Geodesic Polygon Area (Spherical Excess)
+$$
+A_{\text{poly}} = R_{\text{earth}}^2 \cdot \left| \sum_{i=1}^n \left(\lambda_{i+1} - \lambda_{i-1}\right) \cdot \sin(\phi_i) \right| \cdot \frac{1}{2} \quad [\text{m}^2]
+$$
+
+#### C. Vector Digitizing Snapping Engine
+Cursor coordinates $\vec{p} = (x, y)$ snap to active vector vertex $\vec{v}_i$ or line segment $\overline{\vec{v}_1 \vec{v}_2}$ within screen tolerance radius $\tau = 12\,\text{px}$:
+$$
+t = \text{clamp}\left(\frac{(\vec{p} - \vec{v}_1) \cdot (\vec{v}_2 - \vec{v}_1)}{\|\vec{v}_2 - \vec{v}_1\|^2},\, 0,\, 1\right), \qquad \vec{p}_{\text{proj}} = \vec{v}_1 + t(\vec{v}_2 - \vec{v}_1)
+$$
+$$
+\text{Snap Triggered if } \|\vec{p} - \vec{p}_{\text{proj}}\| \le \tau
+$$
+
+#### D. CSR Road Graph Geodesic A* Shortest Path
+Node evaluation priority queue score:
+$$
+f(u) = g(u) + h(u)
+$$
+- $g(u)$: Exact accumulated geodesic distance or travel duration from start node.
+- $h(u)$: Admissible geodesic distance heuristic to destination:
+  $$
+  h(u) = \begin{cases}
+  \text{Haversine}(u, \text{Target}) & \text{Shortest Distance Optimization} \\
+  \frac{\text{Haversine}(u, \text{Target})}{v_{\text{max}}} & \text{Fastest Time Optimization } (v_{\text{max}} = 33.33\,\text{m/s} = 120\,\text{km/h})
+  \end{cases}
+  $$
 
 ---
 

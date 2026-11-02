@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using GeoStudio.Hydrology.Models;
 using GeoStudio.Hydrology.Services;
 using GeoStudio.UI.Services;
@@ -132,7 +133,10 @@ namespace GeoStudio.UI.Dialogs.Hydrology
 
                 if (res.IsEligible)
                 {
-                    BorderSitingVerdict.Background = System.Windows.Media.Brushes.AliceBlue;
+                    BorderSitingVerdict.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EFF6FF"));
+                    BorderSitingVerdict.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BFDBFE"));
+                    TxtSitingVerdict.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E40AF"));
+                    TxtSitingReason.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E3A8A"));
 
                     // Sync Structure Combo
                     switch (res.RecommendedStructure)
@@ -161,7 +165,10 @@ namespace GeoStudio.UI.Dialogs.Hydrology
                 }
                 else
                 {
-                    BorderSitingVerdict.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(254, 242, 242));
+                    BorderSitingVerdict.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEF2F2"));
+                    BorderSitingVerdict.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FECACA"));
+                    TxtSitingVerdict.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#991B1B"));
+                    TxtSitingReason.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B91C1C"));
                     GridBoq.ItemsSource = null;
                     TxtTotalCost.Text = "Structure Excluded by Screening Gates";
                 }
@@ -341,8 +348,8 @@ namespace GeoStudio.UI.Dialogs.Hydrology
                 // Update UI Metrics
                 TxtMacroScreeningRemark.Text = _lastMacroResult.ScreeningRemarks;
                 TxtMacroScreeningRemark.Foreground = _lastMacroResult.IsScreeningPassed
-                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(15, 118, 110))
-                    : System.Windows.Media.Brushes.Red;
+                    ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E40AF"))
+                    : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DC2626"));
 
                 TxtMacroT.Text = $"{_lastMacroResult.UnsaturatedThicknessMeters:F1} m";
                 TxtMacroVu.Text = $"{_lastMacroResult.UnsaturatedVolumeMcm:N0} MCM";
