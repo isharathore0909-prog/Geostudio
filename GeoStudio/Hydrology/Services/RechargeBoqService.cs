@@ -21,6 +21,10 @@ namespace GeoStudio.Hydrology.Services
         public const double RATE_DRILLING_BORE = 850.0;  // 450mm shaft bore per meter
         public const double RATE_PVC_CASING = 950.0;     // 200mm slotted PVC pipe per meter
 
+        public const double RATE_PLASTER_13 = 185.0;     // 20mm waterproof cement plaster 1:3 per sqm
+        public const double RATE_RCC_M25 = 7800.0;       // RCC M25 for cover slabs / beams per cum
+        public const double RATE_BRICK_MASONRY = 3200.0; // Class I brick masonry in CM 1:4 per cum
+
         public StructureEstimate CalculateBoq(
             RechargeStructureType type,
             double lengthM,
@@ -40,12 +44,20 @@ namespace GeoStudio.Hydrology.Services
             switch (type)
             {
                 case RechargeStructureType.CheckDam:
-                    est.StructureName = "Masonry Check Dam / Anicut";
+                    est.StructureName = "Pacca Masonry Check Dam";
                     CalculateCheckDamBoq(est);
                     break;
                 case RechargeStructureType.PercolationPond:
                     est.StructureName = "Percolation Tank / Talab";
                     CalculatePercolationPondBoq(est);
+                    break;
+                case RechargeStructureType.MiniPercolationTank:
+                    est.StructureName = "Mini Percolation Tank / Pit";
+                    CalculateMiniPercolationTankBoq(est);
+                    break;
+                case RechargeStructureType.Anicut:
+                    est.StructureName = "Masonry Anicut (Spillway & Apron)";
+                    CalculateAnicutBoq(est);
                     break;
                 case RechargeStructureType.FarmPond:
                     est.StructureName = "Farm Pond (Khet Talai) with HDPE Liner";
@@ -54,6 +66,14 @@ namespace GeoStudio.Hydrology.Services
                 case RechargeStructureType.RechargeShaft:
                     est.StructureName = "Recharge Shaft with Injection Bore";
                     CalculateRechargeShaftBoq(est);
+                    break;
+                case RechargeStructureType.Tanka:
+                    est.StructureName = "Tanka (Covered Rainwater Harvesting Cistern)";
+                    CalculateTankaBoq(est);
+                    break;
+                case RechargeStructureType.MacroStorageTank:
+                    est.StructureName = "Macro Storage Reservoir / Bandha";
+                    CalculateMacroStorageTankBoq(est);
                     break;
                 default:
                     est.StructureName = "Water Conservation Structure";
@@ -135,6 +155,91 @@ namespace GeoStudio.Hydrology.Services
             est.Items.Add(new BoqItemLine { ItemNo = 4, ItemDescription = "Surface Desilting Chamber Concrete Structure", Quantity = 4.0, Unit = "cum", UnitRateInr = RATE_CC_124 });
 
             est.StorageCapacityTcm = 12.0; // Nominal annual intake TCM
+        }
+
+        private static void CalculateMiniPercolationTankBoq(StructureEstimate est)
+        {
+            double L = est.LengthMeters > 0 ? est.LengthMeters : 15.0; // Pit length/side
+            double H = est.HeightMeters > 0 ? est.HeightMeters : 1.8;  // Depth
+            double pitVol = L * L * H * 0.75;
+
+            est.Items.Add(new BoqItemLine { ItemNo = 1, ItemDescription = "Excavation in Soft/Medium Rock for Mini Pit", Quantity = pitVol, Unit = "cum", UnitRateInr = RATE_EXCAVATION });
+            est.Items.Add(new BoqItemLine { ItemNo = 2, ItemDescription = "Dry Stone Pitching on Side Embankments", Quantity = L * H * 0.25, Unit = "cum", UnitRateInr = RATE_DRY_STONE });
+            est.Items.Add(new BoqItemLine { ItemNo = 3, ItemDescription = "Graded Boulder & Gravel Infiltration Filter Bed", Quantity = L * 1.5 * 0.4, Unit = "cum", UnitRateInr = RATE_FILTER_MEDIA });
+
+            est.StorageCapacityTcm = pitVol / 1000.0;
+        }
+
+        private static void CalculateAnicutBoq(StructureEstimate est)
+        {
+            double L = est.LengthMeters > 0 ? est.LengthMeters : 35.0; // Spillway length
+            double H = est.HeightMeters > 0 ? est.HeightMeters : 3.0;  // Overflow weir height
+            double Df = est.FoundationDepthMeters > 0 ? est.FoundationDepthMeters : 1.5;
+            double topW = est.TopWidthMeters > 0 ? est.TopWidthMeters : 2.2;
+            double bottomW = topW + (0.9 * (H + Df));
+
+            double excVol = L * bottomW * Df * 1.25;
+            est.Items.Add(new BoqItemLine { ItemNo = 1, ItemDescription = "Deep Riverbed Rock Excavation for Spillway & Flanks", Quantity = excVol, Unit = "cum", UnitRateInr = RATE_EXCAVATION });
+
+            double rrmVol = L * ((topW + bottomW) / 2.0) * (H + Df);
+            est.Items.Add(new BoqItemLine { ItemNo = 2, ItemDescription = "Random Rubble Masonry (RRM) in Cement Mortar 1:4 with pointing", Quantity = rrmVol, Unit = "cum", UnitRateInr = RATE_RRM_MASONRY });
+
+            double capVol = L * topW * 0.2;
+            est.Items.Add(new BoqItemLine { ItemNo = 3, ItemDescription = "RCC M20 Grade Reinforced Crest & Ogee Overflow Cap", Quantity = capVol, Unit = "cum", UnitRateInr = RATE_CC_124 });
+
+            double apronVol = L * (H * 3.5) * 0.4;
+            est.Items.Add(new BoqItemLine { ItemNo = 4, ItemDescription = "M15 Grade Cement Concrete Stilling Basin & Cutoff Walls", Quantity = apronVol, Unit = "cum", UnitRateInr = RATE_CC_136 });
+
+            est.Items.Add(new BoqItemLine { ItemNo = 5, ItemDescription = "Side Guide Bunds Earthwork & Heavy Boulder Pitching", Quantity = L * 4.0, Unit = "cum", UnitRateInr = RATE_EARTHWORK });
+
+            est.StorageCapacityTcm = (L * H * H * 25.0) / 1000.0;
+        }
+
+        private static void CalculateTankaBoq(StructureEstimate est)
+        {
+            // Western Rajasthan Tanka: Traditional 30,000 - 50,000 Liter Circular Masonry Cistern with Silt Trap
+            double diaM = est.TopWidthMeters > 0 ? est.TopWidthMeters : 4.0;
+            double depthM = est.HeightMeters > 0 ? est.HeightMeters : 3.5;
+            double radius = diaM / 2.0;
+
+            double excVol = Math.PI * Math.Pow(radius + 0.4, 2) * (depthM + 0.5);
+            est.Items.Add(new BoqItemLine { ItemNo = 1, ItemDescription = "Circular Pit Excavation in Hard Murrum / Caliche", Quantity = excVol, Unit = "cum", UnitRateInr = RATE_EXCAVATION });
+
+            double wallVol = Math.PI * diaM * 0.35 * depthM;
+            est.Items.Add(new BoqItemLine { ItemNo = 2, ItemDescription = "Class I Masonry Wall in CM 1:4 with Local Stone", Quantity = wallVol, Unit = "cum", UnitRateInr = RATE_RRM_MASONRY });
+
+            double plasterArea = (Math.PI * diaM * depthM) + (Math.PI * Math.Pow(radius, 2));
+            est.Items.Add(new BoqItemLine { ItemNo = 3, ItemDescription = "20mm Waterproof Cement Plaster 1:3 with neat cement slurry", Quantity = plasterArea, Unit = "sqm", UnitRateInr = RATE_PLASTER_13 });
+
+            double slabVol = Math.PI * Math.Pow(radius + 0.3, 2) * 0.12;
+            est.Items.Add(new BoqItemLine { ItemNo = 4, ItemDescription = "RCC M25 Roof Cover Slab with Manhole & Vent Pipe", Quantity = slabVol, Unit = "cum", UnitRateInr = RATE_RCC_M25 });
+
+            double agorArea = Math.PI * (Math.Pow(12.0, 2) - Math.Pow(radius, 2)); // 24m dia circular catchment
+            est.Items.Add(new BoqItemLine { ItemNo = 5, ItemDescription = "Catchment Apron (Agor) Murrum Dressing & Ramming", Quantity = agorArea, Unit = "sqm", UnitRateInr = 45.0 });
+
+            est.StorageCapacityTcm = (Math.PI * Math.Pow(radius, 2) * depthM) / 1000.0; // in TCM
+        }
+
+        private static void CalculateMacroStorageTankBoq(StructureEstimate est)
+        {
+            double L = est.LengthMeters > 0 ? est.LengthMeters : 120.0; // Bund length
+            double H = est.HeightMeters > 0 ? est.HeightMeters : 4.5;   // Max bund height
+            double topW = est.TopWidthMeters > 0 ? est.TopWidthMeters : 3.0;
+
+            double bundCrossArea = ((topW + (topW + 2 * 2.5 * H)) / 2.0) * H;
+            double earthBundVol = bundCrossArea * L;
+            est.Items.Add(new BoqItemLine { ItemNo = 1, ItemDescription = "Zoned Earthen Dam Embankment Compaction with Impermeable Core", Quantity = earthBundVol, Unit = "cum", UnitRateInr = RATE_EARTHWORK });
+
+            double cutoffVol = L * 2.0 * 2.5;
+            est.Items.Add(new BoqItemLine { ItemNo = 2, ItemDescription = "Impermeable Clay Key Trench (Cut-off Trench) Excavation & Puddling", Quantity = cutoffVol, Unit = "cum", UnitRateInr = RATE_EXCAVATION });
+
+            double pitchingArea = L * Math.Sqrt(Math.Pow(H * 2.5, 2) + Math.Pow(H, 2));
+            est.Items.Add(new BoqItemLine { ItemNo = 3, ItemDescription = "Hand-Packed Dry Stone Pitching with Graded Filter Backing on U/S", Quantity = pitchingArea * 0.3, Unit = "cum", UnitRateInr = RATE_DRY_STONE });
+
+            est.Items.Add(new BoqItemLine { ItemNo = 4, ItemDescription = "Masonry Clear Overfall Surplus Escape Waste Weir (20m length)", Quantity = 85.0, Unit = "cum", UnitRateInr = RATE_RRM_MASONRY });
+            est.Items.Add(new BoqItemLine { ItemNo = 5, ItemDescription = "RCC Sluice Outlet Regulator with Screw Gear Hoist", Quantity = 1.0, Unit = "job", UnitRateInr = 185000.0 });
+
+            est.StorageCapacityTcm = (L * H * H * 45.0) / 1000.0;
         }
     }
 }

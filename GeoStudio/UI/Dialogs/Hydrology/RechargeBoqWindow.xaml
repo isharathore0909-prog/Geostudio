@@ -1,132 +1,439 @@
 <Window x:Class="GeoStudio.UI.Dialogs.Hydrology.RechargeBoqWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="CGWB Recharge Siting &amp; Rajasthan BSR BOQ Estimator"
-        Height="540" Width="680"
+        Title="CGWB Artificial Recharge Master Plan (2020) &amp; Rajasthan BSR BOQ Studio"
+        Height="700" Width="920"
+        MinHeight="600" MinWidth="800"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
         Background="#F8FAFC">
     <Window.Resources>
         <Style TargetType="TextBox">
             <Setter Property="Height" Value="28"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontSize" Value="11"/>
             <Setter Property="Padding" Value="5,3"/>
             <Setter Property="BorderBrush" Value="#CBD5E1"/>
             <Setter Property="Background" Value="#FFFFFF"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="TabItemHeaderStyle" TargetType="TabItem">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="16,8"/>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="16">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Banner -->
-        <Border Grid.Row="0" Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,12">
-            <StackPanel>
-                <TextBlock Text="💧 CGWB Artificial Recharge Siting &amp; BOQ Cost Engine" FontWeight="Bold" FontSize="13" Foreground="#166534"/>
-                <TextBlock Text="Calibrated with official Rajasthan WRD &amp; WDSC BSR 2023-24 rates and CGWB 2007 guidelines." FontSize="11" Foreground="#475569" Margin="0,3,0,0"/>
-            </StackPanel>
-        </Border>
+        <!-- Tabs Container -->
+        <TabControl Grid.Row="0" Background="Transparent" BorderBrush="#E2E8F0">
+            <!-- TAB 1: SITE-SPECIFIC SITING & BOQ (MICRO) -->
+            <TabItem Header="📍 Site-Specific Siting &amp; BOQ" Style="{StaticResource TabItemHeaderStyle}">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-        <!-- Parameters Grid -->
-        <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+                    <!-- Multi-Criteria Site Inputs Expander/Border -->
+                    <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock Text="Step 1: Terrain, Stream &amp; Subsurface Site Parameters (CGWB Ch. 5)" FontWeight="Bold" FontSize="11" Foreground="#1E293B" Margin="0,0,0,8"/>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                <!-- Structure Type -->
-                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,8">
-                    <TextBlock Text="Structure Type:" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,3"/>
-                    <ComboBox x:Name="ComboStructureType" Height="28" SelectionChanged="ComboStructureType_SelectionChanged">
-                        <ComboBoxItem Content="Check Dam / Anicut" IsSelected="True"/>
-                        <ComboBoxItem Content="Percolation Pond"/>
-                        <ComboBoxItem Content="Farm Pond (Khet Talai)"/>
-                        <ComboBoxItem Content="Recharge Shaft"/>
-                    </ComboBox>
-                </StackPanel>
+                                <!-- District -->
+                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,6,6">
+                                    <TextBlock Text="District:" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <ComboBox x:Name="ComboSiteDistrict" SelectionChanged="ComboSiteDistrict_SelectionChanged"/>
+                                </StackPanel>
 
-                <!-- Length / Span -->
-                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,8,8">
-                    <TextBlock x:Name="LblLength" Text="Length / Span (m):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,3"/>
-                    <TextBox x:Name="TxtLength" Text="25.0"/>
-                </StackPanel>
+                                <!-- Stream Order -->
+                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,6,6">
+                                    <TextBlock Text="Stream Order (Strahler):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <ComboBox x:Name="ComboSiteStreamOrder">
+                                        <ComboBoxItem Content="1st Order (Gully / Ridge)"/>
+                                        <ComboBoxItem Content="2nd Order (Small Nala)" IsSelected="True"/>
+                                        <ComboBoxItem Content="3rd Order (Main Stream)"/>
+                                        <ComboBoxItem Content="4th Order (River Reach)"/>
+                                    </ComboBox>
+                                </StackPanel>
 
-                <!-- Height / Depth -->
-                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,8,8">
-                    <TextBlock x:Name="LblHeight" Text="Height / Depth (m):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,3"/>
-                    <TextBox x:Name="TxtHeight" Text="2.5"/>
-                </StackPanel>
+                                <!-- Channel Bed Width -->
+                                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,6,6">
+                                    <TextBlock Text="Bed Width (m):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtSiteBedWidth" Text="10.0"/>
+                                </StackPanel>
 
-                <!-- Top Width / Diameter -->
-                <StackPanel Grid.Row="0" Grid.Column="3" Margin="0,0,0,8">
-                    <TextBlock x:Name="LblWidth" Text="Top Width (m):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,3"/>
-                    <TextBox x:Name="TxtWidth" Text="1.8"/>
-                </StackPanel>
+                                <!-- Channel Slope -->
+                                <StackPanel Grid.Row="0" Grid.Column="3" Margin="0,0,6,6">
+                                    <TextBlock Text="Bed Slope (%):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtSiteSlope" Text="2.0"/>
+                                </StackPanel>
 
-                <!-- Foundation Depth -->
-                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,0">
-                    <TextBlock Text="Foundation Depth (m):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,3"/>
-                    <TextBox x:Name="TxtFoundation" Text="1.2"/>
-                </StackPanel>
+                                <!-- Catchment Area -->
+                                <StackPanel Grid.Row="0" Grid.Column="4" Margin="0,0,0,6">
+                                    <TextBlock Text="Catchment Area (ha):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtSiteCatchmentArea" Text="65.0"/>
+                                </StackPanel>
 
-                <!-- Calculate Button -->
-                <Button Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Content="⚡ Compute Preliminary BOQ &amp; Cost" Height="28" FontWeight="Bold" FontSize="11" Background="#16A34A" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand" Margin="0,15,0,0" Click="BtnCompute_Click"/>
-            </Grid>
-        </Border>
+                                <!-- Lithology -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,6,0">
+                                    <TextBlock Text="Lithology / Bed Strata:" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <ComboBox x:Name="ComboSiteLithology">
+                                        <ComboBoxItem Content="Weathered / Fractured Hard Rock" IsSelected="True"/>
+                                        <ComboBoxItem Content="Bouldery / Sandy Alluvium"/>
+                                        <ComboBoxItem Content="Massive Crystalline Rock"/>
+                                        <ComboBoxItem Content="Desert Aeolian Sand"/>
+                                        <ComboBoxItem Content="Sandstone / Limestone Outcrop"/>
+                                    </ComboBox>
+                                </StackPanel>
 
-        <!-- BOQ DataGrid -->
-        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Margin="0,0,0,10">
-            <DataGrid x:Name="GridBoq" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="26" BorderThickness="0" Background="Transparent">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="#" Binding="{Binding ItemNo}" Width="35"/>
-                    <DataGridTextColumn Header="Item Description (BSR 2023-24)" Binding="{Binding ItemDescription}" Width="*"/>
-                    <DataGridTextColumn Header="Qty" Binding="{Binding Quantity, StringFormat='{}{0:F1}'}" Width="65"/>
-                    <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="50"/>
-                    <DataGridTextColumn Header="Rate (₹)" Binding="{Binding UnitRateInr, StringFormat='{}{0:N0}'}" Width="75"/>
-                    <DataGridTextColumn Header="Amount (₹)" Binding="{Binding TotalCostInr, StringFormat='{}{0:N0}'}" Width="95"/>
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
+                                <!-- Post-Monsoon DTW -->
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,6,0">
+                                    <TextBlock Text="Post-Monsoon DTW (m):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtSiteDtw" Text="11.5"/>
+                                </StackPanel>
 
-        <!-- Summary & Totals -->
-        <Border Grid.Row="3" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,10">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtStorageCapacity" Text="Est. Storage Capacity: 2.34 TCM (Thousand m³)" FontSize="11" Foreground="#334155"/>
-                    <TextBlock Text="Contingency (3%) &amp; Quality Control (2%) included" FontSize="10" Foreground="#64748B"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtTotalCost" Text="Total Cost: ₹ 6,85,400" FontSize="14" FontWeight="Bold" Foreground="#15803D"/>
-                </StackPanel>
-            </Grid>
-        </Border>
+                                <!-- Native EC -->
+                                <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,6,0">
+                                    <TextBlock Text="Native EC (µS/cm):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtSiteEc" Text="1200"/>
+                                </StackPanel>
 
-        <!-- Footer -->
-        <Grid Grid.Row="4">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Content="📥 Export BOQ to CSV" HorizontalAlignment="Left" Height="30" Padding="12,0" Style="{StaticResource RustGisSmallBtn}" Click="BtnExportCsv_Click"/>
-            <Button Grid.Column="1" Content="Close" Height="30" Padding="16,0" Style="{StaticResource RustGisSmallBtn}" Click="BtnClose_Click"/>
+                                <!-- Catchment Type -->
+                                <StackPanel Grid.Row="1" Grid.Column="3" Margin="0,0,6,0">
+                                    <TextBlock Text="Catchment Type:" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <ComboBox x:Name="ComboSiteCatchmentType">
+                                        <ComboBoxItem Content="Average (C ≈ 0.16)" IsSelected="True"/>
+                                        <ComboBoxItem Content="Good (Steep/Rocky C ≈ 0.22)"/>
+                                        <ComboBoxItem Content="Bad (Flat/Sandy C ≈ 0.10)"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <!-- Evaluate Button -->
+                                <Button Grid.Row="1" Grid.Column="4" Content="⚡ Siting Advisor" FontWeight="Bold" FontSize="11" Background="#2563EB" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand" Height="28" Click="BtnEvaluateSite_Click"/>
+                            </Grid>
+
+                            <!-- Checkboxes for exceptions -->
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <CheckBox x:Name="ChkClayCover" Content="Upper 3-8m has low-permeability clay blanket over aquifer" FontSize="10" Foreground="#475569" Margin="0,0,20,0"/>
+                                <CheckBox x:Name="ChkOutcropWest" Content="Sandstone/Limestone outcrop generating runoff (Western Zone)" FontSize="10" Foreground="#475569"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Siting Verdict Banner -->
+                    <Border Grid.Row="1" x:Name="BorderSitingVerdict" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock x:Name="TxtSitingVerdict" Text="RECOMMENDED: Pacca Masonry Check Dam (Order 2-3)" FontWeight="Bold" FontSize="12" Foreground="#1E40AF"/>
+                                <TextBlock x:Name="TxtSitingReason" Text="Stream order 2 nala with firm rocky bed/banks (width 5-15m, slope 1-3%). Pondage recharges phreatic aquifer directly." FontSize="10" Foreground="#3B82F6" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtCatchmentYield" Text="Est. Catchment Yield: 64.5 TCM | 4 Fillings" FontSize="10" FontWeight="SemiBold" Foreground="#1E3A8A"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Structure Dimensions & BOQ Parameters Grid -->
+                    <Grid Grid.Row="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Sizing Controls -->
+                        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.5*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Structure Type -->
+                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                    <TextBlock Text="Structure Type:" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <ComboBox x:Name="ComboStructureType" Height="28" SelectionChanged="ComboStructureType_SelectionChanged">
+                                        <ComboBoxItem Content="Check Dam (Pacca Masonry)" IsSelected="True"/>
+                                        <ComboBoxItem Content="Percolation Tank / Talab"/>
+                                        <ComboBoxItem Content="Farm Pond (Khet Talai)"/>
+                                        <ComboBoxItem Content="Mini Percolation Tank"/>
+                                        <ComboBoxItem Content="Anicut (Spillway &amp; Apron)"/>
+                                        <ComboBoxItem Content="Recharge Shaft (Injection Bore)"/>
+                                        <ComboBoxItem Content="Tanka (Rainwater Cistern)"/>
+                                        <ComboBoxItem Content="Macro Storage Tank"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <!-- Length -->
+                                <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                                    <TextBlock x:Name="LblLength" Text="Length / Span (m):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtLength" Text="25.0"/>
+                                </StackPanel>
+
+                                <!-- Height -->
+                                <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                                    <TextBlock x:Name="LblHeight" Text="Weir Height (m):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtHeight" Text="2.5"/>
+                                </StackPanel>
+
+                                <!-- Width -->
+                                <StackPanel Grid.Column="3" Margin="0,0,8,0">
+                                    <TextBlock x:Name="LblWidth" Text="Top Width (m):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtWidth" Text="1.8"/>
+                                </StackPanel>
+
+                                <!-- Foundation Depth -->
+                                <StackPanel Grid.Column="4" Margin="0,0,8,0">
+                                    <TextBlock x:Name="LblFoundation" Text="Foundation Depth (m):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtFoundation" Text="1.2"/>
+                                </StackPanel>
+
+                                <!-- Calculate BOQ Button -->
+                                <Button Grid.Column="5" Content="⚡ Recalculate BOQ" FontWeight="Bold" FontSize="11" Background="#16A34A" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand" Height="28" Padding="12,0" VerticalAlignment="Bottom" Click="BtnCompute_Click"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- BOQ DataGrid -->
+                        <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Margin="0,0,0,8">
+                            <DataGrid x:Name="GridBoq" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="26" BorderThickness="0" Background="Transparent">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="#" Binding="{Binding ItemNo}" Width="35"/>
+                                    <DataGridTextColumn Header="Item Description (Rajasthan WRD BSR 2023-24)" Binding="{Binding ItemDescription}" Width="*"/>
+                                    <DataGridTextColumn Header="Qty" Binding="{Binding Quantity, StringFormat='{}{0:F1}'}" Width="70"/>
+                                    <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="50"/>
+                                    <DataGridTextColumn Header="Rate (₹)" Binding="{Binding UnitRateInr, StringFormat='{}{0:N0}'}" Width="80"/>
+                                    <DataGridTextColumn Header="Amount (₹)" Binding="{Binding TotalCostInr, StringFormat='{}{0:N0}'}" Width="105"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+
+                        <!-- Totals Banner -->
+                        <Border Grid.Row="2" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock x:Name="TxtStorageCapacity" Text="Est. Storage Capacity: 2.34 TCM (Thousand m³)" FontSize="11" Foreground="#334155"/>
+                                    <TextBlock Text="Includes 3% Contingency &amp; 2% Quality Control supervision" FontSize="10" Foreground="#64748B"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <TextBlock x:Name="TxtTotalCost" Text="Total Cost: ₹ 14,04,714" FontSize="14" FontWeight="Bold" Foreground="#15803D"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- Export button -->
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="📥 Export Site BOQ to CSV" Height="28" Padding="12,0" Background="#F8FAFC" BorderBrush="#CBD5E1" Click="BtnExportCsv_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 2: CGWB MASTER PLAN ALLOCATOR (MACRO) -->
+            <TabItem Header="🗺️ CGWB Master Plan Allocator" Style="{StaticResource TabItemHeaderStyle}">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- District & Policy Selection -->
+                    <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock Text="Rajasthan District Profile &amp; Baseline Hydrogeology (Table 8.17.1)" FontWeight="Bold" FontSize="11" Foreground="#1E293B" Margin="0,0,0,8"/>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.4*"/>
+                                    <ColumnDefinition Width="1.2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- District -->
+                                <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                    <TextBlock Text="District:" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <ComboBox x:Name="ComboMacroDistrict" SelectionChanged="ComboMacroDistrict_SelectionChanged"/>
+                                </StackPanel>
+
+                                <!-- Extraction Stage -->
+                                <StackPanel Grid.Column="1" Margin="0,0,6,0">
+                                    <TextBlock Text="Stage of Extraction:" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <ComboBox x:Name="ComboMacroStage">
+                                        <ComboBoxItem Content="Over-Exploited (>100%)" IsSelected="True"/>
+                                        <ComboBoxItem Content="Critical (90-100%)"/>
+                                        <ComboBoxItem Content="Semi-Critical (70-90%)"/>
+                                        <ComboBoxItem Content="Safe (&lt;70% - CAT Only)"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <!-- DTW -->
+                                <StackPanel Grid.Column="2" Margin="0,0,6,0">
+                                    <TextBlock Text="Post-Mon DTW (m):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtMacroDtw" Text="12.0"/>
+                                </StackPanel>
+
+                                <!-- Trend -->
+                                <StackPanel Grid.Column="3" Margin="0,0,6,0">
+                                    <TextBlock Text="Trend (m/yr):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtMacroTrend" Text="-0.42"/>
+                                </StackPanel>
+
+                                <!-- EC -->
+                                <StackPanel Grid.Column="4" Margin="0,0,6,0">
+                                    <TextBlock Text="EC (µS/cm):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtMacroEc" Text="1250"/>
+                                </StackPanel>
+
+                                <!-- Specific Yield Sy -->
+                                <StackPanel Grid.Column="5" Margin="0,0,6,0">
+                                    <TextBlock Text="Specific Yield (%):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtMacroSy" Text="2.2"/>
+                                </StackPanel>
+
+                                <!-- Surplus Runoff -->
+                                <StackPanel Grid.Column="6" Margin="0,0,6,0">
+                                    <TextBlock Text="Surplus Runoff (MCM):" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,2"/>
+                                    <TextBox x:Name="TxtMacroSurplus" Text="285.0"/>
+                                </StackPanel>
+
+                                <!-- Calculate Button -->
+                                <Button Grid.Column="7" Content="⚡ Compute Plan" FontWeight="Bold" FontSize="11" Background="#0D9488" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand" Height="28" Padding="12,0" VerticalAlignment="Bottom" Click="BtnComputeMacro_Click"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Water Balance & Volume Metrics -->
+                    <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Status remark -->
+                            <TextBlock Grid.Row="0" x:Name="TxtMacroScreeningRemark" Text="Screening Status: Eligible for full artificial recharge master plan allocation." FontWeight="SemiBold" FontSize="11" Foreground="#0F766E" Margin="0,0,0,6"/>
+
+                            <!-- Metric Pills -->
+                            <UniformGrid Grid.Row="1" Columns="6">
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4" Padding="6,4" Margin="0,0,4,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Unsat. T (DTW - 3m)" FontSize="9" Foreground="#64748B"/>
+                                        <TextBlock x:Name="TxtMacroT" Text="9.0 m" FontWeight="Bold" FontSize="11" Foreground="#0F172A"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4" Padding="6,4" Margin="0,0,4,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Unsat. Volume (Vu)" FontSize="9" Foreground="#64748B"/>
+                                        <TextBlock x:Name="TxtMacroVu" Text="94,095 MCM" FontWeight="Bold" FontSize="11" Foreground="#0F172A"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4" Padding="6,4" Margin="0,0,4,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Storage Space (Vu×Sy)" FontSize="9" Foreground="#64748B"/>
+                                        <TextBlock x:Name="TxtMacroSpace" Text="2,070 MCM" FontWeight="Bold" FontSize="11" Foreground="#0F172A"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4" Padding="6,4" Margin="0,0,4,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Water Required (/0.75)" FontSize="9" Foreground="#64748B"/>
+                                        <TextBlock x:Name="TxtMacroWaterReq" Text="2,760 MCM" FontWeight="Bold" FontSize="11" Foreground="#0F172A"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4" Padding="6,4" Margin="0,0,4,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Surplus Available" FontSize="9" Foreground="#64748B"/>
+                                        <TextBlock x:Name="TxtMacroSurplusVal" Text="285 MCM" FontWeight="Bold" FontSize="11" Foreground="#0F172A"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="4" Padding="6,4">
+                                    <StackPanel>
+                                        <TextBlock Text="Feasible Recharge" FontSize="9" Foreground="#047857"/>
+                                        <TextBlock x:Name="TxtMacroFeasible" Text="285 MCM" FontWeight="Bold" FontSize="11" Foreground="#047857"/>
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Quota & Budget Grid -->
+                    <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Margin="0,0,0,8">
+                        <DataGrid x:Name="GridMacroQuota" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="26" BorderThickness="0" Background="Transparent">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Structure Type / Intervention" Binding="{Binding StructureType}" Width="*"/>
+                                <DataGridTextColumn Header="Target Quota (Units / Ha)" Binding="{Binding Count, StringFormat='{}{0:N0}'}" Width="150"/>
+                                <DataGridTextColumn Header="Unit Cost (₹ Lakh)" Binding="{Binding UnitCostLakhs, StringFormat='{}{0:F1}'}" Width="120"/>
+                                <DataGridTextColumn Header="Total Cost (₹ Crore)" Binding="{Binding TotalCostCrores, StringFormat='{}{0:F2}'}" Width="130"/>
+                                <DataGridTextColumn Header="Applicable Zone / Siting" Binding="{Binding ApplicableRegion}" Width="160"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <!-- Master Plan Footer Budget -->
+                    <Border Grid.Row="3" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="📥 Export Master Plan Allocation to CSV" Height="28" Padding="12,0" Background="#FFFFFF" BorderBrush="#CBD5E1" Click="BtnExportMacroCsv_Click"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtMacroTotalBudget" Text="Estimated District Outlay: ₹ 482.50 Cr" FontSize="14" FontWeight="Bold" Foreground="#0D9488"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Window Bottom Close -->
+        <Grid Grid.Row="1" Margin="0,8,0,0">
+            <Button Content="Close" HorizontalAlignment="Right" Height="28" Padding="18,0" Background="#E2E8F0" BorderThickness="0" Cursor="Hand" Click="BtnClose_Click"/>
         </Grid>
     </Grid>
 </Window>

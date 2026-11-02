@@ -4,12 +4,16 @@ namespace GeoStudio.Hydrology.Models
 {
     public enum RechargeStructureType
     {
-        CheckDam,           // Masonry Anicut / Check Dam
-        PercolationPond,    // Percolation Pond / Talab
-        FarmPond,           // Khet Talai with HDPE Lining
-        SubsurfaceDyke,     // Sub-surface Barrier
-        RechargeShaft,      // Filtered Recharge Borehole Shaft
-        ContourBund         // Field Contour Bunding
+        CheckDam,              // Masonry Check Dam (Pacca)
+        PercolationPond,       // Percolation Tank / Talab
+        FarmPond,              // Khet Talai with HDPE Lining
+        SubsurfaceDyke,        // Sub-surface Barrier
+        RechargeShaft,         // Filtered Recharge Borehole Shaft
+        ContourBund,           // Field Contour Bunding / CAT
+        MiniPercolationTank,   // Small upper catchment percolation pit
+        Anicut,                // Medium/Large Masonry Spillway Anicut
+        Tanka,                 // Western Rajasthan Rainwater Cistern (Masonry/RCC)
+        MacroStorageTank       // Large Valley Storage Reservoir
     }
 
     public class SorRateItem
@@ -43,7 +47,6 @@ namespace GeoStudio.Hydrology.Models
         public List<BoqItemLine> Items { get; set; } = new List<BoqItemLine>();
         public double ContingencyPercent { get; set; } = 3.0; // 3% contingency
         public double SupervisionPercent { get; set; } = 2.0; // 2% quality control
-        
         public double SubTotalInr { get; set; }
         public double TotalEstimatedCostInr { get; set; }
     }
@@ -58,3 +61,4 @@ namespace GeoStudio.Hydrology.Models
         public string IrrigationMethod { get; set; } = "Drip / Micro-irrigation";
     }
 }
+

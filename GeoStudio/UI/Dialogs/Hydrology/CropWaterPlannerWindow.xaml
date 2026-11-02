@@ -20,21 +20,12 @@
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Border Grid.Row="0" Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,12">
-            <StackPanel>
-                <TextBlock Text="🌾 Crop &amp; Horticulture Water-Budget Planner" FontWeight="Bold" FontSize="13" Foreground="#166534"/>
-                <TextBlock Text="Protects farmer income while enforcing water sustainability guidelines based on rainfall and aquifer status." FontSize="11" Foreground="#475569" Margin="0,3,0,0" TextWrapping="Wrap"/>
-            </StackPanel>
-        </Border>
-
         <!-- Inputs -->
-        <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -71,13 +62,13 @@
                     </ComboBox>
                 </StackPanel>
 
-                <Button Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Content="⚡ Generate Crop Plan" Height="28" FontWeight="Bold" FontSize="11" Background="#16A34A" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand" Margin="0,15,0,0" Click="BtnGeneratePlan_Click"/>
+                <Button Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Content="Generate Crop Plan" Height="28" FontWeight="Bold" FontSize="11" Background="#16A34A" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand" Margin="0,15,0,0" Click="BtnGeneratePlan_Click"/>
             </Grid>
         </Border>
 
         <!-- Results Display -->
-        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+            <ScrollViewer x:Name="ScrollResults" VerticalScrollBarVisibility="Auto">
                 <StackPanel x:Name="PanelResults">
                     <TextBlock Text="Recommended Crop Prescriptions" FontWeight="Bold" FontSize="12" Foreground="#0F172A" Margin="0,0,0,8"/>
 
@@ -93,15 +84,14 @@
                     <TextBlock Text="Commercial Vegetables (Micro-Drip):" FontSize="11" FontWeight="SemiBold" Foreground="#334155" Margin="0,4,0,2"/>
                     <TextBlock x:Name="TxtVegetables" Text="• Garlic, Chilli, Coriander" FontSize="11" Foreground="#475569" Margin="10,0,0,6"/>
 
-                    <Border Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,8,0,0">
-                        <TextBlock Text="💡 Farmer Profit Protection: Expected net profit meets or exceeds conventional wheat-flood baseline while saving 35-45% groundwater." FontSize="10" Foreground="#92400E" TextWrapping="Wrap"/>
-                    </Border>
+                    <TextBlock Text="Prescribed Irrigation &amp; Water Conveyance:" FontSize="11" FontWeight="SemiBold" Foreground="#334155" Margin="0,4,0,2"/>
+                    <TextBlock x:Name="TxtIrrigation" Text="• Pressurized Sprinkler + Underground PVC Piped Distribution" FontSize="11" Foreground="#2563EB" Margin="10,0,0,4" TextWrapping="Wrap"/>
                 </StackPanel>
             </ScrollViewer>
         </Border>
 
         <!-- Footer -->
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="2">
             <Button Content="Close" HorizontalAlignment="Right" Height="30" Padding="16,0" Style="{StaticResource RustGisSmallBtn}" Click="BtnClose_Click"/>
         </Grid>
     </Grid>
